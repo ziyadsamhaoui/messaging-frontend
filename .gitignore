@@ -1,7 +1,8 @@
 # IDEA
-.idea
+*.idea
 .junie
 /docs/
+
 
 # dependencies
 /node_modules
