@@ -1,43 +1,30 @@
 import React from "react";
-import { ConversationDTO } from "../../lib/types";
+import { RoomResponse } from "../../lib/types";
 import { Avatar } from "../ui/Avatar";
 import { cn } from "../../lib/utils";
 
 interface ConversationItemProps {
-  conversation: ConversationDTO;
-  currentUserId?: number | null;
+  room: RoomResponse;
+  title: string;
+  subtitle?: string;
   active?: boolean;
+  unreadCount?: number;
   onClick: () => void;
 }
 
-function formatTimestamp(iso?: string | null) {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  if (diffMs > 24 * 60 * 60 * 1000) {
-    return date.toLocaleDateString();
-  }
-  const hours = String(date.getHours()).padStart(2, "0");
-  const seconds = String(date.getSeconds()).padStart(2, "0");
-  return `${hours}:${seconds}`;
-}
-
-export function ConversationItem({ conversation, currentUserId, active, onClick }: ConversationItemProps) {
-  const otherParticipant = conversation.participants.find((p) => p.userId !== currentUserId);
-  const title =
-    conversation.type === "PRIVATE"
-      ? otherParticipant?.displayName || otherParticipant?.username || "Private chat"
-      : conversation.name || conversation.participants.map((p) => p.displayName || p.username).join(", ");
-
-  const lastMessage = conversation.lastMessage?.content || "No messages yet";
-  const lastMessageTime = formatTimestamp(conversation.lastMessage?.createdAt);
-  const subtitle = lastMessageTime ? `${lastMessage} • ${lastMessageTime}` : lastMessage;
-
+export function ConversationItem({
+  room,
+  title,
+  subtitle,
+  active,
+  unreadCount,
+  onClick,
+}: ConversationItemProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
+      aria-current={active ? "true" : undefined}
       className={cn(
         "flex w-full items-center gap-3 px-4 py-3 text-left transition-all duration-200",
         active
@@ -46,11 +33,18 @@ export function ConversationItem({ conversation, currentUserId, active, onClick 
       )}
     >
       <Avatar name={title || "Conversation"} />
-      <div className="flex-1">
-        <div className="text-sm font-semibold text-[var(--color-parchment)] line-clamp-1">
-          {title || "Untitled"}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="truncate text-sm font-semibold text-[var(--color-parchment)]">{title}</div>
+          {typeof unreadCount === "number" && unreadCount > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-fern)] px-1 text-[10px] font-bold text-[var(--color-parchment)]">
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </span>
+          )}
         </div>
-        <div className="text-xs text-[var(--color-text-muted)] line-clamp-1">{subtitle}</div>
+        <div className="truncate text-xs text-[var(--color-text-muted)]">
+          {subtitle ?? (room.type === "GROUP" ? "Group chat" : "Direct message")}
+        </div>
       </div>
     </button>
   );

@@ -1,327 +1,410 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Client, IMessage } from "@stomp/stompjs";
-import { useAuth } from "../../lib/auth";
-import { useConversations } from "../../hooks/useConversations";
-import { useMessages } from "../../hooks/useMessages";
-import { useStomp } from "../../hooks/useStomp";
-import { ConversationDTO, MessageDTO, UserDTO } from "../../lib/types";
-import { createConversation, sendMessage, ApiError, searchUsers } from "../../lib/api";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import { useAuth } from "../../hooks/useAuth";
+import { useRooms, roomsQueryKey } from "../../hooks/useRooms";
+import {
+  messagesQueryKey,
+  useMessages,
+  useRoomParticipants,
+  useSendMessage,
+} from "../../hooks/useMessages";
+import { useUser } from "../../hooks/useUser";
+import { useSocket } from "../../hooks/useSocket";
+import { useUiStore } from "../../store/uiStore";
+import { flattenPages } from "../../lib/pagination";
+import { errorMessage, isApiError } from "../../lib/errors";
+import { STOMP_DESTINATIONS } from "../../lib/stompClient";
+import { createRoom, removeParticipant } from "../../lib/services/rooms";
+import { updateUser } from "../../lib/services/users";
+import {
+  CreateRoomRequest,
+  CursorPage,
+  MessageResponse,
+  RoomResponse,
+  TypingEvent,
+} from "../../lib/types";
 import { AppShell } from "../../components/layout/AppShell";
 import { ConversationItem } from "../../components/sidebar/ConversationItem";
 import { NewConversationModal } from "../../components/sidebar/NewConversationModal";
+import { NotificationPanel } from "../../components/notifications/NotificationPanel";
 import { MessageList } from "../../components/chat/MessageList";
 import { MessageInput } from "../../components/chat/MessageInput";
 import { Input } from "../../components/ui/Input";
 import { Skeleton } from "../../components/ui/Skeleton";
-import { useToast } from "../../components/ui/Toast";
 import { Modal } from "../../components/ui/Modal";
+import { useToast } from "../../components/ui/Toast";
+import { useUnreadCount } from "../../hooks/useNotifications";
+
+function roomTitle(room: RoomResponse): string {
+  if (room.name) return room.name;
+  return room.type === "GROUP" ? "Group" : "Direct message";
+}
 
 export default function MessagingApp() {
-  const router = useRouter();
   const auth = useAuth();
   const toast = useToast();
-  const [selected, setSelected] = useState<ConversationDTO | null>(null);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const selectedRoomId = useUiStore((state) => state.selectedRoomId);
+  const selectRoom = useUiStore((state) => state.selectRoom);
+  const drafts = useUiStore((state) => state.drafts);
+  const setDraft = useUiStore((state) => state.setDraft);
+  const clearDraft = useUiStore((state) => state.clearDraft);
+  const roomActivity = useUiStore((state) => state.roomActivity);
+  const noteRoomActivity = useUiStore((state) => state.noteRoomActivity);
+  const socketState = useUiStore((state) => state.socketState);
+  const setSocketState = useUiStore((state) => state.setSocketState);
+
   const [query, setQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsDisplayName, setSettingsDisplayName] = useState(auth.username || "");
-  const [settingsEmail, setSettingsEmail] = useState("");
-  const [settingsPassword, setSettingsPassword] = useState("");
-  const [settingsPasswordConfirm, setSettingsPasswordConfirm] = useState("");
-  const [settingsAvatarName, setSettingsAvatarName] = useState("");
-  const [userResults, setUserResults] = useState<UserDTO[]>([]);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [blockedRooms, setBlockedRooms] = useState<Record<string, boolean>>({});
+  const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
+  const [settingsUsername, setSettingsUsername] = useState("");
+  const [settingsDescription, setSettingsDescription] = useState("");
+  const [settingsSaving, setSettingsSaving] = useState(false);
 
-  const { items: conversations, loading: loadingConversations, nextCursor, loadMore, setItems } =
-    useConversations(auth.token);
+  const lastTypingRef = useRef(0);
+  const typingTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const { items: messages, loading: loadingMessages, nextCursor: messageCursor, loadMore: loadMoreMessages, appendMessage, setItems: setMessageItems } =
-    useMessages(auth.token, selected?.conversationId ?? null);
+  const currentUserId = auth.session?.userId ?? null;
 
-  const updateConversationLastMessage = useCallback(
-    (conversationId: number, message: MessageDTO) => {
-      setItems((prev) =>
-        prev.map((conversation) =>
-          conversation.conversationId === conversationId
-            ? { ...conversation, lastMessage: message }
-            : conversation
-        )
-      );
+  const roomsQuery = useRooms();
+  const rooms = useMemo(() => {
+    const items = flattenPages(roomsQuery.data?.pages);
+    return [...items].sort((a, b) => {
+      const left = roomActivity[a.id] ?? a.createdAt;
+      const right = roomActivity[b.id] ?? b.createdAt;
+      return new Date(right).getTime() - new Date(left).getTime();
+    });
+  }, [roomsQuery.data, roomActivity]);
+
+  const selectedRoom = rooms.find((room) => room.id === selectedRoomId) ?? null;
+
+  const messagesQuery = useMessages(selectedRoomId);
+  const messages = useMemo(() => flattenPages(messagesQuery.data?.pages), [messagesQuery.data]);
+  const appendRealtimeMessage = messagesQuery.appendRealtimeMessage;
+
+  const participantsQuery = useRoomParticipants(selectedRoomId);
+  const participants = useMemo(
+    () => participantsQuery.data?.items ?? [],
+    [participantsQuery.data]
+  );
+  const otherParticipant = participants.find((participant) => participant.userId !== currentUserId);
+  const otherUserQuery = useUser(otherParticipant?.userId);
+
+  const sendMutation = useSendMessage(selectedRoomId, currentUserId);
+  const unread = useUnreadCount(auth.status === "authenticated");
+
+  const handleServerError = useCallback(
+    (error: Parameters<typeof errorMessage>[0]) => {
+      toast.push(errorMessage(error), "error");
+      if (!selectedRoomId) return;
+      void queryClient.invalidateQueries({ queryKey: messagesQueryKey(selectedRoomId) });
+      if (isApiError(error) && error.isBlocked) {
+        setBlockedRooms((prev) => ({ ...prev, [selectedRoomId]: true }));
+      }
     },
-    [setItems]
+    [toast, selectedRoomId, queryClient]
   );
 
-  // Stable onConnect handler: subscribe to global topics here. Per-conversation subscriptions
-  // are handled in the separate useEffect below to avoid recreating the STOMP client
-  // whenever `selected` changes (which was causing re-initialization loops).
-  const handleStompConnect = useCallback(
-    (client: Client) => {
-      client.subscribe("/user/queue/errors", (message: IMessage) => {
-        try {
-          const payload = JSON.parse(message.body);
-          toast.push(payload.message || "An error occurred", payload.status === 200 ? "success" : "error");
-          if (payload.status === 401) {
-            auth.logout();
-            router.push("/login");
-          }
-        } catch {
-          toast.push("WebSocket error", "error");
-        }
-      });
-
-      client.subscribe("/topic/conversations", (message: IMessage) => {
-        try {
-          const convo = JSON.parse(message.body) as ConversationDTO;
-          setItems((prev) => {
-            if (prev.some((c) => c.conversationId === convo.conversationId)) return prev;
-            return [convo, ...prev];
-          });
-        } catch {
-          // ignore parse errors
-        }
-      });
-    },
-    [auth, router, setItems, toast]
-  );
-
-  const { subscribe } = useStomp({
-    token: auth.token,
-    onError: (msg) => toast.push(msg, "error"),
-    onConnect: handleStompConnect,
+  const { subscribe, publish } = useSocket({
+    token: auth.session?.accessToken ?? null,
+    onServerError: handleServerError,
   });
 
   useEffect(() => {
-    if (!selected) return;
-    setMessageItems([]);
-    const sub = subscribe(`/topic/conversations/${selected.conversationId}`, (message) => {
-      const msg = JSON.parse(message.body) as MessageDTO;
-      appendMessage(msg);
-      updateConversationLastMessage(selected.conversationId, msg);
-    });
-    return () => {
-      sub?.unsubscribe();
-    };
-  }, [selected?.conversationId, subscribe, appendMessage, setMessageItems, selected, updateConversationLastMessage]);
+    setSocketState(socketState);
+  }, [socketState, setSocketState]);
 
   useEffect(() => {
-    if (!auth.token) {
-      router.push("/login");
+    if (auth.status === "unauthenticated") {
+      router.replace("/login");
     }
-  }, [auth.token, router]);
-
-  const filtered = useMemo(() => {
-    if (!query.trim()) return conversations;
-    const q = query.toLowerCase();
-    return conversations.filter((c) => {
-      const title = c.name || c.participants.map((p) => p.displayName || p.username).join(", ");
-      return title.toLowerCase().includes(q);
-    });
-  }, [conversations, query]);
+  }, [auth.status, router]);
 
   useEffect(() => {
-    if (!auth.token) return undefined;
-    let active = true;
-    const trimmed = query.trim();
+    if (!currentUserId) return;
+    return subscribe(STOMP_DESTINATIONS.userEvents(currentUserId), () => {
+      void queryClient.invalidateQueries({ queryKey: roomsQueryKey });
+      toast.push("New activity in your account.", "info");
+    });
+  }, [currentUserId, subscribe, queryClient, toast]);
 
-    const handle = setTimeout(async () => {
-      if (!active) return;
-      if (trimmed.length < 2) {
-        setUserResults([]);
-        setSearchOpen(false);
-        setSearchLoading(false);
-        return;
+  useEffect(() => {
+    if (!selectedRoomId) return;
+
+    const unsubscribeMessages = subscribe(
+      STOMP_DESTINATIONS.roomMessages(selectedRoomId),
+      (message) => {
+        try {
+          const payload = JSON.parse(message.body) as MessageResponse;
+          appendRealtimeMessage(payload);
+          noteRoomActivity(payload.roomId, payload.createdAt);
+        } catch {
+          void 0;
+        }
       }
+    );
 
+    const unsubscribeTyping = subscribe(
+      STOMP_DESTINATIONS.roomTyping(selectedRoomId),
+      (message) => {
+        try {
+          const event = JSON.parse(message.body) as TypingEvent;
+          if (event.userId && event.userId === currentUserId) return;
+          const label = event.username ?? "Someone";
+          setTypingUsers((prev) => ({ ...prev, [selectedRoomId]: label }));
+          clearTimeout(typingTimersRef.current[selectedRoomId]);
+          typingTimersRef.current[selectedRoomId] = setTimeout(() => {
+            setTypingUsers((prev) => {
+              const next = { ...prev };
+              delete next[selectedRoomId];
+              return next;
+            });
+          }, 3000);
+        } catch {
+          void 0;
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeMessages();
+      unsubscribeTyping();
+    };
+  }, [selectedRoomId, subscribe, appendRealtimeMessage, noteRoomActivity, currentUserId]);
+
+  useEffect(() => {
+    const timers = typingTimersRef.current;
+    return () => {
+      Object.values(timers).forEach((timer) => clearTimeout(timer));
+    };
+  }, []);
+
+  const filteredRooms = useMemo(() => {
+    if (!query.trim()) return rooms;
+    const needle = query.toLowerCase();
+    return rooms.filter((room) => roomTitle(room).toLowerCase().includes(needle));
+  }, [rooms, query]);
+
+  const draft = selectedRoomId ? drafts[selectedRoomId] ?? "" : "";
+  const isBlocked = selectedRoomId ? Boolean(blockedRooms[selectedRoomId]) : false;
+
+  const selectedTitle = selectedRoom
+    ? selectedRoom.type === "DIRECT"
+      ? otherUserQuery.data?.username ?? "Direct message"
+      : roomTitle(selectedRoom)
+    : "";
+  const selectedInitial = selectedTitle.charAt(0).toUpperCase() || "?";
+
+  const handleSend = useCallback(
+    async (content: string) => {
+      if (!selectedRoomId) return;
       try {
-        setSearchLoading(true);
-        const results = await searchUsers(auth.token, trimmed);
-        if (!active) return;
-        setUserResults(results);
-        setSearchOpen(true);
-      } catch {
-        if (!active) return;
-        setUserResults([]);
-        setSearchOpen(false);
-      } finally {
-        if (!active) return;
-        setSearchLoading(false);
+        await sendMutation.mutateAsync({ content });
+        clearDraft(selectedRoomId);
+        noteRoomActivity(selectedRoomId, new Date().toISOString());
+      } catch (error) {
+        toast.push(errorMessage(error), "error");
+        if (isApiError(error) && error.isBlocked) {
+          setBlockedRooms((prev) => ({ ...prev, [selectedRoomId]: true }));
+        }
       }
-    }, 250);
+    },
+    [selectedRoomId, sendMutation, clearDraft, noteRoomActivity, toast]
+  );
 
-    return () => {
-      active = false;
-      clearTimeout(handle);
-    };
-  }, [auth.token, query]);
+  const handleTyping = useCallback(() => {
+    if (!selectedRoomId) return;
+    const now = Date.now();
+    if (now - lastTypingRef.current < 2000) return;
+    lastTypingRef.current = now;
+    publish(STOMP_DESTINATIONS.typing, { roomId: selectedRoomId });
+  }, [selectedRoomId, publish]);
 
-  const currentUsername = auth.username || "username";
-  const currentDisplayName = currentUsername;
-  const currentEmailPlaceholder = currentUsername.includes("@") ? currentUsername : "you@example.com";
-  const currentInitial = currentDisplayName.charAt(0).toUpperCase();
-  const selectedParticipant = selected?.participants.find((p) => p.userId !== auth.userId) ?? selected?.participants[0];
-  const selectedDisplayName = selected?.name || selectedParticipant?.displayName || selectedParticipant?.username || "Conversation";
-  const selectedInitial = selectedDisplayName.charAt(0).toUpperCase();
+  const handleCreateRoom = useCallback(
+    async (body: CreateRoomRequest) => {
+      const room = await createRoom(body);
+      queryClient.setQueryData<InfiniteData<CursorPage<RoomResponse>>>(
+        roomsQueryKey,
+        (current) => {
+          if (!current || current.pages.length === 0) {
+            return {
+              pageParams: [undefined],
+              pages: [{ items: [room], nextCursor: null, hasMore: false }],
+            };
+          }
+          const [first, ...rest] = current.pages;
+          if (first.items.some((item) => item.id === room.id)) return current;
+          return { ...current, pages: [{ ...first, items: [room, ...first.items] }, ...rest] };
+        }
+      );
+      selectRoom(room.id);
+      noteRoomActivity(room.id, room.createdAt);
+    },
+    [queryClient, selectRoom, noteRoomActivity]
+  );
 
-  if (!auth.token) {
-    return null;
-  }
+  const handleOpenSettings = useCallback(() => {
+    setSettingsUsername(auth.user?.username ?? "");
+    setSettingsDescription(auth.user?.description ?? "");
+    setSettingsOpen(true);
+  }, [auth.user]);
 
-  async function handleCreate(body: Parameters<typeof createConversation>[1]) {
-    if (!auth.token) return;
+  const handleSaveProfile = useCallback(async () => {
+    if (!currentUserId) return;
+    setSettingsSaving(true);
     try {
-      const conversation = await createConversation(auth.token, body);
-      setItems((prev) => {
-        if (prev.some((c) => c.conversationId === conversation.conversationId)) return prev;
-        return [conversation, ...prev];
+      await updateUser(currentUserId, {
+        username: settingsUsername.trim(),
+        description: settingsDescription.trim() || null,
       });
-      setSelected(conversation);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        toast.push(err.payload?.message || err.message, "error");
-      } else {
-        toast.push("Failed to create conversation", "error");
-      }
+      await auth.refreshUser();
+      toast.push("Profile updated.", "success");
+      setSettingsOpen(false);
+    } catch (error) {
+      toast.push(errorMessage(error), "error");
+    } finally {
+      setSettingsSaving(false);
     }
-  }
+  }, [currentUserId, settingsUsername, settingsDescription, auth, toast]);
 
-  async function handleSend(content: string) {
-    if (!auth.token || !selected) return;
+  const handleLeaveRoom = useCallback(async () => {
+    if (!selectedRoomId || !currentUserId) return;
     try {
-      const msg = await sendMessage(auth.token, selected.conversationId, content);
-      appendMessage(msg);
-      updateConversationLastMessage(selected.conversationId, msg);
-    } catch (err) {
-      if (err instanceof ApiError) {
-        toast.push(err.payload?.message || err.message, "error");
-      } else {
-        toast.push("Failed to send message", "error");
-      }
+      await removeParticipant(selectedRoomId, currentUserId);
+      selectRoom(null);
+      await queryClient.invalidateQueries({ queryKey: roomsQueryKey });
+      toast.push("Left conversation.", "success");
+    } catch (error) {
+      toast.push(errorMessage(error), "error");
     }
+  }, [selectedRoomId, currentUserId, selectRoom, queryClient, toast]);
+
+  if (auth.status !== "authenticated") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-[var(--color-sage)] border-t-transparent" />
+          <p className="text-sm text-[var(--color-text-muted)]">Loading your workspace…</p>
+        </div>
+      </div>
+    );
   }
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="border-b border-[rgba(229,217,182,0.1)] px-5 py-3">
-        <Link href="/frontend/public" className="flex items-center gap-3">
-          <Image
-            src="/favicon.png"
-            width={60}
-            height={60}
-            alt="BadrLink favicon"
-            className="inline-block"
-          />
-          <div className="font-display text-4xl text-transparent bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text">
-            BadrLink
-          </div>
-        </Link>
-      </div>
-      <div className="px-4 pt-6">
-        <div className="relative">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => {
-              if (userResults.length > 0) setSearchOpen(true);
-            }}
-            placeholder="Search"
-            className="rounded-xl h-12 border text-lg border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.5)]"
-          />
-          {searchOpen && (searchLoading || userResults.length > 0) && (
-            <div className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-[rgba(164,190,123,0.2)] bg-[rgba(26,58,32,0.95)] shadow-xl">
-              {searchLoading ? (
-                <div className="px-3 py-2 text-xs text-[rgba(164,190,123,0.7)]">Searching...</div>
-              ) : (
-                userResults.map((user) => (
-                  <button
-                    key={user.userId}
-                    type="button"
-                    onClick={() => {
-                      setQuery(user.username);
-                      setSearchOpen(false);
-                    }}
-                    className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-[var(--color-parchment)] transition-colors hover:bg-[rgba(95,141,78,0.2)]"
-                  >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-xs font-semibold">
-                      {user.displayName?.charAt(0)?.toUpperCase() || user.username.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="text-sm">{user.displayName || user.username}</div>
-                      <div className="text-xs text-[rgba(164,190,123,0.7)]">@{user.username}</div>
-                    </div>
-                  </button>
-                ))
-              )}
+        <div className="flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <Image src="/favicon.png" width={44} height={44} alt="BadrLink favicon" className="inline-block" />
+            <div className="font-display bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text text-3xl text-transparent">
+              BadrLink
             </div>
-          )}
+          </Link>
+          <button
+            type="button"
+            onClick={() => setNotificationsOpen(true)}
+            className="relative rounded-full border border-[rgba(229,217,182,0.25)] px-3 py-1 text-xs text-[rgba(229,217,182,0.8)]"
+          >
+            Alerts
+            {(unread.data?.count ?? 0) > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-fern)] px-1 text-[10px] font-bold text-[var(--color-parchment)]">
+                {unread.data!.count > 99 ? "99+" : unread.data!.count}
+              </span>
+            )}
+          </button>
         </div>
       </div>
+
+      <div className="px-4 pt-6">
+        <Input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Filter conversations"
+          className="h-12 rounded-xl border border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-lg text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.5)]"
+        />
+      </div>
+
       <div className="px-4 pt-3">
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="w-full h-13 rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-lg font-medium text-[var(--color-parchment)] transition-all hover:scale-[1.02] hover:shadow-[0_8px_20px_rgba(95,141,78,0.2)] active:scale-[0.98]"
+          className="h-13 w-full rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-lg font-medium text-[var(--color-parchment)] transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
           + New Chat
         </button>
       </div>
+
       <div className="mt-3 flex-1 space-y-1 overflow-y-auto px-2 pb-4">
-        {loadingConversations && conversations.length === 0 ? (
+        {roomsQuery.isLoading && rooms.length === 0 ? (
           <div className="space-y-2 px-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-14" />
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="h-14" />
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : roomsQuery.isError ? (
+          <div className="px-3 text-sm text-red-300">
+            Could not load conversations.
+            <button type="button" onClick={() => roomsQuery.refetch()} className="ml-2 underline">
+              Retry
+            </button>
+          </div>
+        ) : filteredRooms.length === 0 ? (
           <div className="px-3 text-lg text-[rgba(164,190,123,0.6)]">No conversations yet.</div>
         ) : (
-          filtered.map((conversation) => (
+          filteredRooms.map((room) => (
             <ConversationItem
-              key={conversation.conversationId}
-              conversation={conversation}
-              currentUserId={auth.userId}
-              active={selected?.conversationId === conversation.conversationId}
-              onClick={() => setSelected(conversation)}
+              key={room.id}
+              room={room}
+              title={roomTitle(room)}
+              active={selectedRoomId === room.id}
+              onClick={() => selectRoom(room.id)}
             />
           ))
         )}
       </div>
-      {nextCursor && (
+
+      {roomsQuery.hasNextPage && (
         <button
           type="button"
-          onClick={() => loadMore()}
-          className="mx-4 mb-4 rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)] transition-all hover:bg-[rgba(229,217,182,0.08)]"
+          onClick={() => roomsQuery.fetchNextPage()}
+          className="mx-4 mb-4 rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
         >
           Load more
         </button>
       )}
+
       <div className="mt-auto border-t border-[rgba(229,217,182,0.1)] px-5 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-lg font-semibold text-[var(--color-parchment)]">
-              {currentInitial}
+              {(auth.user?.username ?? "?").charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="text-lg font-semibold text-[var(--color-parchment)]">{currentDisplayName}</div>
-              <div className="text-sm text-[rgba(164,190,123,0.7)]">{currentUsername}</div>
+              <div className="text-lg font-semibold text-[var(--color-parchment)]">
+                {auth.user?.username ?? "Signed in"}
+              </div>
+              <div className="text-sm text-[rgba(164,190,123,0.7)]">
+                {socketState === "connected" ? "Online" : "Reconnecting…"}
+              </div>
             </div>
           </div>
           <button
             type="button"
             aria-label="Settings"
-            onClick={() => setSettingsOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-md bg-transparent text-[var(--color-forest)] transition-transform duration-300 hover:rotate-90"
+            onClick={handleOpenSettings}
+            className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-forest)]"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-5 w-5 text-[var(--color-forest)]">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.75a3.25 3.25 0 0 0-3.25 3.25v5a3.25 3.25 0 1 0 6.5 0v-5A3.25 3.25 0 0 0 12 2.75Z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.75 11.5v.5a6.25 6.25 0 0 0 12.5 0v-.5" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.25v2.5" />
-            </svg>
+            ⚙
           </button>
         </div>
       </div>
@@ -330,68 +413,96 @@ export default function MessagingApp() {
 
   const mainContent = (
     <div className="flex h-full flex-col bg-gradient-to-br from-[rgba(229,217,182,0.95)] to-[rgba(212,200,158,0.9)]">
+      {socketState !== "connected" && socketState !== "offline" && (
+        <div className="bg-[rgba(95,141,78,0.2)] px-6 py-1 text-center text-xs text-[var(--color-forest)]">
+          {socketState === "connecting" ? "Connecting…" : "Reconnecting…"}
+        </div>
+      )}
+
       <header className="flex items-center justify-between border-b border-[rgba(40,84,48,0.15)] bg-gradient-to-r from-[rgba(212,200,158,0.9)] to-[rgba(229,217,182,0.95)] px-6 py-4">
-        {selected ? (
+        {selectedRoom ? (
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-sm font-semibold text-[var(--color-parchment)]">
               {selectedInitial}
             </div>
             <div>
-              <div className="font-display text-base text-[var(--color-forest)]">{selectedDisplayName}</div>
+              <div className="font-display text-base text-[var(--color-forest)]">{selectedTitle}</div>
               <div className="text-xs text-[rgba(95,141,78,0.7)]">
-                {selected.type === "GROUP" ? "Group chat" : "Private chat"}
+                {typingUsers[selectedRoom.id] ? `${typingUsers[selectedRoom.id]} is typing…` : selectedRoom.type === "GROUP" ? "Group chat" : "Direct chat"}
               </div>
             </div>
           </div>
         ) : (
           <div />
         )}
+        {selectedRoom && (
+          <button
+            type="button"
+            onClick={handleLeaveRoom}
+            className="rounded-xl border border-[rgba(40,84,48,0.2)] px-3 py-1 text-xs text-[rgba(40,84,48,0.7)]"
+          >
+            Leave
+          </button>
+        )}
       </header>
 
-      {selected ? (
+      {selectedRoom ? (
         <>
           <MessageList
             messages={messages}
-            currentUserId={auth.userId}
-            loading={loadingMessages}
-            hasMore={Boolean(messageCursor)}
-            onLoadMore={loadMoreMessages}
+            currentUserId={currentUserId}
+            loading={messagesQuery.isLoading}
+            hasMore={Boolean(messagesQuery.hasNextPage)}
+            onLoadMore={() => messagesQuery.fetchNextPage()}
           />
-          <MessageInput onSend={handleSend} />
+          {messagesQuery.isError && (
+            <div className="px-6 py-2 text-center text-xs text-red-500">Could not load messages.</div>
+          )}
+          <MessageInput
+            value={draft}
+            onChange={(value) => setDraft(selectedRoom.id, value)}
+            onSend={handleSend}
+            onTyping={handleTyping}
+            blocked={isBlocked}
+            sending={sendMutation.isPending}
+          />
         </>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-4 text-[rgba(40,84,48,0.7)]">
-          <div className="flex h-40 w-40 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] animate-pulse">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-15 w-15 text-[var(--color-parchment)]">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" />
-            </svg>
-          </div>
           <div className="text-2xl font-semibold text-[var(--color-forest)]">No chat selected</div>
-          <div className="text-xl text-[rgba(40,84,48,0.6)]">Choose one from the sidebar to start messaging</div>
+          <div className="text-base text-[rgba(40,84,48,0.6)]">
+            Choose a conversation or start a new one.
+          </div>
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="rounded-2xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-6 py-2 font-semibold text-[var(--color-parchment)]"
+          >
+            New conversation
+          </button>
         </div>
       )}
     </div>
   );
 
   return (
-    <div className="h-screen">
-      <div className="lg:hidden h-full">
-        {!selected ? (
-          <div className="h-full">{sidebarContent}</div>
-        ) : (
+    <div className="h-dvh">
+      <div className="h-full lg:hidden">
+        {selectedRoom ? (
           <div className="flex h-full flex-col">
             <div className="flex items-center gap-3 border-b border-[rgba(40,84,48,0.15)] bg-gradient-to-r from-[rgba(212,200,158,0.9)] to-[rgba(229,217,182,0.95)] px-4 py-3">
               <button
                 type="button"
-                onClick={() => setSelected(null)}
+                onClick={() => selectRoom(null)}
                 className="rounded-xl border border-[rgba(40,84,48,0.2)] px-3 py-1 text-xs text-[rgba(40,84,48,0.7)]"
               >
                 ← Back
               </button>
-              <div className="text-sm text-[rgba(40,84,48,0.7)]">Conversation</div>
             </div>
             {mainContent}
           </div>
+        ) : (
+          <div className="h-full">{sidebarContent}</div>
         )}
       </div>
 
@@ -399,86 +510,51 @@ export default function MessagingApp() {
         <AppShell sidebar={sidebarContent} main={mainContent} />
       </div>
 
-      <NewConversationModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={handleCreate} />
+      <NewConversationModal open={modalOpen} onClose={() => setModalOpen(false)} onCreate={handleCreateRoom} />
+      <NotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />
+
       <Modal open={settingsOpen} onClose={() => setSettingsOpen(false)} title="Settings">
         <div className="flex flex-col gap-4">
-          <div className="flex flex-col items-center gap-3 text-center">
-            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-xl font-semibold text-[var(--color-parchment)]">
-              {currentInitial}
-              <label className="absolute -bottom-1 -right-1 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full border border-[rgba(229,217,182,0.3)] bg-[rgba(40,84,48,0.9)]">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setSettingsAvatarName(e.target.files?.[0]?.name || "")}
-                  className="hidden"
-                />
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4 text-[var(--color-parchment)] rotate-[60deg]">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.1 2.1 0 0 1 2.97 2.97L8.25 19.04l-4.25 1.06 1.06-4.25L16.862 4.487Z" />
-                </svg>
-              </label>
-            </div>
-            <div className="text-sm text-[rgba(164,190,123,0.7)]">
-              {settingsAvatarName ? `Selected: ${settingsAvatarName}` : "Choose an avatar"}
-            </div>
-          </div>
           <Input
-            label="Display name"
-            value={settingsDisplayName}
-            onChange={(e) => setSettingsDisplayName(e.target.value)}
-            placeholder="Your name"
+            label="Username"
+            value={settingsUsername}
+            onChange={(event) => setSettingsUsername(event.target.value)}
+            placeholder="Your username"
             className="bg-[rgba(26,58,32,0.6)]"
           />
           <Input
-            label="Email"
-            value={settingsEmail}
-            onChange={(e) => setSettingsEmail(e.target.value)}
-            placeholder={currentEmailPlaceholder}
-            className="bg-[rgba(26,58,32,0.6)]"
-          />
-          <Input
-            label="Password"
-            type="password"
-            value={settingsPassword}
-            onChange={(e) => setSettingsPassword(e.target.value)}
-            placeholder="••••••••"
-            className="bg-[rgba(26,58,32,0.6)]"
-          />
-          <Input
-            label="Confirm password"
-            type="password"
-            value={settingsPasswordConfirm}
-            onChange={(e) => setSettingsPasswordConfirm(e.target.value)}
-            placeholder="••••••••"
+            label="Description"
+            value={settingsDescription}
+            onChange={(event) => setSettingsDescription(event.target.value)}
+            placeholder="A short bio"
             className="bg-[rgba(26,58,32,0.6)]"
           />
           <div className="flex justify-between gap-2">
             <button
               type="button"
-              onClick={() => {
-                auth.logout();
-                router.push("/login");
+              onClick={async () => {
+                await auth.logout();
+                router.replace("/login");
               }}
-              className="rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.8)] transition-all hover:bg-[rgba(229,217,182,0.08)]"
+              className="rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.8)]"
             >
-              Logout
+              Log out
             </button>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => setSettingsOpen(false)}
-                className="text-sm text-[rgba(229,217,182,0.6)] hover:text-[var(--color-parchment)]"
+                className="text-sm text-[rgba(229,217,182,0.6)]"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  toast.push("Settings saved", "success");
-                  setSettingsOpen(false);
-                }}
-                className="rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-sm font-semibold text-[var(--color-parchment)] transition-all hover:scale-[1.02]"
+                onClick={handleSaveProfile}
+                disabled={settingsSaving}
+                className="rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-sm font-semibold text-[var(--color-parchment)] disabled:opacity-60"
               >
-                Save
+                {settingsSaving ? "Saving…" : "Save"}
               </button>
             </div>
           </div>

@@ -1,16 +1,26 @@
 import React from "react";
-import { MessageDTO } from "../../lib/types";
+import { ChatMessage } from "../../lib/types";
 import { cn } from "../../lib/utils";
 
 interface MessageBubbleProps {
-  message: MessageDTO;
+  message: ChatMessage;
   isOwn: boolean;
+  showSender: boolean;
 }
 
-export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
+export function MessageBubble({ message, isOwn, showSender }: MessageBubbleProps) {
+  if (message.isDeleted) {
+    return (
+      <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
+        <div className="rounded-2xl border border-dashed border-[rgba(40,84,48,0.3)] px-4 py-2 text-xs italic text-[rgba(40,84,48,0.5)]">
+          Message deleted
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}
-    >
+    <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
       {!isOwn && (
         <div className="mr-2 mt-auto h-7 w-7 flex-shrink-0 rounded-full bg-gradient-to-br from-[var(--color-sage)] to-[var(--color-fern)]" />
       )}
@@ -22,12 +32,27 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
             : "rounded-bl-sm border border-[rgba(40,84,48,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.15)] to-[rgba(95,141,78,0.1)] text-[var(--color-forest)]"
         )}
       >
+        {showSender && !isOwn && message.senderUsername && (
+          <div className="mb-1 text-[11px] font-semibold opacity-70">@{message.senderUsername}</div>
+        )}
         <p className="whitespace-pre-wrap leading-relaxed">{message.content}</p>
-        <div className={cn("mt-1 text-[10px]", isOwn ? "text-[rgba(229,217,182,0.6)]" : "text-[rgba(40,84,48,0.4)]")}>
-          {new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        <div
+          className={cn(
+            "mt-1 flex items-center gap-2 text-[10px]",
+            isOwn ? "text-[rgba(229,217,182,0.6)]" : "text-[rgba(40,84,48,0.4)]"
+          )}
+        >
+          {message.isEdited && <span>edited</span>}
+          <span>
+            {new Date(message.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+          {message.pending && <span>sending…</span>}
+          {message.failed && <span className="text-red-500">failed</span>}
         </div>
       </div>
     </div>
   );
 }
-
