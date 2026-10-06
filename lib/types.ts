@@ -14,6 +14,8 @@ export type NotificationType = "MESSAGE" | "REACTION" | "INVITATION" | "SYSTEM";
 
 export type NotificationSource = "MESSAGE" | "REACTION" | "INVITATION" | "SYSTEM";
 
+export type OnlineStatus = "ONLINE" | "AWAY" | "OFFLINE";
+
 export interface ErrorResponse {
   timestamp?: string;
   status: number;
@@ -172,6 +174,14 @@ export interface UpdateUserRequest {
   description?: string | null;
 }
 
+export interface InvitationDraft {
+  invitationId: string;
+  roomId: string | null;
+  roomName: string | null;
+  inviterUsername: string | null;
+  sentAt: string;
+}
+
 export interface UpdatePreferencesRequest {
   mutedTypes?: NotificationType[];
   pushEnabled?: boolean;
@@ -215,11 +225,75 @@ export interface ErrorFrame {
 export interface ChatMessage extends MessageResponse {
   pending?: boolean;
   failed?: boolean;
+  reactions?: MessageReactionSummary[];
+}
+
+export interface MessageReactionSummary {
+  userId: string;
+  emoji: string;
+  username?: string;
+}
+
+export interface RoomMessageFrame {
+  messageId: string;
+  senderId: string;
+  type?: MessageType;
+  content?: string;
+  createdAt?: string;
+}
+
+export interface ReactionFrame {
+  messageId: string;
+  reactorId: string;
+  reactorUsername?: string;
+  emoji: string;
+}
+
+export interface MessageDeletedFrame {
+  messageId: string;
+  roomId: string;
+}
+
+export interface ParticipantFrame {
+  eventType: "PARTICIPANT_ADDED" | "PARTICIPANT_REMOVED" | "PARTICIPANT_MUTED" | "PARTICIPANT_UNMUTED";
+  roomId: string;
+  userId: string | null;
+  role?: ParticipantRole;
+  muted?: boolean;
+  mutedUntil?: string | null;
+}
+
+export interface InvitationSentFrame {
+  eventType: "INVITATION_SENT";
+  invitationId: string;
+  roomId: string;
+  invitedId: string;
+  inviterId: string;
+  roomName: string | null;
+  inviterUsername: string | null;
+  sentAt: string | null;
+}
+
+export interface InvitationAcceptedFrame {
+  eventType: "INVITATION_ACCEPTED";
+  invitationId: string;
+  roomId: string;
+  invitedId: string | null;
+  inviterId: string;
+  invitedUsername: string | null;
+  acceptedAt: string | null;
+}
+
+export interface ConnectionAcceptedFrame {
+  eventType: "USER_CONNECTION_ACCEPTED";
+  userIdA: string;
+  userIdB: string;
+  userAUsername: string | null;
+  userBUsername: string | null;
+  acceptedAt: string | null;
 }
 
 export interface TypingEvent {
   roomId: string;
-  userId?: string;
-  username?: string;
-  typing?: boolean;
+  senderId: string;
 }

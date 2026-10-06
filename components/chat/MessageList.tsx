@@ -8,21 +8,40 @@ import { Skeleton } from "../ui/Skeleton";
 interface MessageListProps {
   messages: ChatMessage[];
   currentUserId: string | null;
+  roomCreatedById?: string | null;
   loading: boolean;
   hasMore: boolean;
   onLoadMore: () => void;
+  onEdit?: (messageId: string, content: string) => void;
+  onDelete?: (messageId: string) => void;
+  onReact?: (messageId: string, emoji: string) => void;
+  onRemoveReaction?: (messageId: string) => void;
 }
 
 export function MessageList({
   messages,
   currentUserId,
+  roomCreatedById,
   loading,
   hasMore,
   onLoadMore,
+  onEdit,
+  onDelete,
+  onReact,
+  onRemoveReaction,
 }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const lastCountRef = useRef(messages.length);
 
   const ordered = useMemo(() => [...messages].reverse(), [messages]);
+
+  useEffect(() => {
+    if (messages.length > lastCountRef.current) {
+      bottomRef.current?.scrollIntoView({ block: "end" });
+    }
+    lastCountRef.current = messages.length;
+  }, [messages.length]);
 
   useEffect(() => {
     const element = containerRef.current;
@@ -58,16 +77,24 @@ export function MessageList({
           {ordered.map((message, index) => {
             const previous = ordered[index - 1];
             const showSender = !previous || previous.senderId !== message.senderId;
+            const isOwn = message.senderId === currentUserId;
             return (
               <MessageBubble
                 key={message.id}
                 message={message}
-                isOwn={message.senderId === currentUserId}
+                isOwn={isOwn}
                 showSender={showSender}
+                currentUserId={currentUserId}
+                canDeleteAsOwner={Boolean(roomCreatedById && roomCreatedById === currentUserId)}
+                onEdit={isOwn ? onEdit : undefined}
+                onDelete={onDelete}
+                onReact={onReact}
+                onRemoveReaction={onRemoveReaction}
               />
             );
           })}
           {loading && <div className="text-center text-xs text-[rgba(40,84,48,0.4)]">Loading older…</div>}
+          <div ref={bottomRef} />
         </div>
       )}
     </div>

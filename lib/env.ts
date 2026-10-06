@@ -13,3 +13,7 @@ export const STOMP_URL = withoutTrailingSlash(
 );
 
 export const ACCESS_TOKEN_QUERY_PARAM = "access_token";
+
+export const VAPID_PUBLIC_KEY = (
+  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ""
+).trim();

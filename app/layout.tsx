@@ -25,6 +25,7 @@ const monoFont = IBM_Plex_Mono({
 export const metadata: Metadata = {
   title: "BadrLink",
   description: "Real-time messaging, rooted in calm.",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

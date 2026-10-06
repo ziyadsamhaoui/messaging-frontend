@@ -2,10 +2,12 @@
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getNotificationPreferences,
   getUnreadCount,
   listNotifications,
   markAllNotificationsRead,
   markNotificationRead,
+  updateNotificationPreferences,
 } from "@/lib/services/notifications";
 
 export const unreadCountQueryKey = ["notifications", "unread-count"] as const;
@@ -50,6 +52,26 @@ export function useMarkAllNotificationsRead() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: notificationsQueryKey });
       void queryClient.invalidateQueries({ queryKey: unreadCountQueryKey });
+    },
+  });
+}
+
+export const notificationPreferencesQueryKey = ["notifications", "preferences"] as const;
+
+export function useNotificationPreferences(enabled = true) {
+  return useQuery({
+    queryKey: notificationPreferencesQueryKey,
+    queryFn: getNotificationPreferences,
+    enabled,
+  });
+}
+
+export function useUpdateNotificationPreferences() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateNotificationPreferences,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: notificationPreferencesQueryKey });
     },
   });
 }

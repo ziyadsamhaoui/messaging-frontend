@@ -1,0 +1,23 @@
+{
+  "name": "BadrLink",
+  "short_name": "BadrLink",
+  "description": "Real-time messaging, rooted in calm.",
+  "start_url": "/app",
+  "display": "standalone",
+  "background_color": "#1a3a20",
+  "theme_color": "#1a3a20",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

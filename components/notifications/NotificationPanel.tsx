@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Modal } from "../ui/Modal";
 import { flattenPages } from "../../lib/pagination";
 import {
@@ -10,6 +10,7 @@ import {
 } from "../../hooks/useNotifications";
 import { errorMessage } from "../../lib/errors";
 import { useToast } from "../ui/Toast";
+import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
 
 interface NotificationPanelProps {
   open: boolean;
@@ -21,6 +22,7 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
   const feed = useNotificationFeed(open);
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
   const items = flattenPages(feed.data?.pages);
 
   async function handleMarkRead(id: string) {
@@ -42,7 +44,14 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
   return (
     <Modal open={open} onClose={onClose} title="Notifications">
       <div className="flex flex-col gap-3">
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={() => setPreferencesOpen(true)}
+            className="text-xs text-[var(--color-sage)] hover:text-[var(--color-parchment)]"
+          >
+            Preferences
+          </button>
           <button
             type="button"
             onClick={handleMarkAll}
@@ -91,6 +100,8 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
           </button>
         )}
       </div>
+
+      <NotificationPreferencesModal open={preferencesOpen} onClose={() => setPreferencesOpen(false)} />
     </Modal>
   );
 }
