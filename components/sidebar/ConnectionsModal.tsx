@@ -2,9 +2,9 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/Modal";
-import { Input } from "../ui/Input";
 import { Avatar } from "../ui/Avatar";
 import { Skeleton } from "../ui/Skeleton";
+import { UserSearchCombobox } from "../ui/UserSearchCombobox";
 import { useToast } from "../ui/Toast";
 import {
   useAcceptConnection,
@@ -13,7 +13,6 @@ import {
   useDeclineConnection,
   usePendingConnections,
 } from "../../hooks/useConnections";
-import { useUserSearch } from "../../hooks/useUserSearch";
 import { useUser } from "../../hooks/useUser";
 import { errorMessage } from "../../lib/errors";
 import { ConnectionDto } from "../../lib/types";
@@ -116,7 +115,6 @@ function RequestsList() {
   const connect = useConnectUser();
   const accept = useAcceptConnection();
   const decline = useDeclineConnection();
-  const search = useUserSearch(query);
   const pending = pendingQuery.data ?? [];
 
   async function sendRequest(userId: string, username: string) {
@@ -149,30 +147,22 @@ function RequestsList() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 rounded-xl border border-[rgba(164,190,123,0.15)] p-3">
-        <Input
+        <UserSearchCombobox
           label="Send a connection request"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onValueChange={setQuery}
+          onSelect={(user) => void sendRequest(user.id, user.username)}
           placeholder="Search by username"
-          className="bg-[rgba(26,58,32,0.6)]"
-        />
-        {search.isFetching && (
-          <div className="text-xs text-[rgba(164,190,123,0.7)]">Searching…</div>
-        )}
-        {search.data &&
-          search.data.map((user) => (
-            <div key={user.id} className="flex items-center justify-between gap-2 py-1">
+          inputClassName="bg-[rgba(26,58,32,0.6)]"
+          renderOption={(user) => (
+            <>
               <span className="truncate text-sm text-[var(--color-parchment)]">@{user.username}</span>
-              <button
-                type="button"
-                onClick={() => void sendRequest(user.id, user.username)}
-                disabled={connectingId === user.id}
-                className="rounded-lg bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-2 py-1 text-xs font-semibold text-[var(--color-parchment)] disabled:opacity-60"
-              >
+              <span className="text-xs font-semibold text-[var(--color-sage)]">
                 {connectingId === user.id ? "Sending…" : "Connect"}
-              </button>
-            </div>
-          ))}
+              </span>
+            </>
+          )}
+        />
       </div>
 
       {pendingQuery.isLoading ? (

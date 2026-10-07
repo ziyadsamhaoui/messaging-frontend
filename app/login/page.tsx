@@ -122,7 +122,7 @@ export default function LoginPage() {
               <h1 className="font-display bg-gradient-to-r from-[var(--color-parchment)] via-[var(--color-sage)] to-[var(--color-parchment)] bg-clip-text text-xl uppercase tracking-widest text-transparent sm:text-3xl">
                 {mode === "login" ? "Welcome Back" : "Create Your Account"}
               </h1>
-              <p className="mt-2 text-sm text-[rgba(164,190,123,0.8)] tracking-wide">
+              <p className="mt-2 text-sm text-[rgba(164,190,123,0.95)] tracking-wide">
                 {mode === "login" ? "Sign in with your email address." : "Register to start messaging."}
               </p>
               <div className="mt-4 h-px w-full bg-[rgba(164,190,123,0.3)]" />
@@ -182,7 +182,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-9 text-sm text-[rgba(164,190,123,0.6)] hover:text-[var(--color-parchment)]"
+                  className="absolute right-4 top-9 text-sm text-[rgba(164,190,123,0.85)] hover:text-[var(--color-parchment)]"
                   aria-label="Toggle password visibility"
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -205,7 +205,7 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      className="absolute right-4 top-9 text-sm text-[rgba(164,190,123,0.6)] hover:text-[var(--color-parchment)]"
+                      className="absolute right-4 top-9 text-sm text-[rgba(164,190,123,0.85)] hover:text-[var(--color-parchment)]"
                       aria-label="Toggle confirm password visibility"
                     >
                       {showConfirmPassword ? "Hide" : "Show"}

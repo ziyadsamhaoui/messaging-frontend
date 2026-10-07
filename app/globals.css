@@ -183,3 +183,21 @@ button {
 }
 
 
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-pulse,
+  .animate-bounce,
+  .animate-fade-in,
+  .animate-fade-up,
+  .animate-shake,
+  .animate-shimmer,
+  .animate-scroll-plane,
+  .animate-float,
+  .animate-float-slow {
+    animation: none;
+  }
+}

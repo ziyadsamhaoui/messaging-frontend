@@ -2,12 +2,11 @@
 
 import React, { useState } from "react";
 import { Modal } from "../ui/Modal";
-import { Input } from "../ui/Input";
 import { Avatar } from "../ui/Avatar";
 import { Skeleton } from "../ui/Skeleton";
+import { UserSearchCombobox } from "../ui/UserSearchCombobox";
 import { useToast } from "../ui/Toast";
 import { useRoomParticipants } from "../../hooks/useMessages";
-import { useUserSearch } from "../../hooks/useUserSearch";
 import { useUser } from "../../hooks/useUser";
 import { errorMessage, isApiError } from "../../lib/errors";
 import { inviteToRoom, removeParticipant, updateParticipant } from "../../lib/services/rooms";
@@ -206,7 +205,6 @@ function InviteByUsername({ roomId }: { roomId: string }) {
   const toast = useToast();
   const [query, setQuery] = useState("");
   const [invitingId, setInvitingId] = useState<string | null>(null);
-  const search = useUserSearch(query);
 
   async function invite(user: PublicUserDto) {
     setInvitingId(user.id);
@@ -227,32 +225,23 @@ function InviteByUsername({ roomId }: { roomId: string }) {
 
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-[rgba(164,190,123,0.15)] p-3">
-      <Input
+      <UserSearchCombobox
         label="Invite by username"
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onValueChange={setQuery}
+        onSelect={(user) => void invite(user)}
         placeholder="Type at least 2 characters"
-        className="bg-[rgba(26,58,32,0.6)]"
+        inputClassName="bg-[rgba(26,58,32,0.6)]"
+        renderOption={(user) => (
+          <>
+            <span className="truncate text-sm text-[var(--color-parchment)]">@{user.username}</span>
+            <span className="text-xs font-semibold text-[var(--color-sage)]">
+              {invitingId === user.id ? "Sending…" : "Invite"}
+            </span>
+          </>
+        )}
       />
-      {search.isFetching && <div className="text-xs text-[rgba(164,190,123,0.7)]">Searching…</div>}
-      {search.data && search.data.length > 0 && (
-        <div className="max-h-40 overflow-y-auto">
-          {search.data.map((user) => (
-            <div key={user.id} className="flex items-center justify-between gap-2 py-1">
-              <span className="truncate text-sm text-[var(--color-parchment)]">@{user.username}</span>
-              <button
-                type="button"
-                onClick={() => void invite(user)}
-                disabled={invitingId === user.id}
-                className="rounded-lg bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-2 py-1 text-xs font-semibold text-[var(--color-parchment)] disabled:opacity-60"
-              >
-                {invitingId === user.id ? "Sending…" : "Invite"}
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      <span className="text-[11px] text-[rgba(164,190,123,0.6)]">
+      <span className="text-[11px] text-[rgba(164,190,123,0.9)]">
         Invited users receive a pending invitation they can accept or reject.
       </span>
     </div>

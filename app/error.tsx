@@ -12,12 +12,14 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">{error.message}</p>
         <div className="mt-6 flex flex-col gap-3">
           <Button onClick={() => reset()}>Try again</Button>
-          <Link href="/frontend/public">
-            <Button variant="ghost">Back to home</Button>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-transparent px-5 py-2.5 text-sm font-medium text-[var(--color-text-primary)] transition hover:bg-[rgba(164,190,123,0.1)]"
+          >
+            Back to home
           </Link>
         </div>
       </div>
     </div>
   );
 }
-

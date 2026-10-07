@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Button } from "../components/ui/Button";
 
 export default function NotFound() {
   return (
@@ -8,12 +7,14 @@ export default function NotFound() {
         <h1 className="font-display text-2xl text-[var(--color-parchment)]">This path faded away</h1>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">The page you were looking for cannot be found.</p>
         <div className="mt-6">
-          <Link href="/frontend/public">
-            <Button>Return home</Button>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-cta)] px-5 py-2.5 text-sm font-medium text-[var(--color-parchment)] transition hover:bg-[var(--color-cta-hover)]"
+          >
+            Return home
           </Link>
         </div>
       </div>
     </div>
   );
 }
-

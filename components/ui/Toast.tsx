@@ -18,6 +18,10 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<ToastItem[]>([]);
 
+  const dismiss = useCallback((id: string) => {
+    setItems((prev) => prev.filter((item) => item.id !== id));
+  }, []);
+
   const push = useCallback((message: string, tone: ToastItem["tone"] = "info") => {
     const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     setItems((prev) => [...prev, { id, message, tone }]);
@@ -31,18 +35,32 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed right-4 bottom-4 z-50 flex w-[min(320px,90vw)] flex-col gap-3">
+      <div
+        role="region"
+        aria-label="Notifications"
+        aria-live="polite"
+        aria-atomic="false"
+        className="fixed right-4 bottom-4 z-50 flex w-[min(320px,90vw)] flex-col gap-3"
+      >
         {items.map((item) => (
           <div
             key={item.id}
             className={cn(
-              "rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur",
+              "flex items-start gap-3 rounded-2xl border border-[var(--color-border)] px-4 py-3 text-sm shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur",
               item.tone === "error" && "bg-[rgba(192,57,43,0.2)] text-[var(--color-parchment)]",
               item.tone === "success" && "bg-[rgba(95,141,78,0.25)] text-[var(--color-parchment)]",
               item.tone === "info" && "bg-[rgba(40,84,48,0.7)] text-[var(--color-parchment)]"
             )}
           >
-            {item.message}
+            <span className="flex-1">{item.message}</span>
+            <button
+              type="button"
+              onClick={() => dismiss(item.id)}
+              className="-mr-1 -mt-1 rounded-full px-1.5 py-0.5 text-base leading-none text-[rgba(229,217,182,0.85)] hover:text-[var(--color-parchment)]"
+              aria-label="Dismiss notification"
+            >
+              ✕
+            </button>
           </div>
         ))}
       </div>
@@ -57,4 +75,3 @@ export function useToast() {
   }
   return ctx;
 }
-

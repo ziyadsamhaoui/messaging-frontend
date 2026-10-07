@@ -4,11 +4,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
 
-// stats are now hardcoded in the markup (no JS array needed)
-
 export default function Home() {
 	return (
-		<div className="relative min-h-screen overflow-hidden bg-[url('/images/backgroundforlogin.jpg')] bg-cover bg-center text-[var(--color-parchment)]">
+		<div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[var(--color-forest)] via-[rgba(95,141,78,0.65)] to-[var(--color-parchment-dim)] text-[var(--color-parchment)]">
 			<div className="absolute inset-0 bg-gradient-to-br from-[rgba(40,84,48,0.7)] via-[rgba(95,141,78,0.4)] to-[rgba(229,217,182,0.3)] animate-pulse" />
 			<div className="pointer-events-none absolute -left-1/2 top-24 h-10 w-[200%] bg-gradient-to-r from-transparent via-[rgba(229,217,182,0.18)] to-transparent blur-md animate-scroll-plane" />
 			<div className="absolute left-10 top-16 h-24 w-24 rounded-full bg-[rgba(164,190,123,0.1)] blur-3xl animate-bounce" style={{ animationDelay: "200ms" }} />
@@ -18,7 +16,7 @@ export default function Home() {
 
 			<nav className="relative z-20 w-full h-17 bg-gradient-to-r from-[#E5D9B6] to-[#D4C89E] border-b border-[rgba(40,84,48,0.06)] py-1 px-6">
 				<div className="w-full flex items-center justify-between">
-					<Link href="/frontend/public" className="flex items-center gap-3 ">
+					<Link href="/" className="flex items-center gap-3 ">
 						<Image
 							src="/favicon.png"
 							width={60}
@@ -31,15 +29,17 @@ export default function Home() {
 						</span>
 					</Link>
 					<div className="flex items-center gap-2 py-2 relative left-0 lg:py-2">
-						<Link href="/login">
-							<button className="rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-5 py-2 text-sm font-semibold text-[var(--color-parchment)] transition-all cursor-pointer">
-								Sign Up
-							</button>
+						<Link
+							href="/login"
+							className="rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-5 py-2 text-sm font-semibold text-[var(--color-parchment)] transition-all cursor-pointer"
+						>
+							Sign Up
 						</Link>
-						<Link href="/login">
-							<button className="rounded-xl border border-[rgba(229,217,182,0.4)] bg-gradient-to-r from-[var(--color-sage)] to-[var(--color-fern)] px-5 py-2 text-sm text-[rgba(229,217,182,0.8)] transition-all  cursor-pointer">
-								Log In
-							</button>
+						<Link
+							href="/login"
+							className="rounded-xl border border-[rgba(229,217,182,0.4)] bg-gradient-to-r from-[var(--color-sage)] to-[var(--color-fern)] px-5 py-2 text-sm text-[rgba(229,217,182,0.95)] transition-all cursor-pointer"
+						>
+							Log In
 						</Link>
 					</div>
 				</div>
@@ -60,7 +60,7 @@ export default function Home() {
 								<br />
 								<span className="italic">And people do too.</span>
 							</h1>
-							<p className="text-base text-[rgba(164,190,123,0.85)] lg:text-lg">
+							<p className="text-base text-[rgba(164,190,123,0.95)] lg:text-lg">
 								A web-based app that keeps you connected with the people who matter most.
 							</p>
 						</motion.div>
@@ -71,12 +71,13 @@ export default function Home() {
 							transition={{ duration: 0.8, delay: 0.15 }}
 							className="flex flex-wrap gap-3"
 						>
-							<Link href="/login">
-								<button className="rounded-2xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-8 py-3 text-xl cursor-pointer font-semibold text-[var(--color-parchment)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_30px_rgba(95,141,78,0.3)] active:scale-[0.97]">
-									Get Started →
-								</button>
+							<Link
+								href="/login"
+								className="rounded-2xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-8 py-3 text-xl cursor-pointer font-semibold text-[var(--color-parchment)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_30px_rgba(95,141,78,0.3)] active:scale-[0.97]"
+							>
+								Get Started →
 							</Link>
-							<button className="rounded-2xl border border-[rgba(229,217,182,0.3)] px-6 py-3 text-xl text-[rgba(229,217,182,0.7)] backdrop-blur-sm transition-all hover:bg-[rgba(229,217,182,0.1)]">
+							<button className="rounded-2xl border border-[rgba(229,217,182,0.3)] px-6 py-3 text-xl text-[rgba(229,217,182,0.9)] backdrop-blur-sm transition-all hover:bg-[rgba(229,217,182,0.1)]">
 								Why BadrLink?
 							</button>
 						</motion.div>
@@ -94,19 +95,19 @@ export default function Home() {
 										initial={{ opacity: 0, y: 16 }}
 										animate={{ opacity: 1, y: 0 }}
 										transition={{ duration: 0.8, delay: 0.45 }}
-										className="grid grid-cols-3 gap-3 text-sm text-[rgba(229,217,182,0.7)]"
+										className="grid grid-cols-3 gap-3 text-sm text-[rgba(229,217,182,0.9)]"
 									>
 										<div className="px-4 border-r border-[rgba(229,217,182,0.2)] text-lg">
 											<div>Fast enough.</div>
-											<div className="text-xl text-[rgba(164,190,123,0.6)]">Real time</div>
+											<div className="text-xl text-[rgba(164,190,123,0.9)]">Real time</div>
 										</div>
 										<div className="px-4 border-r border-[rgba(229,217,182,0.2)] text-lg">
 											<div>Private.</div>
-											<div className="text-xl text-[rgba(164,190,123,0.6)]">Encrypted</div>
+											<div className="text-xl text-[rgba(164,190,123,0.9)]">Encrypted</div>
 										</div>
 										<div className="px-4 text-lg">
 											<div>Simple.</div>
-											<div className="text-xl text-[rgba(164,190,123,0.6)]">No clutter</div>
+											<div className="text-xl text-[rgba(164,190,123,0.9)]">No clutter</div>
 										</div>
 									</motion.div>
 					</div>

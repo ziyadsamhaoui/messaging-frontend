@@ -66,7 +66,7 @@ export function MessageBubble({
   if (message.isDeleted) {
     return (
       <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
-        <div className="rounded-2xl border border-dashed border-[rgba(40,84,48,0.3)] px-4 py-2 text-xs italic text-[rgba(40,84,48,0.5)]">
+        <div className="rounded-2xl border border-dashed border-[rgba(40,84,48,0.3)] px-4 py-2 text-xs italic text-[rgba(40,84,48,0.75)]">
           This message was deleted
         </div>
       </div>
@@ -145,7 +145,7 @@ export function MessageBubble({
           <div
             className={cn(
               "mt-1 flex items-center gap-2 text-[10px]",
-              isOwn ? "text-[rgba(229,217,182,0.6)]" : "text-[rgba(40,84,48,0.4)]"
+              isOwn ? "text-[rgba(229,217,182,0.85)]" : "text-[rgba(40,84,48,0.7)]"
             )}
           >
             {message.isEdited && <span>edited</span>}

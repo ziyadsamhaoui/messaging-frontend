@@ -565,7 +565,7 @@ export default function MessagingApp() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Filter conversations"
-          className="h-12 rounded-xl border border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-lg text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.5)]"
+          className="h-12 rounded-xl border border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-lg text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.75)]"
         />
       </div>
 
@@ -659,8 +659,7 @@ export default function MessagingApp() {
             <div>
               <div className="text-lg font-semibold text-[var(--color-parchment)]">
                 {auth.user?.username ?? "Signed in"}
-              </div>
-              <div className="text-sm text-[rgba(164,190,123,0.7)]">
+              </div>                <div className="text-sm text-[rgba(164,190,123,0.9)]">
                 {socketState === "connected" ? "Online" : "Reconnecting…"}
               </div>
             </div>
@@ -748,6 +747,7 @@ export default function MessagingApp() {
       {selectedRoom ? (
         <>
           <MessageList
+            roomId={selectedRoom.id}
             messages={messages}
             currentUserId={currentUserId}
             roomCreatedById={selectedRoom.createdBy}
