@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal } from "../ui/Modal";
-import { Input } from "../ui/Input";
-import { UserSearchCombobox } from "../ui/UserSearchCombobox";
-import { CreateRoomRequest, PublicUserDto, RoomType } from "../../lib/types";
-import { errorMessage } from "../../lib/errors";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+import { UserSearchCombobox } from "@/components/ui/UserSearchCombobox";
+import { CreateRoomRequest, PublicUserDto, RoomType } from "@/lib/types";
+import { errorMessage } from "@/lib/errors";
 
 interface NewConversationModalProps {
   open: boolean;

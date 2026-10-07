@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useRef } from "react";
-import { cn } from "../../lib/utils";
+import { X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ModalProps {
   open: boolean;
@@ -150,7 +151,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
             className="rounded-full px-2 py-1 text-[rgba(164,190,123,0.85)] hover:text-[var(--color-parchment)]"
             aria-label="Close modal"
           >
-            ✕
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
         <div className="mt-4">{children}</div>

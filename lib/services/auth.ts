@@ -1,6 +1,6 @@
-import { apiClient } from "../apiClient";
-import { AuthSession, LoginRequest, RegisterRequest, RegisterResponse, TokenResponse } from "../types";
-import { decodeJwtSubject } from "../tokenStore";
+import { apiClient } from "@/lib/apiClient";
+import { AuthSession, LoginRequest, RegisterRequest, RegisterResponse, TokenResponse } from "@/lib/types";
+import { decodeJwtSubject } from "@/lib/tokenStore";
 
 export function loginRequest(body: LoginRequest) {
   return apiClient.post<TokenResponse>("/auth/login", body, { auth: false });

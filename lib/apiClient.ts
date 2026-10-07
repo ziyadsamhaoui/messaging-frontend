@@ -197,7 +197,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
 
   if (!response.ok) {
     const body = await readErrorBody(response);
-    const apiError = normalizeError(response.status, body, response.headers.get("Retry-After"));
+    const apiError = normalizeError(response.status, body);
     if (apiError.status === 401 && options.auth !== false) {
       triggerUnauthorized();
     }

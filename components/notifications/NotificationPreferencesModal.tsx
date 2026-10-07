@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal } from "../ui/Modal";
-import { useToast } from "../ui/Toast";
+import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
 import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
-} from "../../hooks/useNotifications";
-import { errorMessage } from "../../lib/errors";
-import { isPushSupported, subscribeToPush } from "../../lib/push";
-import { NotificationType, PreferencesResponse } from "../../lib/types";
+} from "@/hooks/useNotifications";
+import { errorMessage } from "@/lib/errors";
+import { isPushSupported, subscribeToPush } from "@/lib/push";
+import { NotificationType, PreferencesResponse } from "@/lib/types";
 
 const NOTIFICATION_TYPES: NotificationType[] = ["MESSAGE", "REACTION", "INVITATION", "SYSTEM"];
 
@@ -31,7 +31,7 @@ export function NotificationPreferencesModal({ open, onClose }: NotificationPref
   return (
     <Modal open={open} onClose={onClose} title="Notification preferences">
       {preferencesQuery.isLoading || !preferencesQuery.data ? (
-        <div className="text-sm text-[rgba(164,190,123,0.7)]">Loading…</div>
+        <div className="text-sm text-[var(--color-text-secondary-soft)]">Loading…</div>
       ) : (
         <PreferencesForm preferences={preferencesQuery.data} onClose={onClose} />
       )}
@@ -111,7 +111,7 @@ function PreferencesForm({ preferences, onClose }: PreferencesFormProps) {
         {NOTIFICATION_TYPES.map((type) => (
           <label
             key={type}
-            className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(164,190,123,0.15)] px-3 py-2"
+            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border-subtle)] px-3 py-2"
           >
             <span className="text-sm text-[var(--color-parchment)]">{TYPE_LABELS[type]}</span>
             <input
@@ -125,7 +125,7 @@ function PreferencesForm({ preferences, onClose }: PreferencesFormProps) {
         ))}
       </div>
 
-      <label className="flex items-center justify-between gap-3 rounded-xl border border-[rgba(164,190,123,0.15)] px-3 py-2">
+      <label className="flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border-subtle)] px-3 py-2">
         <span className="text-sm text-[var(--color-parchment)]">Push notifications</span>
         <input
           type="checkbox"
@@ -136,11 +136,11 @@ function PreferencesForm({ preferences, onClose }: PreferencesFormProps) {
         />
       </label>
 
-      <div className="rounded-xl border border-[rgba(164,190,123,0.15)] px-3 py-2">
+      <div className="rounded-xl border border-[var(--color-border-subtle)] px-3 py-2">
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-sm text-[var(--color-parchment)]">This device</div>
-            <div className="text-xs text-[rgba(164,190,123,0.7)]">
+            <div className="text-xs text-[var(--color-text-secondary-soft)]">
               {pushSupported
                 ? pushActive
                   ? "Subscribed to web push on this device."

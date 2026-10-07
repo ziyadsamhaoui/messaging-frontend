@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/check-env.mjs && next dev",
+    "build": "node scripts/check-env.mjs && next build",
     "start": "next start",
     "lint": "eslint",
     "check:env": "node scripts/check-env.mjs"
@@ -12,11 +12,14 @@
   "dependencies": {
     "@stomp/stompjs": "^7.0.1",
     "@tanstack/react-query": "^5.104.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.52.0",
     "motion": "^12.38.0",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "sockjs-client": "^1.6.1",
+    "tailwind-merge": "^3.7.0",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

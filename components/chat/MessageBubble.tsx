@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChatMessage, MessageReactionSummary } from "../../lib/types";
-import { cn } from "../../lib/utils";
+import { Paperclip } from "lucide-react";
+import { ChatMessage, MessageReactionSummary } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🎉"];
 
@@ -135,7 +136,7 @@ export function MessageBubble({
                   : "border-[rgba(40,84,48,0.25)] text-[rgba(40,84,48,0.7)]"
               )}
             >
-              <span aria-hidden="true">📎</span>
+              <Paperclip className="h-3 w-3" aria-hidden="true" />
               <span>
                 {attachmentCount} attachment{attachmentCount > 1 ? "s" : ""}
               </span>

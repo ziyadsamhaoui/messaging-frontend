@@ -1,7 +1,7 @@
 import React from "react";
-import { cn } from "../../lib/utils";
-import { OnlineStatus } from "../../lib/types";
-import { presenceDotClass } from "../../lib/presence";
+import { cn } from "@/lib/utils";
+import { OnlineStatus } from "@/lib/types";
+import { presenceDotClass } from "@/lib/presence";
 
 interface AvatarProps {
   name: string;

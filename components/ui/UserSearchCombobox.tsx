@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { PublicUserDto } from "../../lib/types";
-import { useUserSearch } from "../../hooks/useUserSearch";
+import { PublicUserDto } from "@/lib/types";
+import { useUserSearch } from "@/hooks/useUserSearch";
 import { Input } from "./Input";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 
 interface UserSearchComboboxProps {
   value: string;

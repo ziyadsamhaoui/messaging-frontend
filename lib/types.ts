@@ -4,15 +4,15 @@ export type MessageType = "TEXT" | "IMAGE" | "VIDEO" | "AUDIO" | "FILE";
 
 export type ParticipantRole = "OWNER" | "ADMIN" | "GUEST";
 
-export type UserType = "USER" | "ADMIN";
+type UserType = "USER" | "ADMIN";
 
-export type ConnectionStatus = "PENDING" | "ACCEPTED" | "DECLINED";
+type ConnectionStatus = "PENDING" | "ACCEPTED" | "DECLINED";
 
-export type InvitationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
+type InvitationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
 
 export type NotificationType = "MESSAGE" | "REACTION" | "INVITATION" | "SYSTEM";
 
-export type NotificationSource = "MESSAGE" | "REACTION" | "INVITATION" | "SYSTEM";
+type NotificationSource = "MESSAGE" | "REACTION" | "INVITATION" | "SYSTEM";
 
 export type OnlineStatus = "ONLINE" | "AWAY" | "OFFLINE";
 
@@ -202,16 +202,6 @@ export interface CreateRoomRequest {
 export interface SendMessageRequest {
   type: MessageType;
   content: string;
-}
-
-export interface SendMessageSocketPayload {
-  roomId: string;
-  type: MessageType;
-  content: string;
-}
-
-export interface TypingSocketPayload {
-  roomId: string;
 }
 
 export interface ErrorFrame {

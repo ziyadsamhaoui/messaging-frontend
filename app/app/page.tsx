@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Plus, Settings } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
-import { useAuth } from "../../hooks/useAuth";
-import { roomsQueryKey, useRooms } from "../../hooks/useRooms";
+import { useAuth } from "@/hooks/useAuth";
+import { roomsQueryKey, useRooms } from "@/hooks/useRooms";
 import {
   messagesQueryKey,
   participantsQueryKey,
@@ -18,21 +19,21 @@ import {
   useRemoveReaction,
   useRoomParticipants,
   useSendMessage,
-} from "../../hooks/useMessages";
-import { useUser } from "../../hooks/useUser";
-import { useBlockedUserIds, useBlockUser, useUnblockUser } from "../../hooks/useBlocks";
-import { usePendingConnections } from "../../hooks/useConnections";
-import { useUnreadCount } from "../../hooks/useNotifications";
-import { useSocket } from "../../hooks/useSocket";
-import { useUiStore } from "../../store/uiStore";
-import { flattenPages } from "../../lib/pagination";
-import { errorMessage, isApiError } from "../../lib/errors";
-import { STOMP_DESTINATIONS } from "../../lib/stompClient";
-import { classifyRoomFrame } from "../../lib/realtimeFrames";
-import { derivePresence, formatLastSeen, presenceLabel } from "../../lib/presence";
-import { registerServiceWorker } from "../../lib/push";
-import { createRoom, removeParticipant } from "../../lib/services/rooms";
-import { getUser, updateUser } from "../../lib/services/users";
+} from "@/hooks/useMessages";
+import { useUser } from "@/hooks/useUser";
+import { useBlockedUserIds, useBlockUser, useUnblockUser } from "@/hooks/useBlocks";
+import { usePendingConnections } from "@/hooks/useConnections";
+import { useUnreadCount } from "@/hooks/useNotifications";
+import { useSocket } from "@/hooks/useSocket";
+import { useUiStore } from "@/store/uiStore";
+import { flattenPages } from "@/lib/pagination";
+import { errorMessage, isApiError } from "@/lib/errors";
+import { STOMP_DESTINATIONS } from "@/lib/stompClient";
+import { classifyRoomFrame } from "@/lib/realtimeFrames";
+import { derivePresence, formatLastSeen, presenceLabel } from "@/lib/presence";
+import { registerServiceWorker } from "@/lib/push";
+import { createRoom, removeParticipant } from "@/lib/services/rooms";
+import { getUser, updateUser } from "@/lib/services/users";
 import {
   ChatMessage,
   ConnectionAcceptedFrame,
@@ -42,22 +43,22 @@ import {
   InvitationSentFrame,
   RoomResponse,
   TypingEvent,
-} from "../../lib/types";
-import { AppShell } from "../../components/layout/AppShell";
-import { ConversationItem } from "../../components/sidebar/ConversationItem";
-import { NewConversationModal } from "../../components/sidebar/NewConversationModal";
-import { BlockedUsersModal } from "../../components/sidebar/BlockedUsersModal";
-import { ConnectionsModal } from "../../components/sidebar/ConnectionsModal";
-import { InvitationsModal } from "../../components/sidebar/InvitationsModal";
-import { NotificationPanel } from "../../components/notifications/NotificationPanel";
-import { ParticipantsDrawer } from "../../components/chat/ParticipantsDrawer";
-import { MessageList } from "../../components/chat/MessageList";
-import { MessageInput } from "../../components/chat/MessageInput";
-import { Input } from "../../components/ui/Input";
-import { Skeleton } from "../../components/ui/Skeleton";
-import { Modal } from "../../components/ui/Modal";
-import { Avatar } from "../../components/ui/Avatar";
-import { useToast } from "../../components/ui/Toast";
+} from "@/lib/types";
+import { AppShell } from "@/components/layout/AppShell";
+import { ConversationItem } from "@/components/sidebar/ConversationItem";
+import { NewConversationModal } from "@/components/sidebar/NewConversationModal";
+import { BlockedUsersModal } from "@/components/sidebar/BlockedUsersModal";
+import { ConnectionsModal } from "@/components/sidebar/ConnectionsModal";
+import { InvitationsModal } from "@/components/sidebar/InvitationsModal";
+import { NotificationPanel } from "@/components/notifications/NotificationPanel";
+import { ParticipantsDrawer } from "@/components/chat/ParticipantsDrawer";
+import { MessageList } from "@/components/chat/MessageList";
+import { MessageInput } from "@/components/chat/MessageInput";
+import { Input } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { Modal } from "@/components/ui/Modal";
+import { Avatar } from "@/components/ui/Avatar";
+import { useToast } from "@/components/ui/Toast";
 
 interface ActiveTyping {
   userId: string;
@@ -548,7 +549,7 @@ export default function MessagingApp() {
           <button
             type="button"
             onClick={() => setNotificationsOpen(true)}
-            className="relative rounded-full border border-[rgba(229,217,182,0.25)] px-3 py-1 text-xs text-[rgba(229,217,182,0.8)]"
+            className="relative rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-xs text-[rgba(229,217,182,0.8)]"
           >
             Alerts
             {(unread.data?.count ?? 0) > 0 && (
@@ -565,7 +566,7 @@ export default function MessagingApp() {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Filter conversations"
-          className="h-12 rounded-xl border border-[rgba(164,190,123,0.15)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-lg text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.75)]"
+          className="h-12 rounded-xl border border-[var(--color-border-subtle)] bg-gradient-to-r from-[rgba(46,94,55,0.6)] to-[rgba(95,141,78,0.2)] text-lg text-[var(--color-parchment)] placeholder:text-[rgba(164,190,123,0.75)]"
         />
       </div>
 
@@ -575,7 +576,7 @@ export default function MessagingApp() {
           onClick={() => setModalOpen(true)}
           className="h-13 flex-1 rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-4 py-2 text-lg font-medium text-[var(--color-parchment)] transition-all hover:scale-[1.02] active:scale-[0.98]"
         >
-          + New Chat
+          <Plus className="inline h-4 w-4" aria-hidden="true" /> New Chat
         </button>
       </div>
 
@@ -583,7 +584,7 @@ export default function MessagingApp() {
         <button
           type="button"
           onClick={() => setConnectionsOpen(true)}
-          className="rounded-full border border-[rgba(229,217,182,0.25)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
+          className="rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
         >
           People
           {(pendingConnectionsQuery.data?.length ?? 0) > 0 && (
@@ -595,7 +596,7 @@ export default function MessagingApp() {
         <button
           type="button"
           onClick={() => setInvitesOpen(true)}
-          className="relative rounded-full border border-[rgba(229,217,182,0.25)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
+          className="relative rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
         >
           Invites
           {pendingInvitations.length > 0 && (
@@ -607,7 +608,7 @@ export default function MessagingApp() {
         <button
           type="button"
           onClick={() => setBlockedOpen(true)}
-          className="rounded-full border border-[rgba(229,217,182,0.25)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
+          className="rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
         >
           Blocked
         </button>
@@ -646,7 +647,7 @@ export default function MessagingApp() {
         <button
           type="button"
           onClick={() => roomsQuery.fetchNextPage()}
-          className="mx-4 mb-4 rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
+          className="mx-4 mb-4 rounded-xl border border-[var(--color-border-strong)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
         >
           Load more
         </button>
@@ -670,7 +671,7 @@ export default function MessagingApp() {
             onClick={handleOpenSettings}
             className="flex h-9 w-9 items-center justify-center rounded-md text-[var(--color-forest)]"
           >
-            ⚙
+            <Settings className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -801,7 +802,7 @@ export default function MessagingApp() {
                 onClick={() => selectRoom(null)}
                 className="rounded-xl border border-[rgba(40,84,48,0.2)] px-3 py-1 text-xs text-[rgba(40,84,48,0.7)]"
               >
-                ← Back
+                <ArrowLeft className="inline h-3 w-3" aria-hidden="true" /> Back
               </button>
             </div>
             {mainContent}
@@ -860,7 +861,7 @@ export default function MessagingApp() {
                 await auth.logout();
                 router.replace("/login");
               }}
-              className="rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.8)]"
+              className="rounded-xl border border-[var(--color-border-strong)] px-4 py-2 text-sm text-[rgba(229,217,182,0.8)]"
             >
               Log out
             </button>

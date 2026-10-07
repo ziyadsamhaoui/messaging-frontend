@@ -1,4 +1,4 @@
-import { apiClient, buildQuery } from "../apiClient";
+import { apiClient, buildQuery } from "@/lib/apiClient";
 import {
   CreateRoomRequest,
   CursorPage,
@@ -10,7 +10,7 @@ import {
   RoomResponse,
   SendMessageRequest,
   UpdateParticipantRequest,
-} from "../types";
+} from "@/lib/types";
 
 export function listRooms(cursor?: string | null, limit = 20) {
   return apiClient.get<CursorPage<RoomResponse>>(`/rooms${buildQuery({ cursor, limit })}`);

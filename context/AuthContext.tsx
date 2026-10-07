@@ -9,17 +9,17 @@ import React, {
   useMemo,
   useState,
 } from "react";
-import { refreshSession, setUnauthorizedHandler } from "../lib/apiClient";
-import { buildSession, loginRequest, logoutRequest, registerRequest } from "../lib/services/auth";
-import { getUser } from "../lib/services/users";
-import { AuthSession, PublicUserDto, RegisterRequest } from "../lib/types";
+import { refreshSession, setUnauthorizedHandler } from "@/lib/apiClient";
+import { buildSession, loginRequest, logoutRequest, registerRequest } from "@/lib/services/auth";
+import { getUser } from "@/lib/services/users";
+import { AuthSession, PublicUserDto, RegisterRequest } from "@/lib/types";
 import {
   clearSession,
   getSession,
   isSessionExpired,
   setSession,
   subscribeSession,
-} from "../lib/tokenStore";
+} from "@/lib/tokenStore";
 
 export type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 

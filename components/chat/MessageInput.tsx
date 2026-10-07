@@ -1,7 +1,8 @@
 "use client";
 
 import React from "react";
-import { Textarea } from "../ui/Textarea";
+import { Send } from "lucide-react";
+import { Textarea } from "@/components/ui/Textarea";
 
 interface MessageInputProps {
   value: string;
@@ -75,7 +76,7 @@ export function MessageInput({
           className="absolute bottom-2 right-2 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-fern)] to-[var(--color-forest)] text-[var(--color-parchment)] transition-all disabled:opacity-60"
           aria-label="Send message"
         >
-          →
+          <Send className="h-5 w-5" aria-hidden="true" />
         </button>
       </div>
     </div>

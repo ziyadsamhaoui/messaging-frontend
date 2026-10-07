@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef } from "react";
-import { ChatMessage } from "../../lib/types";
+import { ChatMessage } from "@/lib/types";
 import { MessageBubble } from "./MessageBubble";
-import { Skeleton } from "../ui/Skeleton";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 interface MessageListProps {
   roomId: string;

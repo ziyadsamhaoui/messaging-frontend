@@ -1,13 +1,13 @@
 "use client";
 
 import React from "react";
-import { Modal } from "../ui/Modal";
-import { Avatar } from "../ui/Avatar";
-import { Skeleton } from "../ui/Skeleton";
-import { useToast } from "../ui/Toast";
-import { useBlockedUserIds, useUnblockUser } from "../../hooks/useBlocks";
-import { useUser } from "../../hooks/useUser";
-import { errorMessage } from "../../lib/errors";
+import { Modal } from "@/components/ui/Modal";
+import { Avatar } from "@/components/ui/Avatar";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { useToast } from "@/components/ui/Toast";
+import { useBlockedUserIds, useUnblockUser } from "@/hooks/useBlocks";
+import { useUser } from "@/hooks/useUser";
+import { errorMessage } from "@/lib/errors";
 
 interface BlockedUsersModalProps {
   open: boolean;
@@ -42,7 +42,7 @@ export function BlockedUsersModal({ open, onClose, currentUserId }: BlockedUsers
         )}
 
         {!blockedQuery.isLoading && blockedIds.length === 0 && (
-          <div className="py-6 text-center text-sm text-[rgba(164,190,123,0.7)]">
+          <div className="py-6 text-center text-sm text-[var(--color-text-secondary-soft)]">
             You have not blocked anyone.
           </div>
         )}
@@ -68,13 +68,13 @@ function BlockedUserRow({
   const username = userQuery.data?.username ?? userId.slice(0, 8);
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-[rgba(164,190,123,0.15)] px-3 py-2">
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--color-border-subtle)] px-3 py-2">
       <Avatar name={username} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold text-[var(--color-parchment)]">
           @{username}
         </div>
-        <div className="text-xs text-[rgba(164,190,123,0.7)]">Blocked · messaging disabled</div>
+        <div className="text-xs text-[var(--color-text-secondary-soft)]">Blocked · messaging disabled</div>
       </div>
       <button
         type="button"

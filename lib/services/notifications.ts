@@ -1,4 +1,4 @@
-import { apiClient, buildQuery } from "../apiClient";
+import { apiClient, buildQuery } from "@/lib/apiClient";
 import {
   CursorPage,
   NotificationResponse,
@@ -6,7 +6,7 @@ import {
   SubscriptionResponse,
   UnreadCountResponse,
   UpdatePreferencesRequest,
-} from "../types";
+} from "@/lib/types";
 
 export function listNotifications(cursor?: string | null, limit = 30, unreadOnly = false) {
   return apiClient.get<CursorPage<NotificationResponse>>(

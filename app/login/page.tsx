@@ -4,11 +4,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
+import { AlertTriangle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Input } from "../../components/ui/Input";
-import { useAuth } from "../../hooks/useAuth";
-import { useToast } from "../../components/ui/Toast";
-import { errorMessage } from "../../lib/errors";
+import { Input } from "@/components/ui/Input";
+import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/components/ui/Toast";
+import { errorMessage } from "@/lib/errors";
 
 export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -130,7 +131,7 @@ export default function LoginPage() {
 
             {error && (
               <div className="mt-6 flex items-center gap-3 rounded-xl border border-red-400/30 bg-gradient-to-r from-red-900/30 to-red-700/20 p-3 text-sm text-red-200">
-                <span>⚠</span>
+                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
                 <span>{error}</span>
               </div>
             )}
@@ -251,7 +252,8 @@ export default function LoginPage() {
                 }}
                 className="font-semibold text-[var(--color-sage)] underline underline-offset-2 hover:text-[var(--color-parchment)]"
               >
-                {mode === "login" ? "Sign Up" : "Sign In"} →
+                {mode === "login" ? "Sign Up" : "Sign In"}{" "}
+                <ArrowRight className="inline h-3.5 w-3.5" aria-hidden="true" />
               </button>
             </div>
           </motion.div>

@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal } from "../ui/Modal";
-import { flattenPages } from "../../lib/pagination";
+import { Modal } from "@/components/ui/Modal";
+import { flattenPages } from "@/lib/pagination";
 import {
   useMarkAllNotificationsRead,
   useMarkNotificationRead,
   useNotificationFeed,
-} from "../../hooks/useNotifications";
-import { errorMessage } from "../../lib/errors";
-import { useToast } from "../ui/Toast";
+} from "@/hooks/useNotifications";
+import { errorMessage } from "@/lib/errors";
+import { useToast } from "@/components/ui/Toast";
 import { NotificationPreferencesModal } from "./NotificationPreferencesModal";
 
 interface NotificationPanelProps {
@@ -61,10 +61,10 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
           </button>
         </div>
 
-        {feed.isLoading && <div className="text-sm text-[rgba(164,190,123,0.7)]">Loading…</div>}
+        {feed.isLoading && <div className="text-sm text-[var(--color-text-secondary-soft)]">Loading…</div>}
 
         {!feed.isLoading && items.length === 0 && (
-          <div className="py-6 text-center text-sm text-[rgba(164,190,123,0.7)]">No notifications yet.</div>
+          <div className="py-6 text-center text-sm text-[var(--color-text-secondary-soft)]">No notifications yet.</div>
         )}
 
         <div className="max-h-96 space-y-2 overflow-y-auto">
@@ -94,7 +94,7 @@ export function NotificationPanel({ open, onClose }: NotificationPanelProps) {
           <button
             type="button"
             onClick={() => feed.fetchNextPage()}
-            className="rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
+            className="rounded-xl border border-[var(--color-border-strong)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
           >
             Load more
           </button>

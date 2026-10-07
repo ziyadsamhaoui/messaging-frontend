@@ -1,7 +1,7 @@
 import React from "react";
-import { RoomResponse } from "../../lib/types";
-import { Avatar } from "../ui/Avatar";
-import { cn } from "../../lib/utils";
+import { RoomResponse } from "@/lib/types";
+import { Avatar } from "@/components/ui/Avatar";
+import { cn } from "@/lib/utils";
 
 interface ConversationItemProps {
   room: RoomResponse;

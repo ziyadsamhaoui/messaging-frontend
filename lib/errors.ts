@@ -62,7 +62,6 @@ export class ApiError extends Error {
   readonly kind: ApiErrorKind;
   readonly fieldErrors: Record<string, string>;
   readonly path?: string;
-  readonly retryAfterSeconds?: number;
 
   constructor(params: {
     status: number;
@@ -71,7 +70,6 @@ export class ApiError extends Error {
     kind: ApiErrorKind;
     fieldErrors?: Record<string, string>;
     path?: string;
-    retryAfterSeconds?: number;
   }) {
     super(params.message);
     this.name = "ApiError";
@@ -80,7 +78,6 @@ export class ApiError extends Error {
     this.kind = params.kind;
     this.fieldErrors = params.fieldErrors ?? {};
     this.path = params.path;
-    this.retryAfterSeconds = params.retryAfterSeconds;
   }
 
   get isBlocked() {
@@ -96,16 +93,9 @@ export function isApiError(value: unknown): value is ApiError {
   return value instanceof ApiError;
 }
 
-function parseRetryAfter(headerValue: string | null): number | undefined {
-  if (!headerValue) return undefined;
-  const seconds = Number(headerValue);
-  return Number.isFinite(seconds) ? seconds : undefined;
-}
-
 export function normalizeError(
   status: number,
-  body: Partial<ErrorResponse> | null,
-  retryAfterHeader?: string | null
+  body: Partial<ErrorResponse> | null
 ): ApiError {
   const code = (body?.code || body?.error || `HTTP_${status}`).toString();
   const message = body?.message || `Request failed with status ${status}`;
@@ -116,7 +106,6 @@ export function normalizeError(
     kind: classifyError(status, code),
     fieldErrors: body?.fieldErrors ?? {},
     path: body?.path,
-    retryAfterSeconds: parseRetryAfter(retryAfterHeader ?? null),
   });
 }
 

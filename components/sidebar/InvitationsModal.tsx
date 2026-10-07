@@ -2,18 +2,18 @@
 
 import React, { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Modal } from "../ui/Modal";
-import { useToast } from "../ui/Toast";
+import { Modal } from "@/components/ui/Modal";
+import { useToast } from "@/components/ui/Toast";
 import {
   notificationsQueryKey,
   unreadCountQueryKey,
   useNotificationFeed,
-} from "../../hooks/useNotifications";
-import { roomsQueryKey } from "../../hooks/useRooms";
-import { useUiStore } from "../../store/uiStore";
-import { acceptInvitation, rejectInvitation } from "../../lib/services/rooms";
-import { errorMessage, isApiError } from "../../lib/errors";
-import { NotificationResponse } from "../../lib/types";
+} from "@/hooks/useNotifications";
+import { roomsQueryKey } from "@/hooks/useRooms";
+import { useUiStore } from "@/store/uiStore";
+import { acceptInvitation, rejectInvitation } from "@/lib/services/rooms";
+import { errorMessage, isApiError } from "@/lib/errors";
+import { NotificationResponse } from "@/lib/types";
 
 interface InboxItem {
   invitationId: string;
@@ -95,11 +95,11 @@ export function InvitationsModal({ open, onClose }: InvitationsModalProps) {
     <Modal open={open} onClose={onClose} title="Room invitations">
       <div className="flex flex-col gap-3">
         {feed.isLoading && items.length === 0 && (
-          <div className="text-sm text-[rgba(164,190,123,0.7)]">Loading…</div>
+          <div className="text-sm text-[var(--color-text-secondary-soft)]">Loading…</div>
         )}
 
         {!feed.isLoading && items.length === 0 && (
-          <div className="py-6 text-center text-sm text-[rgba(164,190,123,0.7)]">
+          <div className="py-6 text-center text-sm text-[var(--color-text-secondary-soft)]">
             No pending invitations.
           </div>
         )}
@@ -152,7 +152,7 @@ export function InvitationsModal({ open, onClose }: InvitationsModalProps) {
           <button
             type="button"
             onClick={() => feed.fetchNextPage()}
-            className="rounded-xl border border-[rgba(229,217,182,0.25)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
+            className="rounded-xl border border-[var(--color-border-strong)] px-4 py-2 text-sm text-[rgba(229,217,182,0.7)]"
           >
             Load more
           </button>

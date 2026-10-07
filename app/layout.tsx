@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
-import { ToastProvider } from "../components/ui/Toast";
+import { ToastProvider } from "@/components/ui/Toast";
 
 const displayFont = Cormorant_Garamond({
   variable: "--font-display",
@@ -26,6 +26,7 @@ export const metadata: Metadata = {
   title: "BadrLink",
   description: "Real-time messaging, rooted in calm.",
   manifest: "/manifest.json",
+  icons: { icon: "/favicon.png" },
 };
 
 export default function RootLayout({

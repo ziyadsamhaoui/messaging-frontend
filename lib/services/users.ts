@@ -1,5 +1,5 @@
-import { apiClient, buildQuery } from "../apiClient";
-import { ConnectionDto, PublicUserDto, UpdateUserRequest } from "../types";
+import { apiClient, buildQuery } from "@/lib/apiClient";
+import { ConnectionDto, PublicUserDto, UpdateUserRequest } from "@/lib/types";
 
 export function getUser(id: string) {
   return apiClient.get<PublicUserDto>(`/users/${id}`);

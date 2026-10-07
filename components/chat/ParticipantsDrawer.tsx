@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { Modal } from "../ui/Modal";
-import { Avatar } from "../ui/Avatar";
-import { Skeleton } from "../ui/Skeleton";
-import { UserSearchCombobox } from "../ui/UserSearchCombobox";
-import { useToast } from "../ui/Toast";
-import { useRoomParticipants } from "../../hooks/useMessages";
-import { useUser } from "../../hooks/useUser";
-import { errorMessage, isApiError } from "../../lib/errors";
-import { inviteToRoom, removeParticipant, updateParticipant } from "../../lib/services/rooms";
+import { Modal } from "@/components/ui/Modal";
+import { Avatar } from "@/components/ui/Avatar";
+import { Skeleton } from "@/components/ui/Skeleton";
+import { UserSearchCombobox } from "@/components/ui/UserSearchCombobox";
+import { useToast } from "@/components/ui/Toast";
+import { useRoomParticipants } from "@/hooks/useMessages";
+import { useUser } from "@/hooks/useUser";
+import { errorMessage, isApiError } from "@/lib/errors";
+import { inviteToRoom, removeParticipant, updateParticipant } from "@/lib/services/rooms";
 import {
   ParticipantResponse,
   ParticipantRole,
   PublicUserDto,
   RoomResponse,
-} from "../../lib/types";
+} from "@/lib/types";
 
 interface ParticipantsDrawerProps {
   open: boolean;
@@ -104,7 +104,7 @@ export function ParticipantsDrawer({
           ))}
         </div>
 
-        <div className="flex justify-between border-t border-[rgba(164,190,123,0.15)] pt-3">
+        <div className="flex justify-between border-t border-[var(--color-border-subtle)] pt-3">
           <button
             type="button"
             onClick={leave}
@@ -150,14 +150,14 @@ function ParticipantRow({
   const manageable = canManage && !targetIsOwner && !isSelf;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-[rgba(164,190,123,0.15)] px-3 py-2">
+    <div className="flex items-center gap-3 rounded-xl border border-[var(--color-border-subtle)] px-3 py-2">
       <Avatar name={user?.username ?? "?"} />
       <div className="min-w-0 flex-1">
         <div className="truncate text-sm font-semibold text-[var(--color-parchment)]">
           {user?.username ?? participant.userId.slice(0, 8)}
           {isSelf && <span className="ml-1 text-xs font-normal opacity-60">(you)</span>}
         </div>
-        <div className="text-xs text-[rgba(164,190,123,0.7)]">
+        <div className="text-xs text-[var(--color-text-secondary-soft)]">
           {participant.role}
           {participant.isMuted && " · muted"}
         </div>
@@ -224,7 +224,7 @@ function InviteByUsername({ roomId }: { roomId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-[rgba(164,190,123,0.15)] p-3">
+    <div className="flex flex-col gap-2 rounded-xl border border-[var(--color-border-subtle)] p-3">
       <UserSearchCombobox
         label="Invite by username"
         value={query}
