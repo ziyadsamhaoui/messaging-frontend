@@ -167,14 +167,14 @@ export default function MessagingApp() {
     [toast, selectedRoomId, queryClient, markBlockedRoom]
   );
 
-  const { subscribe, publish } = useSocket({
+  const { state: socketConnectionState, subscribe, publish } = useSocket({
     token: auth.session?.accessToken ?? null,
     onServerError: markRoomServerError,
   });
 
   useEffect(() => {
-    setSocketState(socketState);
-  }, [socketState, setSocketState]);
+    setSocketState(socketConnectionState);
+  }, [socketConnectionState, setSocketState]);
 
   useEffect(() => {
     if (auth.status === "unauthenticated") {
