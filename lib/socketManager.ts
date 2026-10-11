@@ -1,6 +1,8 @@
 import { Client, IMessage, StompSubscription } from "@stomp/stompjs";
+import { endSession, refreshSession } from "./apiClient";
 import { ApiError, normalizeStompError } from "./errors";
 import { ConnectionState, createStompClient, STOMP_DESTINATIONS } from "./stompClient";
+import { isAccessTokenUsable } from "./tokenStore";
 
 type MessageHandler = (message: IMessage) => void;
 type StateListener = (state: ConnectionState) => void;
@@ -14,6 +16,8 @@ class SocketManager {
   private readonly stateListeners = new Set<StateListener>();
   private readonly errorListeners = new Set<ErrorListener>();
   private state: ConnectionState = "offline";
+  private readonly rejectedTokens = new Set<string>();
+  private recoveringAuthentication = false;
 
   getState(): ConnectionState {
     return this.state;
@@ -44,6 +48,27 @@ class SocketManager {
     this.errorListeners.forEach((listener) => listener(error));
   }
 
+  private isUnauthenticated(error: ApiError) {
+    return error.status === 401 || error.kind === "unauthenticated";
+  }
+
+  private recoverAuthentication = async (rejectedToken: string) => {
+    if (this.recoveringAuthentication) return;
+    this.rejectedTokens.add(rejectedToken);
+    this.recoveringAuthentication = true;
+    this.disconnect();
+    try {
+      const refreshed = await refreshSession();
+      if (!refreshed || this.rejectedTokens.has(refreshed.accessToken)) {
+        endSession();
+        return;
+      }
+      this.connect(refreshed.accessToken);
+    } finally {
+      this.recoveringAuthentication = false;
+    }
+  };
+
   private attach = (destination: string) => {
     const client = this.client;
     if (!client?.connected) return;
@@ -69,7 +94,7 @@ class SocketManager {
   }
 
   connect = (token: string) => {
-    if (!token) {
+    if (!isAccessTokenUsable(token, 5_000)) {
       this.disconnect();
       return;
     }
@@ -77,10 +102,12 @@ class SocketManager {
     this.disconnect();
     this.token = token;
     const client = createStompClient(token);
+    let connected = false;
     this.client = client;
     this.setState("connecting");
 
     client.onConnect = () => {
+      connected = true;
       this.active.clear();
       this.setState("connected");
       this.attachAll();
@@ -91,10 +118,18 @@ class SocketManager {
     };
     client.onWebSocketClose = () => {
       this.active.clear();
+      if (!connected || !isAccessTokenUsable(token, 5_000)) {
+        void this.recoverAuthentication(token);
+        return;
+      }
       if (client.active) this.setState("reconnecting");
     };
     client.onStompError = (frame) => {
-      this.emitError(normalizeStompError(frame.headers["message"] ?? frame.body));
+      const error = normalizeStompError(frame.headers["message"] ?? frame.body);
+      this.emitError(error);
+      if (this.isUnauthenticated(error)) {
+        void this.recoverAuthentication(token);
+      }
     };
 
     this.ensureErrorSubscription();

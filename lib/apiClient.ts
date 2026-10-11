@@ -76,7 +76,7 @@ async function readSuccessBody<T>(response: Response): Promise<T> {
   return JSON.parse(text) as T;
 }
 
-function triggerUnauthorized() {
+export function endSession() {
   clearSession();
   if (onUnauthorized) {
     onUnauthorized();
@@ -185,7 +185,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
         throw toApiError(error);
       }
     } else {
-      triggerUnauthorized();
+      endSession();
       throw new ApiError({
         status: 401,
         code: "UNAUTHENTICATED",
@@ -199,7 +199,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     const body = await readErrorBody(response);
     const apiError = normalizeError(response.status, body);
     if (apiError.status === 401 && options.auth !== false) {
-      triggerUnauthorized();
+      endSession();
     }
     throw apiError;
   }

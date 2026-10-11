@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/errors";
 import { socketManager } from "@/lib/socketManager";
 import { ConnectionState } from "@/lib/stompClient";
+import { endSession, refreshSession } from "@/lib/apiClient";
+import { getSession, isAccessTokenUsable, isSessionExpired } from "@/lib/tokenStore";
 
 interface UseSocketOptions {
   token: string | null;
@@ -21,11 +23,33 @@ export function useSocket({ token, onServerError }: UseSocketOptions) {
   }, [onServerError]);
 
   useEffect(() => {
-    if (token) {
-      socketManager.connect(token);
-    } else {
+    let active = true;
+    if (!token) {
       socketManager.disconnect();
+      return () => {
+        active = false;
+      };
     }
+
+    const connect = async () => {
+      const session = getSession();
+      if (!session) return;
+      const next = isSessionExpired(session, 5_000) || !isAccessTokenUsable(session.accessToken, 5_000)
+        ? await refreshSession()
+        : session;
+      if (!next) {
+        socketManager.disconnect();
+        endSession();
+        return;
+      }
+      if (active && next && isAccessTokenUsable(next.accessToken, 5_000)) {
+        socketManager.connect(next.accessToken);
+      }
+    };
+    void connect();
+    return () => {
+      active = false;
+    };
   }, [token]);
 
   return {

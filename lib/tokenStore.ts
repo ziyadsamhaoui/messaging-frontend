@@ -75,6 +75,12 @@ export function isSessionExpired(session: AuthSession, skewMs = 0): boolean {
   return session.expiresAt - skewMs <= Date.now();
 }
 
+export function isAccessTokenUsable(token: string, skewMs = 0): boolean {
+  if (!token.trim()) return false;
+  const exp = decodeJwtPayload(token)?.exp;
+  return typeof exp === "number" && Number.isFinite(exp) && exp * 1000 - skewMs > Date.now();
+}
+
 export function decodeJwtSubject(token: string): string | null {
   const payload = decodeJwtPayload(token);
   return typeof payload?.sub === "string" ? payload.sub : null;
