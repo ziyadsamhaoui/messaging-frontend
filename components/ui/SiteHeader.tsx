@@ -10,7 +10,10 @@ import { Wordmark } from "@/components/ui/Wordmark";
  * The wordmark is the shared component; only this header scales it up, so every
  * other screen keeps the default mark without that component having to change.
  */
-const HEADER_WORDMARK_SIZE =
+/** Shared by every page-level header (the public site header and the auth header),
+ * so the two bars cannot drift apart.
+ */
+export const HEADER_WORDMARK_SIZE =
   "[&_img]:h-9 [&_img]:w-9 [&_span]:text-[22px] " +
   "min-[480px]:[&_img]:h-[46px] min-[480px]:[&_img]:w-[46px] min-[480px]:[&_span]:text-[28px]";
 

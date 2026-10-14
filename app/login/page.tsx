@@ -9,6 +9,7 @@ import { Button, buttonClasses } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { Wordmark } from "@/components/ui/Wordmark";
+import { HEADER_WORDMARK_SIZE } from "@/components/ui/SiteHeader";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import { errorMessage } from "@/lib/errors";
@@ -163,8 +164,8 @@ export default function LoginPage() {
       />
 
       <header className="relative z-20 border-b border-[rgba(40,84,48,0.25)] bg-[var(--color-parchment)]">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
-          <Wordmark />
+        <div className="mx-auto flex h-[68px] w-full max-w-6xl items-center justify-between gap-4 px-6">
+          <Wordmark hideNameOnMobile className={HEADER_WORDMARK_SIZE} />
           <nav aria-label="Authentication">
             <Link href="/" className={buttonClasses({ variant: "ghost", tone: "light" })}>
               Back to home
