@@ -242,7 +242,6 @@ export default function LoginPage() {
                 setPassword(event.target.value);
                 clearFieldError("password");
               }}
-              placeholder="••••••••"
               error={fieldErrors.password}
               disabled={loading}
               autoComplete={mode === "login" ? "current-password" : "new-password"}
@@ -264,7 +263,6 @@ export default function LoginPage() {
                     setConfirmPassword(event.target.value);
                     clearFieldError("confirmPassword");
                   }}
-                  placeholder="••••••••"
                   error={confirmError}
                   disabled={loading}
                   autoComplete="new-password"
