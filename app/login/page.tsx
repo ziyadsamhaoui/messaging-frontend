@@ -22,6 +22,21 @@ interface FieldErrors {
   confirmPassword?: string;
 }
 
+/*
+ * Labels already render in Source Sans 3 (the interface/chrome face), but the
+ * fields did not: `globals.css` still carries an UNLAYERED
+ * `input, textarea, button { font-family: inherit }` rule, and unlayered
+ * declarations outrank every layered Tailwind utility, so the `font-ui` class
+ * that Input already applies was silently losing to the inherited body serif.
+ * That left labels sans and typed text/placeholders serif in the same form.
+ *
+ * Scoped here on purpose: moving that rule into `@layer base` would change every
+ * input, textarea and <button> in the app, which is outside this task. `!` is
+ * needed because no ordinary utility can outrank an unlayered declaration, and
+ * 16px keeps mobile browsers from zooming on focus.
+ */
+const AUTH_FIELD_CLASS = "font-ui! text-[16px]";
+
 const STRENGTH_LEVELS = [
   { label: "Weak", bar: "bg-[var(--color-error)]", text: "text-[var(--color-danger)]" },
   { label: "Fair", bar: "bg-[var(--color-warning)]", text: "text-[var(--color-warning)]" },
@@ -223,6 +238,7 @@ export default function LoginPage() {
               error={fieldErrors.email}
               disabled={loading}
               autoComplete="email"
+              className={AUTH_FIELD_CLASS}
             />
 
             {mode === "register" && (
@@ -237,6 +253,7 @@ export default function LoginPage() {
                 error={usernameError}
                 disabled={loading}
                 autoComplete="username"
+                className={AUTH_FIELD_CLASS}
               />
             )}
 
@@ -250,6 +267,7 @@ export default function LoginPage() {
               error={fieldErrors.password}
               disabled={loading}
               autoComplete={mode === "login" ? "current-password" : "new-password"}
+              className={AUTH_FIELD_CLASS}
             />
 
             {mode === "register" && password.length > 0 && (
@@ -296,6 +314,7 @@ export default function LoginPage() {
                   error={confirmError}
                   disabled={loading}
                   autoComplete="new-password"
+                  className={AUTH_FIELD_CLASS}
                 />
               </>
             )}
