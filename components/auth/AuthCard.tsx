@@ -245,9 +245,17 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
         role="tabpanel"
         id={segmentedPanelId(TABS_ID)}
         aria-labelledby={segmentedTabId(TABS_ID, mode)}
-        initial={reduceMotion ? false : { opacity: 0 }}
+        /*
+          Under reduced motion the panel is handed the FINISHED state on mount
+          (`opacity: 1`, zero-duration transition) rather than a suppressed
+          animation. `initial={false}` alone was not enough: a keyed remount
+          still ran the tween — measured with `prefers-reduced-motion: reduce`
+          the new panel mounted at opacity 0 and faded up over ~180ms, exactly
+          like the default case.
+        */
+        initial={{ opacity: reduceMotion ? 1 : 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.18 }}
+        transition={{ duration: reduceMotion ? 0 : 0.18 }}
         className="mt-6"
       >
         <h1
