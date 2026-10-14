@@ -43,12 +43,17 @@ const AUTH_FIELD_CLASS = "font-ui! text-[16px]";
 /*
  * Four levels for the meter's four segments. The written label — not the hue — is
  * what carries the meaning, so strength is never communicated by colour alone.
+ *
+ * No new colour is introduced here, but the level that reaches for
+ * `--color-success` keeps that token on the 4px BAR only: its 4.10:1 against the
+ * card misses the 4.5:1 text floor, so the Strong label uses `--color-sage-light`
+ * (6.61:1) instead, staying inside the existing palette.
  */
 const STRENGTH_LEVELS = [
-  { label: "Weak", bar: "bg-[var(--color-error)]", text: "text-[var(--color-danger)]" },
+  { label: "Weak", bar: "bg-[var(--color-danger)]", text: "text-[var(--color-danger)]" },
   { label: "Fair", bar: "bg-[var(--color-warning)]", text: "text-[var(--color-warning)]" },
-  { label: "Good", bar: "bg-[var(--color-sage)]", text: "text-[var(--color-sage-light)]" },
-  { label: "Strong", bar: "bg-[var(--color-success)]", text: "text-[var(--color-success)]" },
+  { label: "Good", bar: "bg-[var(--color-sage)]", text: "text-[var(--color-sage)]" },
+  { label: "Strong", bar: "bg-[var(--color-success)]", text: "text-[var(--color-sage-light)]" },
 ];
 
 const TABS_ID = "auth-mode";
@@ -334,7 +339,12 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
                   />
                 ))}
               </div>
-              <p className="font-ui text-[12px] text-[var(--color-text-muted)]">
+              {/*
+                12px text, so it needs the 4.5:1 pair: `--color-text-muted` (the
+                Input's own hint token) only reaches 4.14:1 on this card surface,
+                while `--color-text-secondary` measures 5.04:1.
+              */}
+              <p className="font-ui text-[12px] text-[var(--color-text-secondary)]">
                 {PASSWORD_RULE_HINT}
               </p>
               {/*
