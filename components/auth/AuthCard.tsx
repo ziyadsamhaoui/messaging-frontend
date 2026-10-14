@@ -380,7 +380,19 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             tone="dark"
             className="w-full"
             disabled={loading}
+            aria-busy={loading}
           >
+            {/*
+              A spinner beside the busy label. It is sized inside the existing
+              button box and coloured with `currentColor`, so neither the button's
+              width nor its height changes while a request is in flight.
+            */}
+            {loading && (
+              <span
+                aria-hidden="true"
+                className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent"
+              />
+            )}
             {loading
               ? mode === "login"
                 ? "Signing in…"
