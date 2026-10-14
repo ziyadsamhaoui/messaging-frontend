@@ -18,19 +18,31 @@ const SIZES: Record<ButtonSize, string> = {
 };
 
 /*
- * Each variant is a small piece of material rather than a flat fill: a soft
- * vertical gradient, a one-pixel highlight along the top edge, and a shallow
- * shadow so the control lifts off the surface. Foreground colours are unchanged
- * from the measured pairs, so every label stays at or above 4.5:1.
+ * Each variant is a small piece of material rather than a flat fill: a one-pixel
+ * highlight along the top edge and a shallow shadow so the control lifts off the
+ * surface. Foreground colours are unchanged from the measured pairs, so every
+ * label stays at or above 4.5:1.
+ *
+ * `dark.primary` is a SOLID parchment fill on purpose. It used to carry a
+ * vertical gradient, which the design constraints forbid on the primary button;
+ * the flat cream keeps the forest label at 6.2:1 and reads the same in the rest
+ * of the dark-surface consumers. The light/danger variants keep the gradient
+ * they were measured with — the landing page and public header are built on them.
  */
 const VARIANTS: Record<ButtonTone, Record<ButtonVariant, string>> = {
   dark: {
     primary:
-      "bg-[linear-gradient(180deg,var(--color-parchment-elevated),var(--color-parchment-dim))] " +
+      "bg-[var(--color-parchment)] " +
       "text-[var(--color-forest)] " +
       "shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_10px_24px_-14px_rgba(4,16,8,0.8)] " +
-      "hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#FFFFFF,var(--color-parchment-elevated))] " +
-      "hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_30px_-14px_rgba(4,16,8,0.85)]",
+      "hover:-translate-y-0.5 hover:bg-[var(--color-parchment-elevated)] " +
+      "hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_14px_30px_-14px_rgba(4,16,8,0.85)] " +
+      // The base rule fades a disabled control to 60% opacity, which composites the
+      // label and fill together and drops the pair to about 1.9:1 — no opacity value
+      // reaches 4.5:1. A dimmer OPAQUE fill keeps the busy label legible (5.2:1) while
+      // still reading as inactive. Scoped here, so no other variant changes.
+      "disabled:bg-[var(--color-parchment-dim)] disabled:text-[var(--color-forest)] " +
+      "disabled:opacity-100 disabled:translate-y-0 disabled:hover:bg-[var(--color-parchment-dim)]",
     // A smoked-glass panel rather than a near-transparent tint: on the hero's
     // mid-green the tint alone left the label around 3.4:1, while the smoked
     // fill keeps the parchment label at roughly 5:1.
