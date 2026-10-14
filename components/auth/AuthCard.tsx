@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/SegmentedControl";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
-import { clearDraftEmail, getDraftEmail, setDraftEmail } from "@/lib/authDraft";
 import {
   AuthFieldErrors,
   AuthMode,
@@ -54,10 +53,10 @@ const TABS = [
 ];
 
 interface AuthCardProps {
-  /** Which form the route it was opened on represents. */
-  initialMode: AuthMode;
-  /** Lets the route mirror the selected mode into the URL. */
-  onModeChange?: (mode: AuthMode) => void;
+  /** The mode the current URL represents — the route owns this, not the card. */
+  mode: AuthMode;
+  /** Mirrors a newly selected mode into the URL. */
+  onModeChange: (mode: AuthMode) => void;
 }
 
 /**
@@ -65,11 +64,8 @@ interface AuthCardProps {
  * never change between modes — only the panel below them does — so switching
  * cannot move the card's top edge or its control.
  */
-export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
-  const [mode, setMode] = useState<AuthMode>(initialMode);
-  // Seeded from the draft so the address the visitor already typed survives the
-  // route change that switching modes performs.
-  const [email, setEmail] = useState(getDraftEmail);
+export function AuthCard({ mode, onModeChange }: AuthCardProps) {
+  const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -86,6 +82,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
       router.replace("/app");
     }
   }, [auth.status, router]);
+
 
   const usernameError = mode === "register" ? fieldErrors.username : undefined;
   const confirmError = mode === "register" ? fieldErrors.confirmPassword : undefined;
@@ -105,7 +102,6 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
   function handleFieldChange(field: keyof AuthValues, value: string) {
     if (field === "email") {
       setEmail(value);
-      setDraftEmail(value);
     } else if (field === "username") {
       setUsername(value);
     } else if (field === "password") {
@@ -138,7 +134,6 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
 
   function switchMode(next: AuthMode) {
     if (next === mode) return;
-    setMode(next);
     setError(null);
     setFieldErrors({});
     // Credentials never survive a switch, and the username only exists in the
@@ -147,7 +142,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
     setPassword("");
     setConfirmPassword("");
     if (next === "login") setUsername("");
-    onModeChange?.(next);
+    onModeChange(next);
   }
 
   async function handleSubmit() {
@@ -166,7 +161,6 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
         await auth.register({ email: email.trim(), username: username.trim(), password });
         toast.push("Account created.", "success");
       }
-      clearDraftEmail();
       router.push("/app");
     } catch (err) {
       const mapped = mapAuthError(err, mode);
@@ -178,7 +172,6 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
   }
 
   async function handleLogout() {
-    clearDraftEmail();
     await auth.logout();
     toast.push("Signed out.", "success");
   }

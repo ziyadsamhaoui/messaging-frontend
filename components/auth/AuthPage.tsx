@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,13 +13,18 @@ const MODE_PATHS: Record<AuthMode, string> = {
 };
 
 /**
- * Everything `/login` and `/register` need, so the two routes differ only by the
- * mode they open on. Keeping the shell and the session-restore gate in one place
- * is what makes the two URLs behave identically rather than drift apart.
+ * Everything `/login` and `/register` need, rendered once by the shared `(auth)`
+ * layout so the card is never unmounted when the mode changes.
  */
-export function AuthPage({ initialMode }: { initialMode: AuthMode }) {
+export function AuthPage() {
   const auth = useAuth();
+  const pathname = usePathname();
   const router = useRouter();
+
+  // The URL is the single source of truth for the mode, so opening either address
+  // directly, refreshing, or arriving via Back/Forward always renders the form
+  // that address names.
+  const mode: AuthMode = pathname === MODE_PATHS.register ? "register" : "login";
 
   /*
    * `replace` rather than `push`, so the browser Back button leaves the auth area
@@ -30,9 +35,9 @@ export function AuthPage({ initialMode }: { initialMode: AuthMode }) {
    * Read straight off `window` because this only ever runs from a user
    * interaction, after hydration.
    */
-  function handleModeChange(mode: AuthMode) {
+  function handleModeChange(next: AuthMode) {
     const search = typeof window === "undefined" ? "" : window.location.search;
-    router.replace(`${MODE_PATHS[mode]}${search}`);
+    router.replace(`${MODE_PATHS[next]}${search}`);
   }
 
   if (auth.status === "loading") {
@@ -50,7 +55,7 @@ export function AuthPage({ initialMode }: { initialMode: AuthMode }) {
 
   return (
     <AuthLayout>
-      <AuthCard initialMode={initialMode} onModeChange={handleModeChange} />
+      <AuthCard mode={mode} onModeChange={handleModeChange} />
     </AuthLayout>
   );
 }
