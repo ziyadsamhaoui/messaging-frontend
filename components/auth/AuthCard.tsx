@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/SegmentedControl";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
+import { clearDraftEmail, getDraftEmail, setDraftEmail } from "@/lib/authDraft";
 import { errorMessage } from "@/lib/errors";
 
 export type AuthMode = "login" | "register";
@@ -68,7 +69,9 @@ interface AuthCardProps {
  */
 export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
-  const [email, setEmail] = useState("");
+  // Seeded from the draft so the address the visitor already typed survives the
+  // route change that switching modes performs.
+  const [email, setEmail] = useState(getDraftEmail);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -158,6 +161,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
         await auth.register({ email: email.trim(), username: username.trim(), password });
         toast.push("Account created.", "success");
       }
+      clearDraftEmail();
       router.push("/app");
     } catch (err) {
       setError(errorMessage(err));
@@ -167,6 +171,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
   }
 
   async function handleLogout() {
+    clearDraftEmail();
     await auth.logout();
     toast.push("Signed out.", "success");
   }
@@ -233,6 +238,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
             value={email}
             onChange={(event) => {
               setEmail(event.target.value);
+              setDraftEmail(event.target.value);
               clearFieldError("email");
             }}
             placeholder="you@example.com"
