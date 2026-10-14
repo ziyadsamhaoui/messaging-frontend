@@ -1,9 +1,15 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { AuthCard, AuthMode } from "@/components/auth/AuthCard";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
+
+const MODE_PATHS: Record<AuthMode, string> = {
+  login: "/login",
+  register: "/register",
+};
 
 /**
  * Everything `/login` and `/register` need, so the two routes differ only by the
@@ -12,6 +18,21 @@ import { useAuth } from "@/hooks/useAuth";
  */
 export function AuthPage({ initialMode }: { initialMode: AuthMode }) {
   const auth = useAuth();
+  const router = useRouter();
+
+  /*
+   * `replace` rather than `push`, so the browser Back button leaves the auth area
+   * instead of walking back through every mode the visitor tried. The existing
+   * query string is carried over verbatim, which is what keeps a `next` (or any
+   * other redirect context) alive across a switch.
+   *
+   * Read straight off `window` because this only ever runs from a user
+   * interaction, after hydration.
+   */
+  function handleModeChange(mode: AuthMode) {
+    const search = typeof window === "undefined" ? "" : window.location.search;
+    router.replace(`${MODE_PATHS[mode]}${search}`);
+  }
 
   if (auth.status === "loading") {
     return (
@@ -28,7 +49,7 @@ export function AuthPage({ initialMode }: { initialMode: AuthMode }) {
 
   return (
     <AuthLayout>
-      <AuthCard initialMode={initialMode} />
+      <AuthCard initialMode={initialMode} onModeChange={handleModeChange} />
     </AuthLayout>
   );
 }
