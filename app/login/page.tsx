@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PasswordField } from "@/components/ui/PasswordField";
 import { Wordmark } from "@/components/ui/Wordmark";
@@ -148,8 +148,13 @@ export default function LoginPage() {
       />
 
       <header className="relative z-20 border-b border-[rgba(40,84,48,0.25)] bg-[var(--color-parchment)]">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center px-6">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-6">
           <Wordmark />
+          <nav aria-label="Authentication">
+            <Link href="/" className={buttonClasses({ variant: "ghost", tone: "light" })}>
+              Back to home
+            </Link>
+          </nav>
         </div>
       </header>
 
@@ -326,14 +331,6 @@ export default function LoginPage() {
         </motion.section>
       </main>
 
-      <footer className="relative z-10 px-6 pb-6 text-center">
-        <Link
-          href="/"
-          className="focus-ring rounded font-ui text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
-        >
-          ← Back to home
-        </Link>
-      </footer>
     </div>
   );
 }
