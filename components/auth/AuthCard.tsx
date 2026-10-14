@@ -271,7 +271,14 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
           </div>
         )}
 
+        {/*
+          `noValidate` hands validation to this form rather than the browser. The
+          email field is `type="email"`, so without it Chrome blocked the submit
+          and showed its own unstyleable bubble, and the messages below — with their
+          `aria-describedby` wiring and the backend's own rules — never appeared.
+        */}
         <form
+          noValidate
           className="mt-6 flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault();
