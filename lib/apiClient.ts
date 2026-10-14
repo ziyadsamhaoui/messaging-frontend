@@ -87,6 +87,14 @@ export function endSession() {
   }
 }
 
+/**
+ * Only an explicit rejection of the refresh token means the session is dead; a network error or a
+ * 5xx/429 from the gateway is transient and must not sign the user out.
+ */
+function isRefreshRejected(status: number): boolean {
+  return status === 400 || status === 401 || status === 403;
+}
+
 export async function refreshSession(): Promise<AuthSession | null> {
   if (refreshInFlight) return refreshInFlight;
 
@@ -105,7 +113,9 @@ export async function refreshSession(): Promise<AuthSession | null> {
       });
 
       if (!response.ok) {
-        clearSession();
+        if (isRefreshRejected(response.status)) {
+          clearSession();
+        }
         return null;
       }
 
@@ -126,7 +136,7 @@ export async function refreshSession(): Promise<AuthSession | null> {
       setSession(next);
       return next;
     } catch {
-      clearSession();
+      // Network/abort failures are transient: keep the session so a blip does not log the user out.
       return null;
     } finally {
       refreshInFlight = null;
@@ -185,7 +195,12 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
         throw toApiError(error);
       }
     } else {
-      endSession();
+      // Only tear the session down when the refresh definitively invalidated it. A transient refresh
+      // failure (network error, upstream 503/429) returns null but leaves the session in place, so the
+      // user is not redirected to the login page by an unrelated outage.
+      if (!getSession()) {
+        endSession();
+      }
       throw new ApiError({
         status: 401,
         code: "UNAUTHENTICATED",

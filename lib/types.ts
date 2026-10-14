@@ -8,6 +8,8 @@ type UserType = "USER" | "ADMIN";
 
 type ConnectionStatus = "PENDING" | "ACCEPTED" | "DECLINED";
 
+export type ConnectionDirection = "INCOMING" | "OUTGOING";
+
 type InvitationStatus = "PENDING" | "ACCEPTED" | "REJECTED" | "EXPIRED";
 
 export type NotificationType = "MESSAGE" | "REACTION" | "INVITATION" | "SYSTEM";
@@ -87,12 +89,32 @@ export interface ReadCursorResponse {
   lastReadAt: string;
 }
 
+export type InvitationDirection = "INCOMING" | "OUTGOING";
+
 export interface InvitationResponse {
   id: string;
   roomId: string;
   inviterId: string;
   invitedId: string;
   status: InvitationStatus;
+  sentAt: string;
+  expiresAt: string;
+}
+
+/**
+ * A row of the caller's pending-invitation inbox. `direction` is viewer-relative:
+ * `INCOMING` rows are addressed to the caller and may be accepted or rejected,
+ * `OUTGOING` rows were sent by the caller. `roomName` is resolved by Chat because
+ * the recipient is not a participant of the room yet.
+ */
+export interface PendingInvitationDto {
+  id: string;
+  roomId: string;
+  roomName: string | null;
+  inviterId: string;
+  invitedId: string;
+  status: InvitationStatus;
+  direction: InvitationDirection;
   sentAt: string;
   expiresAt: string;
 }
@@ -132,6 +154,8 @@ export interface SubscriptionResponse {
 export interface ConnectionDto {
   id: number;
   status: ConnectionStatus;
+  /** INCOMING requests are addressed to the current user and are the only ones they may accept or decline. */
+  direction: ConnectionDirection;
   otherUserId: string;
   createdAt: string;
 }
@@ -172,14 +196,6 @@ export interface UpdateUserRequest {
   username: string;
   profilePictureUrl?: string | null;
   description?: string | null;
-}
-
-export interface InvitationDraft {
-  invitationId: string;
-  roomId: string | null;
-  roomName: string | null;
-  inviterUsername: string | null;
-  sentAt: string;
 }
 
 export interface UpdatePreferencesRequest {

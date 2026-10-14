@@ -3,165 +3,258 @@
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "motion/react";
+import { buttonClasses } from "@/components/ui/Button";
+import { SiteHeader } from "@/components/ui/SiteHeader";
+import { cn } from "@/lib/utils";
+
+type BubbleSide = "left" | "right";
+type BubbleTone = "own" | "theirs";
+type BubbleFloat = "float" | "float-slow" | "float-drift";
+
+/*
+ * Speech bubbles. Both tones are a solid colour under a soft diagonal sheen
+ * with a small specular highlight in the top-left corner, finished with a
+ * one-pixel top highlight and a shallow, faint shadow, so they read as small
+ * pieces of paper rather than flat rectangles.
+ *
+ * The positioning wrapper and the floating element are deliberately separate:
+ * the float keyframes animate `transform`, which would otherwise wipe out the
+ * horizontal offset that hangs each bubble off the illustration's edge.
+ *
+ * Each arbitrary value stays inside one string literal: split across a
+ * concatenation, the scanner never sees the complete class name and emits no
+ * CSS for it.
+ */
+const BUBBLE_SURFACE: Record<BubbleTone, string> = {
+  own:
+    "[background-color:var(--color-surface-2)] [background-image:radial-gradient(120%_90%_at_10%_0%,rgba(255,255,255,0.08),transparent_58%),linear-gradient(158deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02)_46%,rgba(0,0,0,0.08))] border border-[rgba(164,190,123,0.32)] text-[var(--color-parchment-elevated)]",
+  theirs:
+    "[background-color:var(--color-parchment-elevated)] [background-image:radial-gradient(120%_90%_at_10%_0%,rgba(255,255,255,0.9),transparent_62%),linear-gradient(158deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12)_50%,rgba(40,84,48,0.05))] border border-[rgba(40,84,48,0.16)] text-[var(--color-forest)]",
+};
+
+/* A faint two-layer drop shadow plus the one-pixel top highlight. */
+const BUBBLE_SHAPE =
+  "rounded-2xl px-4 py-3 font-body text-[13px] leading-snug sm:text-[15px] [box-shadow:0_10px_22px_-14px_rgba(20,46,25,0.34),0_2px_5px_-2px_rgba(20,46,25,0.14),inset_0_1px_0_rgba(255,255,255,0.45)]";
+
+/** Named in full so the class names stay literal in the source. */
+const FLOAT_ANIMATION: Record<BubbleFloat, string> = {
+  float: "animate-float",
+  "float-slow": "animate-float-slow",
+  "float-drift": "animate-float-drift",
+};
+
+function Bubble({
+  side,
+  topClass,
+  widthClass,
+  tone,
+  float,
+  delay,
+  visibilityClass,
+  children,
+}: {
+  side: BubbleSide;
+  /** Literal Tailwind utilities, so the scanner still sees them. */
+  topClass: string;
+  widthClass: string;
+  tone: BubbleTone;
+  float: BubbleFloat;
+  delay: number;
+  /** Lets a bubble drop out on the narrowest screens. */
+  visibilityClass?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute",
+        topClass,
+        widthClass,
+        visibilityClass,
+        // Below 640px the bubbles sit inside the artwork's edges; above it they
+        // hang 40% of their own width off each side. The cluster keeps its own
+        // responsive sizes so it never reaches past the viewport.
+        side === "left" ? "left-0 sm:-translate-x-[40%]" : "right-0 sm:translate-x-[40%]"
+      )}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay }}
+      >
+        <div className={cn(BUBBLE_SHAPE, BUBBLE_SURFACE[tone], FLOAT_ANIMATION[float])}>
+          {children}
+        </div>
+      </motion.div>
+    </div>
+  );
+}
 
 export default function Home() {
-	return (
-		<div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[var(--color-forest)] via-[rgba(95,141,78,0.65)] to-[var(--color-parchment-dim)] text-[var(--color-parchment)]">
-			<div className="absolute inset-0 bg-gradient-to-br from-[rgba(40,84,48,0.7)] via-[rgba(95,141,78,0.4)] to-[rgba(229,217,182,0.3)] animate-pulse" />
-			<div className="pointer-events-none absolute -left-1/2 top-24 h-10 w-[200%] bg-gradient-to-r from-transparent via-[rgba(229,217,182,0.18)] to-transparent blur-md animate-scroll-plane" />
-			<div className="absolute left-10 top-16 h-24 w-24 rounded-full bg-[rgba(164,190,123,0.1)] blur-3xl animate-bounce" style={{ animationDelay: "200ms" }} />
-			<div className="absolute right-10 top-28 h-20 w-20 rounded-full bg-[rgba(95,141,78,0.15)] blur-3xl animate-bounce" style={{ animationDelay: "500ms" }} />
-			<div className="absolute bottom-20 left-28 h-28 w-28 rounded-full bg-[rgba(229,217,182,0.1)] blur-3xl animate-bounce" style={{ animationDelay: "700ms" }} />
-			<div className="absolute bottom-16 right-20 h-24 w-24 rounded-full bg-[rgba(40,84,48,0.2)] blur-3xl animate-bounce" style={{ animationDelay: "1000ms" }} />
+  return (
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--color-parchment)] text-[var(--color-forest)]">
+      {/* A light wash instead of the old dark ramp: two soft pools of sage and
+          deep parchment keep the parchment from reading as a flat fill. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_95%_at_80%_6%,rgba(164,190,123,0.38),transparent_58%),radial-gradient(90%_80%_at_4%_98%,rgba(212,200,158,0.85),transparent_60%)]"
+      />
 
-			<nav className="relative z-20 w-full h-17 bg-gradient-to-r from-[#E5D9B6] to-[#D4C89E] border-b border-[rgba(40,84,48,0.06)] py-1 px-6">
-				<div className="w-full flex items-center justify-between">
-					<Link href="/" className="flex items-center gap-3 ">
-						<Image
-							src="/favicon.png"
-							width={60}
-							height={60}
-							alt="BadrLink favicon"
-							className=""
-						/>
-						<span className="font-display text-3xl font-bold text-transparent bg-clip-text hidden sm:block bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-forest)] animate-pulse">
-							BadrLink
-						</span>
-					</Link>
-					<div className="flex items-center gap-2 py-2 relative left-0 lg:py-2">
-						<Link
-							href="/login"
-							className="rounded-xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-5 py-2 text-sm font-semibold text-[var(--color-parchment)] transition-all cursor-pointer"
-						>
-							Sign Up
-						</Link>
-						<Link
-							href="/login"
-							className="rounded-xl border border-[rgba(229,217,182,0.4)] bg-gradient-to-r from-[var(--color-sage)] to-[var(--color-fern)] px-5 py-2 text-sm text-[rgba(229,217,182,0.95)] transition-all cursor-pointer"
-						>
-							Log In
-						</Link>
-					</div>
-				</div>
-			</nav>
+      <SiteHeader />
 
-			<main className="relative z-10 flex min-h-[calc(100vh-72px)] flex-col items-center justify-center px-6 py-12">
-				<div className="grid w-full max-w-6xl grid-cols-1 items-center gap-12 lg:grid-cols-2">
-					<div className="flex flex-col gap-6 text-left">
-						<motion.div
-							initial={{ opacity: 0, y: 16 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.8 }}
-							className="space-y-3"
-						>
+      <main className="relative z-10 flex flex-1 items-center px-6 py-12 lg:py-16">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-10">
+          <div className="flex flex-col gap-6">
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="font-display text-[clamp(2.75rem,3.9vw,3.5rem)] font-semibold leading-[1.08] tracking-[-0.01em] text-[var(--color-forest)] [text-wrap:balance]"
+            >
+              Where words feel closer.
+              <span className="mt-1 block italic text-[var(--color-primary)]">
+                And people do too.
+              </span>
+            </motion.h1>
 
-							<h1 className="font-display text-4xl font-bold text-transparent bg-gradient-to-r from-[var(--color-parchment)] via-[var(--color-sage)] to-[var(--color-parchment)] bg-clip-text sm:text-5xl lg:text-6xl">
-								Where words feel closer.
-								<br />
-								<span className="italic">And people do too.</span>
-							</h1>
-							<p className="text-base text-[rgba(164,190,123,0.95)] lg:text-lg">
-								A web-based app that keeps you connected with the people who matter most.
-							</p>
-						</motion.div>
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.12 }}
+              className="max-w-[34rem] font-body text-[18px] leading-[1.6] text-[var(--color-text-on-light-soft)] sm:text-[19px]"
+            >
+              A quiet place to talk with the people who matter, wherever they are. Send it, see it
+              land, get on with your day.
+            </motion.p>
 
-						<motion.div
-							initial={{ opacity: 0, y: 16 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.8, delay: 0.15 }}
-							className="flex flex-wrap gap-3"
-						>
-							<Link
-								href="/login"
-								className="rounded-2xl bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-8 py-3 text-xl cursor-pointer font-semibold text-[var(--color-parchment)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_12px_30px_rgba(95,141,78,0.3)] active:scale-[0.97]"
-							>
-								Get Started →
-							</Link>
-							<button className="rounded-2xl border border-[rgba(229,217,182,0.3)] px-6 py-3 text-xl text-[rgba(229,217,182,0.9)] backdrop-blur-sm transition-all hover:bg-[rgba(229,217,182,0.1)]">
-								Why BadrLink?
-							</button>
-						</motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.24 }}
+              className="flex flex-wrap items-center gap-3 pt-1"
+            >
+              <Link
+                href="/login"
+                className={buttonClasses({
+                  variant: "primary",
+                  tone: "light",
+                  size: "lg",
+                  className: "max-[479px]:w-full",
+                })}
+              >
+                Get Started →
+              </Link>
+              <Link
+                href="/why"
+                className={buttonClasses({
+                  variant: "secondary",
+                  tone: "light",
+                  size: "lg",
+                  className: "max-[479px]:w-full",
+                })}
+              >
+                Why BadrLink?
+              </Link>
+            </motion.div>
+          </div>
 
-						<motion.p
-							initial={{ opacity: 0, y: 16 }}
-							animate={{ opacity: 1, y: 0 }}
-							transition={{ duration: 0.8, delay: 0.3 }}
-							className="font-display text-2xl italic text-transparent bg-gradient-to-r from-[var(--color-parchment)] via-[var(--color-sage)] to-[var(--color-parchment)] bg-clip-text md:text-xl"
-						>
-							“Closer than a whisper, warmer than a thought.”
-						</motion.p>
+          {/*
+            The illustration and its six bubbles share one wrapper. The wrapper
+            keeps horizontal room so the bubbles can hang off the artwork's
+            edges, and each bubble sits at a height its margin scan found free
+            of faces.
+          */}
+          <div className="relative mx-auto w-full max-w-[820px] px-0 sm:px-8">
+            {/* The bubbles anchor to this box, so its width is what drives both the
+                artwork size and where each bubble hangs. */}
+            {/* One range-based width instead of competing breakpoint widths: it
+                holds the artwork at 392px while the column is narrow, then grows
+                with the viewport to 620px, where the bubbles have the most room
+                to hang off it. */}
+            <div className="relative mx-auto w-full max-w-[min(620px,max(392px,calc(50vw-120px)))]">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.9, delay: 0.2 }}
+              >
+                <Image
+                  src="/texting_image_new.png"
+                  alt="Two people chatting on their phones"
+                  width={620}
+                  height={528}
+                  priority
+                  className="h-auto w-full drop-shadow-[0_18px_40px_rgba(40,84,48,0.22)]"
+                />
+              </motion.div>
 
-									<motion.div
-										initial={{ opacity: 0, y: 16 }}
-										animate={{ opacity: 1, y: 0 }}
-										transition={{ duration: 0.8, delay: 0.45 }}
-										className="grid grid-cols-3 gap-3 text-sm text-[rgba(229,217,182,0.9)]"
-									>
-										<div className="px-4 border-r border-[rgba(229,217,182,0.2)] text-lg">
-											<div>Fast enough.</div>
-											<div className="text-xl text-[rgba(164,190,123,0.9)]">Real time</div>
-										</div>
-										<div className="px-4 border-r border-[rgba(229,217,182,0.2)] text-lg">
-											<div>Private.</div>
-											<div className="text-xl text-[rgba(164,190,123,0.9)]">Encrypted</div>
-										</div>
-										<div className="px-4 text-lg">
-											<div>Simple.</div>
-											<div className="text-xl text-[rgba(164,190,123,0.9)]">No clutter</div>
-										</div>
-									</motion.div>
-					</div>
-
-					<div className="relative flex items-center justify-center lg:translate-x-25">
-						<motion.div
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1 }}
-							transition={{ duration: 0.9, delay: 0.2 }}
-						>
-							<Image
-								src="/texting_image_new.png"
-								alt="Texting illustration"
-								width={240}
-								height={240}
-								className="h-75 w-75 object-contain drop-shadow-[0_8px_24px_rgba(95,141,78,0.3)] md:h-120 md:w-120 rounded-xl"
-							/>
-						</motion.div>
-						<motion.div
-							initial={{ opacity: 0, x: -28 }}
-							animate={{ opacity: 1, x: 0 }}
-							transition={{ duration: 0.7, delay: 0.2 }}
-							className="pointer-events-none absolute left-0 top-3 rounded-2xl rounded-bl-xs border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(95,141,78,0.6)] px-4 py-3 text-xs text-[var(--color-parchment)] shadow-lg  max-w-[180px] animate-float lg:left-5 lg:top-4 lg:translate-x-0"
-						>
-							<span className="text-xl">A: You still up?</span>
-						</motion.div>
-						<motion.div
-							initial={{ opacity: 0, x: 28 }}
-							animate={{ opacity: 1, x: 0 }}
-							transition={{ duration: 0.7, delay: 0.3 }}
-							className="pointer-events-none absolute right-0 top-20 rounded-2xl rounded-br-xs border border-[rgba(229,217,182,0.3)] bg-gradient-to-tr from-[rgba(164,190,123,0.7)] to-[rgba(229,217,182,0.6)] px-4 py-3 text-xs text-[var(--color-forest)] shadow-lg  max-w-[180px] animate-float-slow lg:left-auto lg:-right-20 lg:top-20 lg:translate-x-0"
-						>
-							<span className="text-xl">B: Yeah, can&apos;t sleep</span>
-						</motion.div>
-						<motion.div
-							initial={{ opacity: 0, x: 28 }}
-							animate={{ opacity: 1, x: 0 }}
-							transition={{ duration: 0.7, delay: 0.45 }}
-							className="pointer-events-none absolute right-0 top-60 rounded-2xl rounded-br-xs border border-[rgba(229,217,182,0.3)] bg-gradient-to-tr from-[rgba(164,190,123,0.7)] to-[rgba(229,217,182,0.6)] px-4 py-3 text-xs text-[var(--color-forest)] shadow-lg  max-w-[180px] animate-float lg:left-auto lg:-right-20 lg:bottom-0 lg:top-auto lg:translate-x-0"
-						>
-							<span className="text-xl">B: Always, what&apos;s on your mind?</span>
-						</motion.div>
-						<motion.div
-							initial={{ opacity: 0, x: -28 }}
-							animate={{ opacity: 1, x: 0 }}
-							transition={{ duration: 0.7, delay: 0.35 }}
-							className="pointer-events-none absolute left-0 top-40  rounded-2xl rounded-bl-xs border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(95,141,78,0.6)] px-4 py-3 text-xs text-[var(--color-parchment)] shadow-lg  max-w-[180px] animate-float-slow lg:left-5 lg:bottom-24 lg:top-auto lg:translate-x-0"
-						>
-							<span className="text-xl">A: Same... wanna talk for a bit?</span>
-						</motion.div>
-
-					</div>
-				</div>
-			</main>
-		</div>
-	);
+              <Bubble
+                side="left"
+                topClass="top-0 sm:top-[2%] lg:top-[2%]"
+                widthClass="w-[124px] sm:w-[150px] lg:w-[126px]"
+                tone="own"
+                float="float"
+                delay={0.3}
+              >
+                A: You still up?
+              </Bubble>
+              <Bubble
+                side="right"
+                topClass="top-0 sm:top-[4%] lg:top-[2%]"
+                widthClass="w-[128px] sm:w-[154px] lg:w-[132px]"
+                tone="theirs"
+                float="float-slow"
+                delay={0.4}
+              >
+                B: Yeah, can&apos;t sleep
+              </Bubble>
+              <Bubble
+                side="left"
+                topClass="top-[47%] sm:top-[36%] lg:top-[36%]"
+                widthClass="w-[124px] sm:w-[150px] lg:w-[126px]"
+                tone="own"
+                float="float-slow"
+                delay={0.5}
+              >
+                A: Same... wanna talk for a bit?
+              </Bubble>
+              <Bubble
+                side="right"
+                topClass="top-[70%] sm:top-[26%] lg:top-[28%]"
+                widthClass="w-[128px] sm:w-[154px] lg:w-[132px]"
+                tone="theirs"
+                float="float-drift"
+                delay={0.6}
+              >
+                B: Always, what&apos;s on your mind?
+              </Bubble>
+              {/* The last pair needs the wide layout to sit clear of the
+                  illustration's faces, so phones keep the four-bubble cluster. */}
+              <Bubble
+                side="left"
+                topClass="top-[72%] sm:top-[70%] lg:top-[72%]"
+                widthClass="w-[124px] sm:w-[150px] lg:w-[126px]"
+                tone="own"
+                float="float-drift"
+                delay={0.7}
+                visibilityClass="hidden sm:block"
+              >
+                A: Nothing. I just wanted your voice.
+              </Bubble>
+              <Bubble
+                side="right"
+                topClass="top-[76%] sm:top-[74%] lg:top-[74%]"
+                widthClass="w-[128px] sm:w-[154px] lg:w-[132px]"
+                tone="theirs"
+                float="float"
+                delay={0.8}
+                visibilityClass="hidden sm:block"
+              >
+                B: Then stay a while.
+              </Bubble>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }

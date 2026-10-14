@@ -63,6 +63,9 @@ export function useNotificationPreferences(enabled = true) {
     queryKey: notificationPreferencesQueryKey,
     queryFn: getNotificationPreferences,
     enabled,
+    // The preferences form is keyed on the server version; a silent window-focus refetch
+    // would remount it and discard edits the user has not saved yet.
+    refetchOnWindowFocus: false,
   });
 }
 

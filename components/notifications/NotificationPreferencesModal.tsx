@@ -30,10 +30,27 @@ export function NotificationPreferencesModal({ open, onClose }: NotificationPref
 
   return (
     <Modal open={open} onClose={onClose} title="Notification preferences">
-      {preferencesQuery.isLoading || !preferencesQuery.data ? (
+      {preferencesQuery.isError ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-[rgba(192,57,43,0.9)]">{errorMessage(preferencesQuery.error)}</p>
+          <button
+            type="button"
+            onClick={() => void preferencesQuery.refetch()}
+            className="self-start rounded-xl border border-[var(--color-border-strong)] px-3 py-1.5 text-xs text-[var(--color-parchment)]"
+          >
+            Retry
+          </button>
+        </div>
+      ) : preferencesQuery.isLoading || !preferencesQuery.data ? (
         <div className="text-sm text-[var(--color-text-secondary-soft)]">Loading…</div>
       ) : (
-        <PreferencesForm preferences={preferencesQuery.data} onClose={onClose} />
+        // Key on the server version so the form always re-initialises from the persisted
+        // values after a save/refetch instead of showing stale or half-applied local state.
+        <PreferencesForm
+          key={preferencesQuery.dataUpdatedAt}
+          preferences={preferencesQuery.data}
+          onClose={onClose}
+        />
       )}
     </Modal>
   );

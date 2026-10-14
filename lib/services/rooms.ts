@@ -5,6 +5,7 @@ import {
   InvitationResponse,
   MessageResponse,
   ParticipantResponse,
+  PendingInvitationDto,
   ReactionResponse,
   ReadCursorResponse,
   RoomResponse,
@@ -73,6 +74,10 @@ export function inviteToRoom(roomId: string, invitedUserId: string, ttl?: string
     invitedUserId,
     ttl,
   });
+}
+
+export function listPendingInvitations() {
+  return apiClient.get<PendingInvitationDto[]>("/invitations/pending");
 }
 
 export function acceptInvitation(invitationId: string) {

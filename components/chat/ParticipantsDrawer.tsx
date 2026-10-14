@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Modal } from "@/components/ui/Modal";
 import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserSearchCombobox } from "@/components/ui/UserSearchCombobox";
 import { useToast } from "@/components/ui/Toast";
+import { pendingInvitationsQueryKey } from "@/hooks/useInvitations";
 import { useRoomParticipants } from "@/hooks/useMessages";
 import { useUser } from "@/hooks/useUser";
 import { errorMessage, isApiError } from "@/lib/errors";
@@ -203,6 +205,7 @@ function ParticipantRow({
 
 function InviteByUsername({ roomId }: { roomId: string }) {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [invitingId, setInvitingId] = useState<string | null>(null);
 
@@ -210,6 +213,8 @@ function InviteByUsername({ roomId }: { roomId: string }) {
     setInvitingId(user.id);
     try {
       await inviteToRoom(roomId, user.id);
+      // The sender's outgoing invitation is now pending; refresh the shared inbox.
+      void queryClient.invalidateQueries({ queryKey: pendingInvitationsQueryKey });
       toast.push(`Invitation sent to @${user.username}.`, "success");
       setQuery("");
     } catch (error) {

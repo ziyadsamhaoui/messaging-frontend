@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ApiError } from "@/lib/errors";
 import { socketManager } from "@/lib/socketManager";
 import { ConnectionState } from "@/lib/stompClient";
-import { endSession, refreshSession } from "@/lib/apiClient";
+import { refreshSession } from "@/lib/apiClient";
 import { getSession, isAccessTokenUsable, isSessionExpired } from "@/lib/tokenStore";
 
 interface UseSocketOptions {
@@ -38,8 +38,10 @@ export function useSocket({ token, onServerError }: UseSocketOptions) {
         ? await refreshSession()
         : session;
       if (!next) {
+        // Could not obtain a usable token: stay offline instead of signing the user out. Clearing
+        // the session here would turn any transient refresh failure into a logout; the REST layer
+        // owns that decision and only acts on a genuine 401.
         socketManager.disconnect();
-        endSession();
         return;
       }
       if (active && next && isAccessTokenUsable(next.accessToken, 5_000)) {

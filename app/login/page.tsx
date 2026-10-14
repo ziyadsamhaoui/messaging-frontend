@@ -2,37 +2,54 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion } from "motion/react";
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { PasswordField } from "@/components/ui/PasswordField";
+import { Wordmark } from "@/components/ui/Wordmark";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import { errorMessage } from "@/lib/errors";
 
+type AuthMode = "login" | "register";
+
+interface FieldErrors {
+  email?: string;
+  username?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+const STRENGTH_LEVELS = [
+  { label: "Weak", bar: "bg-[var(--color-error)]", text: "text-[var(--color-danger)]" },
+  { label: "Fair", bar: "bg-[var(--color-warning)]", text: "text-[var(--color-warning)]" },
+  { label: "Strong", bar: "bg-[var(--color-success)]", text: "text-[var(--color-success)]" },
+  { label: "Excellent", bar: "bg-[var(--color-success)]", text: "text-[var(--color-success)]" },
+];
+
 export default function LoginPage() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const auth = useAuth();
   const router = useRouter();
   const toast = useToast();
-
-  const cardWidthClasses =
-    mode === "register" ? "max-w-lg md:max-w-xl" : "max-w-md md:max-w-lg";
 
   useEffect(() => {
     if (auth.status === "authenticated") {
       router.replace("/app");
     }
   }, [auth.status, router]);
+
+  const usernameError = mode === "register" ? fieldErrors.username : undefined;
+  const confirmError = mode === "register" ? fieldErrors.confirmPassword : undefined;
 
   const strengthScore = useMemo(() => {
     let score = 0;
@@ -43,26 +60,48 @@ export default function LoginPage() {
     return score;
   }, [password]);
 
-  const strengthLabels = ["", "Weak", "Fair", "Strong", "Excellent"];
-  const strengthLabel = strengthScore > 0 ? strengthLabels[strengthScore] : "";
-  const strengthColors = ["bg-red-500", "bg-orange-400", "bg-yellow-400", "bg-green-500"];
+  const strength = strengthScore > 0 ? STRENGTH_LEVELS[strengthScore - 1] : null;
 
-  async function handleSubmit() {
+  function clearFieldError(field: keyof FieldErrors) {
+    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  }
+
+  function switchMode() {
+    setMode((prev) => (prev === "login" ? "register" : "login"));
     setError(null);
+    setFieldErrors({});
+  }
+
+  function validate(): boolean {
+    const next: FieldErrors = {};
+    if (!email.trim()) next.email = "Email address is required.";
+    if (mode === "register" && !username.trim()) next.username = "Username is required.";
+    if (!password) next.password = "Password is required.";
+    if (mode === "register" && password && password !== confirmPassword) {
+      next.confirmPassword = "Passwords do not match.";
+    }
+    setFieldErrors(next);
+
     if (mode === "register") {
       if (!email.trim() || !username.trim()) {
         setError("Please complete all required fields.");
-        return;
+        return false;
       }
       if (password !== confirmPassword) {
         setError("Passwords do not match.");
-        return;
+        return false;
       }
     }
     if (!email.trim() || !password) {
       setError("Please enter your email and password.");
-      return;
+      return false;
     }
+    return true;
+  }
+
+  async function handleSubmit() {
+    setError(null);
+    if (!validate()) return;
 
     setLoading(true);
     try {
@@ -88,177 +127,213 @@ export default function LoginPage() {
 
   if (auth.status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--color-forest)]">
+      <div className="flex min-h-dvh items-center justify-center bg-[var(--color-forest-deep)]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-12 w-12 animate-spin rounded-full border-2 border-[var(--color-sage)] border-t-transparent" />
-          <p className="text-sm text-[var(--color-parchment-dim)]">Restoring your session…</p>
+          <p className="font-ui text-sm text-[var(--color-text-secondary)]">
+            Restoring your session…
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-full overflow-auto bg-cover bg-center text-[var(--color-parchment)]">
-      <nav className="relative z-20 h-17 w-full border-b border-[rgba(40,84,48,0.06)] bg-gradient-to-r from-[#E5D9B6] to-[#D4C89E] px-6 py-1 shadow-sm">
-        <div className="flex w-full items-center justify-start pl-0">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/favicon.png" width={60} height={60} alt="BadrLink favicon" className="inline-block" />
-            <span className="font-display bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-forest)] bg-clip-text text-3xl font-bold text-transparent">
-              BadrLink
-            </span>
-          </Link>
+    // Column layout with a single viewport-height root: the header no longer adds
+    // an extra 100vh slot, so the page only scrolls when the card genuinely overflows.
+    <div className="flex min-h-dvh flex-col bg-[var(--color-forest-deep)] text-[var(--color-parchment)]">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(110%_80%_at_12%_-10%,rgba(95,141,78,0.32),transparent_58%),radial-gradient(90%_80%_at_100%_115%,rgba(40,84,48,0.6),transparent_60%)]"
+      />
+
+      <header className="relative z-20 border-b border-[rgba(40,84,48,0.25)] bg-[var(--color-parchment)]">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center px-6">
+          <Wordmark />
         </div>
-      </nav>
+      </header>
 
-      <div className="absolute inset-0 bg-gradient-to-br from-[rgba(40,84,48,0.6)] via-[rgba(95,141,78,0.3)] to-[rgba(229,217,182,0.2)]" />
+      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-10 sm:px-6">
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          aria-labelledby="auth-heading"
+          className="w-full max-w-[30rem] rounded-[var(--radius-surface)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-7 shadow-[var(--shadow-card)] sm:p-9"
+        >
+          <div>
+            <h1
+              id="auth-heading"
+              className="font-display text-3xl font-semibold leading-tight text-[var(--color-parchment)]"
+            >
+              {mode === "login" ? "Welcome back" : "Create your account"}
+            </h1>
+            <p className="mt-2 font-ui text-sm text-[var(--color-text-secondary)]">
+              {mode === "login"
+                ? "Sign in to pick up where you left off."
+                : "Set up your account to start messaging."}
+            </p>
+            <div className="mt-5 h-px w-full bg-[var(--color-border)]" />
+          </div>
 
-      <div className="relative z-10 flex min-h-screen flex-col px-4 sm:py-10">
-        <div className="mt-8 flex flex-1 flex-col items-center justify-center md:mt-0">
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`relative z-10 w-full ${cardWidthClasses} rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.8)] to-[rgba(26,58,32,0.9)] p-8 text-[var(--color-parchment)] shadow-2xl backdrop-blur-xl sm:p-10`}
+          {error && (
+            <div
+              role="alert"
+              className="mt-6 flex items-start gap-3 rounded-[var(--radius-control)] border border-[rgba(247,179,168,0.35)] bg-[var(--color-error-surface)] px-3.5 py-3 font-ui text-sm text-[var(--color-danger)]"
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {auth.status === "authenticated" && (
+            <div className="mt-6 rounded-[var(--radius-control)] border border-[var(--color-border)] px-4 py-3 font-ui text-sm">
+              You are signed in as {auth.user?.username ?? "user"}.
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="focus-ring ml-2 rounded underline"
+              >
+                Sign out
+              </button>
+            </div>
+          )}
+
+          <form
+            className="mt-6 flex flex-col gap-4"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleSubmit();
+            }}
           >
-            <div className="text-center">
-              <h1 className="font-display bg-gradient-to-r from-[var(--color-parchment)] via-[var(--color-sage)] to-[var(--color-parchment)] bg-clip-text text-xl uppercase tracking-widest text-transparent sm:text-3xl">
-                {mode === "login" ? "Welcome Back" : "Create Your Account"}
-              </h1>
-              <p className="mt-2 text-sm text-[rgba(164,190,123,0.95)] tracking-wide">
-                {mode === "login" ? "Sign in with your email address." : "Register to start messaging."}
-              </p>
-              <div className="mt-4 h-px w-full bg-[rgba(164,190,123,0.3)]" />
-            </div>
+            <Input
+              label="Email address"
+              type="email"
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                clearFieldError("email");
+              }}
+              placeholder="you@example.com"
+              error={fieldErrors.email}
+              disabled={loading}
+              autoComplete="email"
+            />
 
-            {error && (
-              <div className="mt-6 flex items-center gap-3 rounded-xl border border-red-400/30 bg-gradient-to-r from-red-900/30 to-red-700/20 p-3 text-sm text-red-200">
-                <AlertTriangle className="h-4 w-4" aria-hidden="true" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            {auth.status === "authenticated" && (
-              <div className="mt-6 rounded-xl border border-[rgba(164,190,123,0.3)] p-3 text-sm">
-                You are signed in as {auth.user?.username ?? "user"}.
-                <button type="button" onClick={handleLogout} className="ml-2 underline">
-                  Sign out
-                </button>
-              </div>
-            )}
-
-            <div className="mt-6 flex flex-col gap-4">
+            {mode === "register" && (
               <Input
-                label="Email address"
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                disabled={loading}
-                autoComplete="email"
-                className="bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)]"
-              />
-
-              {mode === "register" && (
-                <Input
-                  label="Username"
-                  value={username}
-                  onChange={(event) => setUsername(event.target.value)}
-                  placeholder="fernwalker"
-                  disabled={loading}
-                  autoComplete="username"
-                  className="bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)]"
-                />
-              )}
-
-              <div className="relative">
-                <Input
-                  label="Password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="••••••••"
-                  disabled={loading}
-                  autoComplete={mode === "login" ? "current-password" : "new-password"}
-                  className="bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pr-12"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-4 top-9 text-sm text-[rgba(164,190,123,0.85)] hover:text-[var(--color-parchment)]"
-                  aria-label="Toggle password visibility"
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
-              </div>
-
-              {mode === "register" && (
-                <>
-                  <div className="relative">
-                    <Input
-                      label="Confirm password"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(event) => setConfirmPassword(event.target.value)}
-                      placeholder="••••••••"
-                      disabled={loading}
-                      autoComplete="new-password"
-                      className="bg-gradient-to-r from-[rgba(40,84,48,0.5)] to-[rgba(40,84,48,0.7)] pr-12"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword((prev) => !prev)}
-                      className="absolute right-4 top-9 text-sm text-[rgba(164,190,123,0.85)] hover:text-[var(--color-parchment)]"
-                      aria-label="Toggle confirm password visibility"
-                    >
-                      {showConfirmPassword ? "Hide" : "Show"}
-                    </button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-[var(--color-sage)]">
-                      <span>Password strength</span>
-                      {strengthScore > 0 && <span>{strengthLabel}</span>}
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {Array.from({ length: 4 }).map((_, index) => (
-                        <div
-                          key={index}
-                          className={`h-1 rounded-full ${
-                            index < strengthScore ? strengthColors[index] : "bg-[rgba(229,217,182,0.25)]"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={loading}
-                className="group relative mt-2 flex h-14 w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--color-fern)] via-[var(--color-sage)] to-[var(--color-fern)] font-semibold text-[var(--color-parchment)] shadow-lg transition-all duration-300 disabled:opacity-60"
-              >
-                {loading ? (mode === "login" ? "Signing in…" : "Creating account…") : mode === "login" ? "Sign In" : "Create Account"}
-              </button>
-            </div>
-
-            <div className="mt-6 text-center text-sm text-[var(--color-parchment-dim)]">
-              {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
-              <button
-                type="button"
-                onClick={() => {
-                  setMode(mode === "login" ? "register" : "login");
-                  setError(null);
+                label="Username"
+                value={username}
+                onChange={(event) => {
+                  setUsername(event.target.value);
+                  clearFieldError("username");
                 }}
-                className="font-semibold text-[var(--color-sage)] underline underline-offset-2 hover:text-[var(--color-parchment)]"
-              >
-                {mode === "login" ? "Sign Up" : "Sign In"}{" "}
-                <ArrowRight className="inline h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
+                placeholder="fernwalker"
+                error={usernameError}
+                disabled={loading}
+                autoComplete="username"
+              />
+            )}
+
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                clearFieldError("password");
+              }}
+              placeholder="••••••••"
+              error={fieldErrors.password}
+              disabled={loading}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+            />
+
+            {/*
+              No "Forgot password?" link: the Auth service exposes
+              POST /auth/forgot-password and /auth/reset-password, but the frontend
+              has no reset route or flow yet, so a link here would lead nowhere.
+              Adding the full flow is left to a later phase (see completion report).
+            */}
+
+            {mode === "register" && (
+              <>
+                <PasswordField
+                  label="Confirm password"
+                  value={confirmPassword}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value);
+                    clearFieldError("confirmPassword");
+                  }}
+                  placeholder="••••••••"
+                  error={confirmError}
+                  disabled={loading}
+                  autoComplete="new-password"
+                />
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between font-ui text-xs text-[var(--color-text-secondary)]">
+                    <span>Password strength</span>
+                    {strength && (
+                      <span className={strength.text} role="status" aria-live="polite">
+                        {strength.label}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-4 gap-2" aria-hidden="true">
+                    {Array.from({ length: 4 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className={`h-1 rounded-[var(--radius-pill)] ${
+                          strength && index < strengthScore
+                            ? strength.bar
+                            : "bg-[rgba(229,217,182,0.2)]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <Button
+              type="submit"
+              size="lg"
+              tone="dark"
+              className="mt-1 w-full"
+              disabled={loading}
+            >
+              {loading
+                ? mode === "login"
+                  ? "Signing in…"
+                  : "Creating account…"
+                : mode === "login"
+                  ? "Sign in"
+                  : "Create account"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center font-ui text-sm text-[var(--color-text-secondary)]">
+            {mode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+            <button
+              type="button"
+              onClick={switchMode}
+              className="focus-ring inline-flex items-center gap-1 rounded font-semibold text-[var(--color-sage)] underline underline-offset-2 hover:text-[var(--color-parchment)]"
+            >
+              {mode === "login" ? "Sign up" : "Sign in"}
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        </motion.section>
+      </main>
+
+      <footer className="relative z-10 px-6 pb-6 text-center">
+        <Link
+          href="/"
+          className="focus-ring rounded font-ui text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+        >
+          ← Back to home
+        </Link>
+      </footer>
     </div>
   );
 }

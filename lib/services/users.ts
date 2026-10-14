@@ -44,3 +44,7 @@ export function acceptConnection(id: number) {
 export function declineConnection(id: number) {
   return apiClient.post<ConnectionDto>(`/connections/${id}/decline`);
 }
+
+export function removeConnection(id: number) {
+  return apiClient.delete<void>(`/connections/${id}`);
+}

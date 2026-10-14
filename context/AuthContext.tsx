@@ -9,9 +9,11 @@ import React, {
   useMemo,
   useState,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { refreshSession, setUnauthorizedHandler } from "@/lib/apiClient";
 import { buildSession, loginRequest, logoutRequest, registerRequest } from "@/lib/services/auth";
 import { getUser } from "@/lib/services/users";
+import { socketManager } from "@/lib/socketManager";
 import { AuthSession, PublicUserDto, RegisterRequest } from "@/lib/types";
 import {
   clearSession,
@@ -40,6 +42,7 @@ const MAX_TIMEOUT_MS = 2_147_000_000;
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [session, setSessionState] = useState<AuthSession | null>(null);
   const [user, setUser] = useState<PublicUserDto | null>(null);
@@ -132,17 +135,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     const current = getSession();
     try {
+      // Revokes the refresh token and denylists the access-token jti server-side. A failure
+      // here (e.g. an expired access token) must not block the local teardown below.
       if (current?.refreshToken) {
         await logoutRequest(current.refreshToken);
       }
     } catch {
       void 0;
     }
+    // Tear down the authenticated realtime connection and drop every cached query so the
+    // next user on this browser cannot observe the previous user's rooms, messages or
+    // notifications, and no subscription survives the sign-out.
+    socketManager.disconnect();
+    queryClient.clear();
     clearSession();
     setSessionState(null);
     setUser(null);
     setStatus("unauthenticated");
-  }, []);
+  }, [queryClient]);
 
   const refreshUser = useCallback(async () => {
     const current = getSession();

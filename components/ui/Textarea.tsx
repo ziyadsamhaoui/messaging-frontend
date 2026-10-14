@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import { cn } from "@/lib/utils";
 
@@ -6,19 +8,36 @@ interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement
   error?: string | null;
 }
 
-export function Textarea({ className, label, error, ...props }: TextareaProps) {
+export function Textarea({ className, label, error, id, ...props }: TextareaProps) {
+  const generatedId = React.useId();
+  const textareaId = id ?? generatedId;
+  const errorId = error ? `${textareaId}-error` : undefined;
+
   return (
-    <label className="flex w-full flex-col gap-2 text-sm">
-      {label && <span className="text-[var(--color-text-secondary)]">{label}</span>}
+    <div className="flex w-full flex-col gap-1.5">
+      {label && (
+        <label
+          htmlFor={textareaId}
+          className="font-ui text-[13px] font-medium text-[var(--color-text-secondary)]"
+        >
+          {label}
+        </label>
+      )}
       <textarea
+        id={textareaId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={errorId}
         className={cn(
-          "min-h-[80px] resize-none rounded-2xl border border-[var(--color-border)] bg-[var(--color-field)] px-4 py-3 text-[var(--color-parchment)] placeholder:text-[var(--color-text-muted)] focus:border-[var(--color-sage)] focus:outline-none focus:ring-2 focus:ring-[rgba(164,190,123,0.35)]",
+          "focus-ring min-h-[80px] w-full resize-none rounded-[var(--radius-control)] border border-[var(--color-field-border)] bg-[var(--color-field)] px-3.5 py-3 font-ui text-[15px] text-[var(--color-text-primary)] transition-colors placeholder:text-[var(--color-text-placeholder)] hover:bg-[var(--color-field-hover)] disabled:cursor-not-allowed disabled:opacity-60",
           className
         )}
         {...props}
       />
-      {error && <span className="text-xs text-[var(--color-error)]">{error}</span>}
-    </label>
+      {error && (
+        <span id={errorId} className="font-ui text-xs text-[var(--color-danger)]">
+          {error}
+        </span>
+      )}
+    </div>
   );
 }
-

@@ -7,6 +7,7 @@ import {
   declineConnection,
   listConnections,
   listPendingConnections,
+  removeConnection,
 } from "@/lib/services/users";
 import { unreadCountQueryKey } from "./useNotifications";
 
@@ -62,6 +63,18 @@ export function useDeclineConnection() {
   return useMutation({
     mutationFn: (connectionId: number) => declineConnection(connectionId),
     onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: pendingConnectionsQueryKey });
+    },
+  });
+}
+
+export function useRemoveConnection() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (connectionId: number) => removeConnection(connectionId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: connectionsQueryKey });
       void queryClient.invalidateQueries({ queryKey: pendingConnectionsQueryKey });
     },
   });

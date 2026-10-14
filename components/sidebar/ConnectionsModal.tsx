@@ -12,6 +12,7 @@ import {
   useConnections,
   useDeclineConnection,
   usePendingConnections,
+  useRemoveConnection,
 } from "@/hooks/useConnections";
 import { useUser } from "@/hooks/useUser";
 import { errorMessage } from "@/lib/errors";
@@ -91,8 +92,21 @@ function ConnectionsList() {
 }
 
 function ConnectionRow({ connection }: { connection: ConnectionDto }) {
+  const toast = useToast();
   const userQuery = useUser(connection.otherUserId);
+  const remove = useRemoveConnection();
+  const [confirming, setConfirming] = useState(false);
   const username = userQuery.data?.username ?? connection.otherUserId.slice(0, 8);
+
+  async function confirmRemove() {
+    try {
+      await remove.mutateAsync(connection.id);
+      toast.push(`Removed connection with @${username}.`, "success");
+    } catch (error) {
+      toast.push(errorMessage(error), "error");
+      setConfirming(false);
+    }
+  }
 
   return (
     <div className="flex items-center gap-3 rounded-xl border border-[var(--color-border-subtle)] px-3 py-2">
@@ -103,6 +117,35 @@ function ConnectionRow({ connection }: { connection: ConnectionDto }) {
         </div>
         <div className="text-xs text-[var(--color-text-secondary-soft)]">Connected</div>
       </div>
+      {confirming ? (
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => void confirmRemove()}
+            disabled={remove.isPending}
+            className="rounded-lg bg-[rgba(192,57,43,0.85)] px-2 py-1 text-xs font-semibold text-[var(--color-parchment)] disabled:opacity-60"
+          >
+            {remove.isPending ? "Removing…" : "Confirm"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            disabled={remove.isPending}
+            className="rounded-lg border border-[rgba(164,190,123,0.35)] px-2 py-1 text-xs text-[var(--color-parchment)] disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-label={`Remove connection with ${username}`}
+          className="rounded-lg border border-[rgba(164,190,123,0.35)] px-2 py-1 text-xs text-[rgba(229,217,182,0.8)] hover:border-[rgba(192,57,43,0.6)] hover:text-[var(--color-parchment)]"
+        >
+          Remove
+        </button>
+      )}
     </div>
   );
 }
@@ -116,6 +159,12 @@ function RequestsList() {
   const accept = useAcceptConnection();
   const decline = useDeclineConnection();
   const pending = pendingQuery.data ?? [];
+
+  // Only requests addressed to the current user may be accepted or declined; the
+  // sender sees an outgoing "pending" state instead (the backend rejects a
+  // requester acting on their own request, so this is not the only guard).
+  const incoming = pending.filter((connection) => connection.direction === "INCOMING");
+  const outgoing = pending.filter((connection) => connection.direction !== "INCOMING");
 
   async function sendRequest(userId: string, username: string) {
     setConnectingId(userId);
@@ -176,26 +225,51 @@ function RequestsList() {
           No pending requests.
         </div>
       ) : (
-        <div className="max-h-64 space-y-2 overflow-y-auto">
-          {pending.map((connection) => (
-            <PendingRow
-              key={connection.id}
-              connection={connection}
-              onRespond={(action) => void respond(connection, action)}
-            />
-          ))}
+        <div className="flex max-h-64 flex-col gap-3 overflow-y-auto">
+          {incoming.length > 0 && (
+            <PendingSection title="Received">
+              {incoming.map((connection) => (
+                <PendingRow
+                  key={connection.id}
+                  connection={connection}
+                  incoming
+                  onRespond={(action) => void respond(connection, action)}
+                />
+              ))}
+            </PendingSection>
+          )}
+          {outgoing.length > 0 && (
+            <PendingSection title="Sent">
+              {outgoing.map((connection) => (
+                <PendingRow key={connection.id} connection={connection} incoming={false} />
+              ))}
+            </PendingSection>
+          )}
         </div>
       )}
     </div>
   );
 }
 
+function PendingSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="px-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--color-text-secondary-soft)]">
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function PendingRow({
   connection,
+  incoming,
   onRespond,
 }: {
   connection: ConnectionDto;
-  onRespond: (action: "accept" | "decline") => void;
+  incoming: boolean;
+  onRespond?: (action: "accept" | "decline") => void;
 }) {
   const userQuery = useUser(connection.otherUserId);
   const username = userQuery.data?.username ?? connection.otherUserId.slice(0, 8);
@@ -207,22 +281,32 @@ function PendingRow({
         <div className="truncate text-sm font-semibold text-[var(--color-parchment)]">
           @{username}
         </div>
-        <div className="text-xs text-[var(--color-text-secondary-soft)]">Pending</div>
+        <div className="text-xs text-[var(--color-text-secondary-soft)]">
+          {incoming ? "Wants to connect" : "Request sent"}
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={() => onRespond("accept")}
-        className="rounded-lg bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-2 py-1 text-xs font-semibold text-[var(--color-parchment)]"
-      >
-        Accept
-      </button>
-      <button
-        type="button"
-        onClick={() => onRespond("decline")}
-        className="rounded-lg border border-[rgba(164,190,123,0.35)] px-2 py-1 text-xs text-[var(--color-parchment)]"
-      >
-        Decline
-      </button>
+      {incoming ? (
+        <>
+          <button
+            type="button"
+            onClick={() => onRespond?.("accept")}
+            className="rounded-lg bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] px-2 py-1 text-xs font-semibold text-[var(--color-parchment)]"
+          >
+            Accept
+          </button>
+          <button
+            type="button"
+            onClick={() => onRespond?.("decline")}
+            className="rounded-lg border border-[rgba(164,190,123,0.35)] px-2 py-1 text-xs text-[var(--color-parchment)]"
+          >
+            Decline
+          </button>
+        </>
+      ) : (
+        <span className="rounded-lg border border-[var(--color-border-subtle)] px-2 py-1 text-xs text-[var(--color-text-secondary-soft)]">
+          Pending
+        </span>
+      )}
     </div>
   );
 }

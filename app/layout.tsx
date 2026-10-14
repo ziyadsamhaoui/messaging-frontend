@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Newsreader, IBM_Plex_Mono } from "next/font/google";
+import { Cormorant_Garamond, Newsreader, IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -22,6 +22,14 @@ const monoFont = IBM_Plex_Mono({
   weight: ["400", "500"],
 });
 
+// Humanist sans reserved for interface chrome: controls, labels, navigation and
+// metadata. The serif body face stays for prose so the visual identity is kept.
+const uiFont = Source_Sans_3({
+  variable: "--font-ui",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "BadrLink",
   description: "Real-time messaging, rooted in calm.",
@@ -37,7 +45,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} h-full antialiased`}
+      className={`${displayFont.variable} ${bodyFont.variable} ${monoFont.variable} ${uiFont.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <Providers>

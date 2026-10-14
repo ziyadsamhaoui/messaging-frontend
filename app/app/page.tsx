@@ -23,6 +23,7 @@ import {
 import { useUser } from "@/hooks/useUser";
 import { useBlockedUserIds, useBlockUser, useUnblockUser } from "@/hooks/useBlocks";
 import { usePendingConnections } from "@/hooks/useConnections";
+import { pendingInvitationsQueryKey, usePendingInvitations } from "@/hooks/useInvitations";
 import { useUnreadCount } from "@/hooks/useNotifications";
 import { useSocket } from "@/hooks/useSocket";
 import { useUiStore } from "@/store/uiStore";
@@ -40,7 +41,6 @@ import {
   CreateRoomRequest,
   CursorPage,
   InvitationAcceptedFrame,
-  InvitationSentFrame,
   RoomResponse,
   TypingEvent,
 } from "@/lib/types";
@@ -85,8 +85,6 @@ export default function MessagingApp() {
   const noteRoomActivity = useUiStore((state) => state.noteRoomActivity);
   const socketState = useUiStore((state) => state.socketState);
   const setSocketState = useUiStore((state) => state.setSocketState);
-  const pendingInvitations = useUiStore((state) => state.pendingInvitations);
-  const addInvitation = useUiStore((state) => state.addInvitation);
   const blockedRooms = useUiStore((state) => state.blockedRooms);
   const markBlockedRoom = useUiStore((state) => state.markBlockedRoom);
 
@@ -144,6 +142,16 @@ export default function MessagingApp() {
   const blockedIdsQuery = useBlockedUserIds(authenticated ? currentUserId : null);
   const blockedIds = useMemo(() => new Set(blockedIdsQuery.data ?? []), [blockedIdsQuery.data]);
   const pendingConnectionsQuery = usePendingConnections(authenticated);
+  // Only requests addressed to this user need their attention; outgoing requests
+  // are already shown (as "Sent") inside the modal.
+  const incomingConnectionRequests = (pendingConnectionsQuery.data ?? []).filter(
+    (connection) => connection.direction === "INCOMING"
+  ).length;
+
+  // Server-truth pending invitations (incoming + outgoing); the Invites badge and
+  // the inbox modal share this one query.
+  const pendingInvitationsQuery = usePendingInvitations(authenticated);
+  const pendingInvitationCount = pendingInvitationsQuery.data?.length ?? 0;
 
   const sendMutation = useSendMessage(selectedRoomId, currentUserId);
   const editMutation = useEditMessage(selectedRoomId);
@@ -221,18 +229,14 @@ export default function MessagingApp() {
         const frame = parsed as Record<string, unknown>;
         const eventType = typeof frame.eventType === "string" ? frame.eventType : null;
         if (eventType === "INVITATION_SENT") {
-          const invitation = frame as unknown as InvitationSentFrame;
-          addInvitation({
-            invitationId: invitation.invitationId,
-            roomId: invitation.roomId ?? null,
-            roomName: invitation.roomName ?? null,
-            inviterUsername: invitation.inviterUsername ?? null,
-            sentAt: invitation.sentAt ?? new Date().toISOString(),
-          });
+          // Refetch the inbox so the recipient sees the invitation without a reload.
+          void queryClient.invalidateQueries({ queryKey: pendingInvitationsQueryKey });
           void queryClient.invalidateQueries({ queryKey: ["notifications"] });
           toast.push("You received a room invitation.", "info");
         } else if (eventType === "INVITATION_ACCEPTED") {
           const accepted = frame as unknown as InvitationAcceptedFrame;
+          // The sender's outgoing invitation is no longer pending.
+          void queryClient.invalidateQueries({ queryKey: pendingInvitationsQueryKey });
           toast.push(
             `${accepted.invitedUsername ?? "Someone"} accepted your invitation.`,
             "success"
@@ -253,7 +257,7 @@ export default function MessagingApp() {
     return () => {
       unsubscribeUserEvents();
     };
-  }, [currentUserId, subscribe, queryClient, addInvitation, toast]);
+  }, [currentUserId, subscribe, queryClient, toast]);
 
   useEffect(() => {
     if (!selectedRoomId) return;
@@ -587,9 +591,9 @@ export default function MessagingApp() {
           className="rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
         >
           People
-          {(pendingConnectionsQuery.data?.length ?? 0) > 0 && (
+          {incomingConnectionRequests > 0 && (
             <span className="ml-1 text-[var(--color-sage)]">
-              ({pendingConnectionsQuery.data!.length})
+              ({incomingConnectionRequests})
             </span>
           )}
         </button>
@@ -599,9 +603,9 @@ export default function MessagingApp() {
           className="relative rounded-full border border-[var(--color-border-strong)] px-3 py-1 text-[rgba(229,217,182,0.8)]"
         >
           Invites
-          {pendingInvitations.length > 0 && (
+          {pendingInvitationCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--color-fern)] px-1 text-[9px] font-bold text-[var(--color-parchment)]">
-              {pendingInvitations.length}
+              {pendingInvitationCount}
             </span>
           )}
         </button>
