@@ -53,6 +53,14 @@ const STRENGTH_LEVELS = [
 
 const TABS_ID = "auth-mode";
 
+/*
+ * A stable id for the first field, so the one-time autofocus can target it without
+ * threading a ref through the shared `Input`. The full field order is
+ * email → username → password → confirm, so the first field is the email in both
+ * modes, which is what the initial focus belongs on.
+ */
+const EMAIL_FIELD_ID = "auth-email";
+
 const TABS = [
   { value: "login" as const, label: "Sign in" },
   { value: "register" as const, label: "Create account" },
@@ -111,6 +119,16 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   }, [password]);
 
   const strength = strengthLevel > 0 ? STRENGTH_LEVELS[strengthLevel - 1] : null;
+
+  /*
+   * Focus the first field once, on the card's own mount — never on a mode switch.
+   * The panel below the control is keyed on the mode, so an `autoFocus` attribute
+   * there would fire again on every switch and pull focus off the segmented
+   * control; this effect lives on the card, which stays mounted.
+   */
+  useEffect(() => {
+    document.getElementById(EMAIL_FIELD_ID)?.focus();
+  }, []);
 
   function handleFieldChange(field: keyof AuthValues, value: string) {
     if (field === "email") {
@@ -246,6 +264,7 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
           }}
         >
           <Input
+            id={EMAIL_FIELD_ID}
             label="Email address"
             type="email"
             value={email}
