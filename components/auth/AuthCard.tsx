@@ -15,9 +15,11 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import {
+  AUTH_RULES,
   AuthFieldErrors,
   AuthMode,
   AuthValues,
+  PASSWORD_RULE_HINT,
   mapAuthError,
   validateField,
   validateForm,
@@ -38,11 +40,15 @@ import {
  */
 const AUTH_FIELD_CLASS = "font-ui! text-[16px]";
 
+/*
+ * Four levels for the meter's four segments. The written label — not the hue — is
+ * what carries the meaning, so strength is never communicated by colour alone.
+ */
 const STRENGTH_LEVELS = [
   { label: "Weak", bar: "bg-[var(--color-error)]", text: "text-[var(--color-danger)]" },
   { label: "Fair", bar: "bg-[var(--color-warning)]", text: "text-[var(--color-warning)]" },
+  { label: "Good", bar: "bg-[var(--color-sage)]", text: "text-[var(--color-sage-light)]" },
   { label: "Strong", bar: "bg-[var(--color-success)]", text: "text-[var(--color-success)]" },
-  { label: "Excellent", bar: "bg-[var(--color-success)]", text: "text-[var(--color-success)]" },
 ];
 
 const TABS_ID = "auth-mode";
@@ -88,16 +94,23 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   const confirmError = mode === "register" ? fieldErrors.confirmPassword : undefined;
   const values: AuthValues = { email, username, password, confirmPassword };
 
-  const strengthScore = useMemo(() => {
+  /*
+   * The backend only enforces `@Size(min = 8, max = 128)` on registration, so the
+   * extra criteria here guide without pretending to be requirements, and the score
+   * is clamped to at least one level whenever anything has been typed: a bare grey
+   * bar with no label would be ambiguous.
+   */
+  const strengthLevel = useMemo(() => {
+    if (!password) return 0;
     let score = 0;
-    if (password.length >= 8) score += 1;
+    if (password.length >= AUTH_RULES.passwordMinLength) score += 1;
     if (/[A-Z]/.test(password)) score += 1;
     if (/[0-9]/.test(password)) score += 1;
     if (/[^A-Za-z0-9]/.test(password)) score += 1;
-    return score;
+    return Math.min(STRENGTH_LEVELS.length, Math.max(1, score));
   }, [password]);
 
-  const strength = strengthScore > 0 ? STRENGTH_LEVELS[strengthScore - 1] : null;
+  const strength = strengthLevel > 0 ? STRENGTH_LEVELS[strengthLevel - 1] : null;
 
   function handleFieldChange(field: keyof AuthValues, value: string) {
     if (field === "email") {
@@ -275,7 +288,7 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
               <div className="flex items-center justify-between font-ui text-xs text-[var(--color-text-secondary)]">
                 <span>Password strength</span>
                 {strength && (
-                  <span className={strength.text} role="status" aria-live="polite">
+                  <span className={`text-[12px] font-medium ${strength.text}`} aria-hidden="true">
                     {strength.label}
                   </span>
                 )}
@@ -285,13 +298,23 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
                   <div
                     key={index}
                     className={`h-1 rounded-[var(--radius-pill)] ${
-                      strength && index < strengthScore
+                      strength && index < strengthLevel
                         ? strength.bar
                         : "bg-[rgba(229,217,182,0.2)]"
                     }`}
                   />
                 ))}
               </div>
+              <p className="font-ui text-[12px] text-[var(--color-text-muted)]">
+                {PASSWORD_RULE_HINT}
+              </p>
+              {/*
+                The visible label is hidden from assistive tech so the change is
+                announced once, as a full sentence rather than a bare adjective.
+              */}
+              <p className="sr-only" role="status" aria-live="polite">
+                {strength ? `Password strength: ${strength.label}` : ""}
+              </p>
             </div>
           )}
 
