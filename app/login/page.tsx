@@ -247,6 +247,31 @@ export default function LoginPage() {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
             />
 
+            {mode === "register" && password.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between font-ui text-xs text-[var(--color-text-secondary)]">
+                  <span>Password strength</span>
+                  {strength && (
+                    <span className={strength.text} role="status" aria-live="polite">
+                      {strength.label}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 gap-2" aria-hidden="true">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className={`h-1 rounded-[var(--radius-pill)] ${
+                        strength && index < strengthScore
+                          ? strength.bar
+                          : "bg-[rgba(229,217,182,0.2)]"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/*
               No "Forgot password?" link: the Auth service exposes
               POST /auth/forgot-password and /auth/reset-password, but the frontend
@@ -267,29 +292,6 @@ export default function LoginPage() {
                   disabled={loading}
                   autoComplete="new-password"
                 />
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between font-ui text-xs text-[var(--color-text-secondary)]">
-                    <span>Password strength</span>
-                    {strength && (
-                      <span className={strength.text} role="status" aria-live="polite">
-                        {strength.label}
-                      </span>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-4 gap-2" aria-hidden="true">
-                    {Array.from({ length: 4 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className={`h-1 rounded-[var(--radius-pill)] ${
-                          strength && index < strengthScore
-                            ? strength.bar
-                            : "bg-[rgba(229,217,182,0.2)]"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
               </>
             )}
 
