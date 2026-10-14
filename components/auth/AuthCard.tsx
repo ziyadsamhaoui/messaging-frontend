@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -86,6 +86,13 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [loading, setLoading] = useState(false);
+  /*
+   * A ref, not the `loading` state, is what actually prevents a duplicate submit:
+   * a burst of clicks (or Enter presses) in the same tick all run their handler
+   * before React re-renders with `disabled`, so they would all read `loading` as
+   * false and fire a second, third and fourth request.
+   */
+  const submitLockRef = useRef(false);
   const auth = useAuth();
   const router = useRouter();
   const toast = useToast();
@@ -177,12 +184,14 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   }
 
   async function handleSubmit() {
+    if (submitLockRef.current) return;
     setError(null);
 
     const errors = validateForm(values, mode);
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
+    submitLockRef.current = true;
     setLoading(true);
     try {
       if (mode === "login") {
@@ -198,6 +207,7 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
       setFieldErrors(mapped.fieldErrors);
       setError(mapped.formError);
     } finally {
+      submitLockRef.current = false;
       setLoading(false);
     }
   }
