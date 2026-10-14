@@ -2,9 +2,10 @@
 
 import React from "react";
 import { useRouter } from "next/navigation";
-import { AuthCard, AuthMode } from "@/components/auth/AuthCard";
+import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
+import { AuthMode } from "@/lib/authValidation";
 
 const MODE_PATHS: Record<AuthMode, string> = {
   login: "/login",

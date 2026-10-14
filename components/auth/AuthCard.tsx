@@ -15,16 +15,14 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import { clearDraftEmail, getDraftEmail, setDraftEmail } from "@/lib/authDraft";
-import { errorMessage } from "@/lib/errors";
-
-export type AuthMode = "login" | "register";
-
-interface FieldErrors {
-  email?: string;
-  username?: string;
-  password?: string;
-  confirmPassword?: string;
-}
+import {
+  AuthFieldErrors,
+  AuthMode,
+  AuthValues,
+  mapAuthError,
+  validateField,
+  validateForm,
+} from "@/lib/authValidation";
 
 /*
  * Labels already render in Source Sans 3 (the interface/chrome face), but the
@@ -76,7 +74,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [loading, setLoading] = useState(false);
   const auth = useAuth();
   const router = useRouter();
@@ -91,6 +89,7 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
 
   const usernameError = mode === "register" ? fieldErrors.username : undefined;
   const confirmError = mode === "register" ? fieldErrors.confirmPassword : undefined;
+  const values: AuthValues = { email, username, password, confirmPassword };
 
   const strengthScore = useMemo(() => {
     let score = 0;
@@ -103,8 +102,38 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
 
   const strength = strengthScore > 0 ? STRENGTH_LEVELS[strengthScore - 1] : null;
 
-  function clearFieldError(field: keyof FieldErrors) {
-    setFieldErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
+  function handleFieldChange(field: keyof AuthValues, value: string) {
+    if (field === "email") {
+      setEmail(value);
+      setDraftEmail(value);
+    } else if (field === "username") {
+      setUsername(value);
+    } else if (field === "password") {
+      setPassword(value);
+    } else {
+      setConfirmPassword(value);
+    }
+
+    // A stale message about the field being edited is worse than none, and any
+    // form-level message is about the previous attempt.
+    setError(null);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next[field];
+      // Editing the password can invalidate a confirmation that already passed.
+      if (field === "password" && mode === "register" && confirmPassword) {
+        if (value !== confirmPassword) next.confirmPassword = "Passwords do not match.";
+        else delete next.confirmPassword;
+      }
+      return next;
+    });
+  }
+
+  function handleFieldBlur(field: keyof AuthValues) {
+    // Only report a problem once something has actually been typed; submit is what
+    // surfaces every missing required field.
+    if (!values[field]) return;
+    setFieldErrors((prev) => ({ ...prev, [field]: validateField(field, values, mode) }));
   }
 
   function switchMode(next: AuthMode) {
@@ -121,36 +150,12 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
     onModeChange?.(next);
   }
 
-  function validate(): boolean {
-    const next: FieldErrors = {};
-    if (!email.trim()) next.email = "Email address is required.";
-    if (mode === "register" && !username.trim()) next.username = "Username is required.";
-    if (!password) next.password = "Password is required.";
-    if (mode === "register" && password && password !== confirmPassword) {
-      next.confirmPassword = "Passwords do not match.";
-    }
-    setFieldErrors(next);
-
-    if (mode === "register") {
-      if (!email.trim() || !username.trim()) {
-        setError("Please complete all required fields.");
-        return false;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match.");
-        return false;
-      }
-    }
-    if (!email.trim() || !password) {
-      setError("Please enter your email and password.");
-      return false;
-    }
-    return true;
-  }
-
   async function handleSubmit() {
     setError(null);
-    if (!validate()) return;
+
+    const errors = validateForm(values, mode);
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     setLoading(true);
     try {
@@ -164,7 +169,9 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
       clearDraftEmail();
       router.push("/app");
     } catch (err) {
-      setError(errorMessage(err));
+      const mapped = mapAuthError(err, mode);
+      setFieldErrors(mapped.fieldErrors);
+      setError(mapped.formError);
     } finally {
       setLoading(false);
     }
@@ -236,11 +243,8 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
             label="Email address"
             type="email"
             value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              setDraftEmail(event.target.value);
-              clearFieldError("email");
-            }}
+            onChange={(event) => handleFieldChange("email", event.target.value)}
+            onBlur={() => handleFieldBlur("email")}
             placeholder="you@example.com"
             error={fieldErrors.email}
             disabled={loading}
@@ -252,10 +256,8 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
             <Input
               label="Username"
               value={username}
-              onChange={(event) => {
-                setUsername(event.target.value);
-                clearFieldError("username");
-              }}
+              onChange={(event) => handleFieldChange("username", event.target.value)}
+              onBlur={() => handleFieldBlur("username")}
               placeholder="fernwalker"
               error={usernameError}
               disabled={loading}
@@ -267,10 +269,8 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
           <PasswordField
             label="Password"
             value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              clearFieldError("password");
-            }}
+            onChange={(event) => handleFieldChange("password", event.target.value)}
+            onBlur={() => handleFieldBlur("password")}
             error={fieldErrors.password}
             disabled={loading}
             autoComplete={mode === "login" ? "current-password" : "new-password"}
@@ -306,10 +306,8 @@ export function AuthCard({ initialMode, onModeChange }: AuthCardProps) {
             <PasswordField
               label="Confirm password"
               value={confirmPassword}
-              onChange={(event) => {
-                setConfirmPassword(event.target.value);
-                clearFieldError("confirmPassword");
-              }}
+              onChange={(event) => handleFieldChange("confirmPassword", event.target.value)}
+              onBlur={() => handleFieldBlur("confirmPassword")}
               error={confirmError}
               disabled={loading}
               autoComplete="new-password"
