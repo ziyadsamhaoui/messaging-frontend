@@ -2,6 +2,11 @@
 
 import React, { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
+import {
+  SegmentedControl,
+  segmentedPanelId,
+  segmentedTabId,
+} from "@/components/ui/SegmentedControl";
 import { Avatar } from "@/components/ui/Avatar";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserSearchCombobox } from "@/components/ui/UserSearchCombobox";
@@ -23,38 +28,37 @@ interface ConnectionsModalProps {
   onClose: () => void;
 }
 
+const TABS_ID = "connections-tabs";
+
+const TABS = [
+  { value: "connections" as const, label: "Connections" },
+  { value: "requests" as const, label: "Requests" },
+];
+
 export function ConnectionsModal({ open, onClose }: ConnectionsModalProps) {
   const [tab, setTab] = useState<"connections" | "requests">("connections");
 
   return (
     <Modal open={open} onClose={onClose} title="Connections">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[rgba(95,141,78,0.2)] to-[rgba(164,190,123,0.1)] p-1">
-          <button
-            type="button"
-            onClick={() => setTab("connections")}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm transition-all ${
-              tab === "connections"
-                ? "bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] text-[var(--color-parchment)]"
-                : "text-[rgba(229,217,182,0.7)]"
-            }`}
-          >
-            Connections
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("requests")}
-            className={`flex-1 rounded-xl px-3 py-2 text-sm transition-all ${
-              tab === "requests"
-                ? "bg-gradient-to-r from-[var(--color-fern)] to-[var(--color-sage)] text-[var(--color-parchment)]"
-                : "text-[rgba(229,217,182,0.7)]"
-            }`}
-          >
-            Requests
-          </button>
-        </div>
+        <SegmentedControl
+          idBase={TABS_ID}
+          label="Connections sections"
+          options={TABS}
+          value={tab}
+          onChange={setTab}
+        />
 
-        {tab === "connections" ? <ConnectionsList /> : <RequestsList />}
+        {/* One panel whose contents swap, so every tab's aria-controls resolves. */}
+        <div
+          role="tabpanel"
+          id={segmentedPanelId(TABS_ID)}
+          aria-labelledby={segmentedTabId(TABS_ID, tab)}
+          tabIndex={-1}
+          className="focus-ring rounded-xl"
+        >
+          {tab === "connections" ? <ConnectionsList /> : <RequestsList />}
+        </div>
       </div>
     </Modal>
   );
