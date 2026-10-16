@@ -193,7 +193,24 @@ export function Popover({
   );
 }
 
-/** A row action inside a {@link Popover}: 32 px tall, full width, left aligned. */
+/**
+ * A row inside a {@link Popover}: 32 px tall, full width, left aligned. Exported
+ * separately so a menu entry that has to be a *link* can share the exact styling
+ * without nesting an anchor inside a button.
+ */
+export function popoverItemClasses({
+  danger,
+  className,
+}: { danger?: boolean; className?: string } = {}) {
+  return cn(
+    "focus-ring-light flex h-8 w-full items-center gap-2 rounded-lg px-2.5 font-ui text-[13px] font-medium transition-colors duration-150 motion-reduce:transition-none",
+    danger
+      ? "text-[var(--app-danger-on-light)] hover:bg-[rgba(143,42,27,0.12)]"
+      : "text-[var(--app-pane-text)] hover:bg-[var(--app-pane-hover)]",
+    className
+  );
+}
+
 export function PopoverItem({
   className,
   danger,
@@ -201,17 +218,7 @@ export function PopoverItem({
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { danger?: boolean }) {
   return (
-    <button
-      type="button"
-      className={cn(
-        "focus-ring-light flex h-8 w-full items-center gap-2 rounded-lg px-2.5 font-ui text-[13px] font-medium transition-colors duration-150 motion-reduce:transition-none",
-        danger
-          ? "text-[var(--app-danger-on-light)] hover:bg-[rgba(143,42,27,0.12)]"
-          : "text-[var(--app-pane-text)] hover:bg-[var(--app-pane-hover)]",
-        className
-      )}
-      {...props}
-    >
+    <button type="button" className={popoverItemClasses({ danger, className })} {...props}>
       {children}
     </button>
   );

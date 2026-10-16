@@ -285,6 +285,86 @@ button {
 }
 
 /*
+ * ---------------------------------------------------------------------------
+ * Sidebar rail
+ * ---------------------------------------------------------------------------
+ * The collapsed state lives on the document element (set before the first paint by
+ * the bootstrap script in `app/app/layout.tsx`), and the geometry is expressed from
+ * it in CSS. That is what keeps the rail from being painted at one width and then
+ * snapping to another once React hydrates: the width is right in the server's own
+ * HTML and stays right.
+ *
+ * 200 ms on the width and 120 ms on the labels, with `nowrap` + `overflow: hidden`
+ * so a label can never wrap or push the row while the rail animates.
+ */
+:root {
+  --app-rail-width: 248px;
+}
+
+html[data-sidebar="collapsed"] {
+  --app-rail-width: 72px;
+}
+
+.app-rail {
+  width: var(--app-rail-width);
+  overflow: hidden;
+  transition: width 200ms ease-out;
+}
+
+.app-rail-label {
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 120ms ease-out;
+}
+
+html[data-sidebar="collapsed"] .app-rail-label {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Destination rows are 48 px wide and centred when collapsed, full width otherwise. */
+.app-rail-row {
+  padding-inline: 12px;
+}
+
+html[data-sidebar="collapsed"] .app-rail-row {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* Tooltips belong to the collapsed rail: expanded rows already carry their title. */
+html[data-sidebar="expanded"] .app-rail .app-tooltip {
+  display: none;
+}
+
+/*
+ * Below 768 px the rail is always the icon rail: a bottom tab bar is the planned
+ * replacement for this breakpoint, and until then the navigation stays reachable
+ * without a hover-only affordance.
+ */
+@media (max-width: 767px) {
+  .app-rail {
+    width: 72px;
+  }
+
+  .app-rail-label {
+    display: none;
+  }
+
+  .app-rail-row {
+    justify-content: center;
+    padding-inline: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-rail,
+  .app-rail-label {
+    transition: none;
+  }
+}
+
+/*
  * Tooltip reveal. A delay on the way in and none on the way out is what keeps
  * tooltips from flickering while the pointer crosses a rail; it needs no timer in
  * JS, and the delay survives a keyboard focus because `:focus-visible` starts the
