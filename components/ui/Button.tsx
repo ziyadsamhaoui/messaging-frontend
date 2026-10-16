@@ -54,10 +54,13 @@ const VARIANTS: Record<ButtonTone, Record<ButtonVariant, string>> = {
     ghost:
       "bg-transparent text-[var(--color-text-secondary)] " +
       "hover:bg-[rgba(229,217,182,0.1)] hover:text-[var(--color-parchment)]",
+    // A solid shade instead of the gradient it used to carry — gradients on a
+    // control are out of the system. The parchment label on #8F2A1B measures
+    // 6.89:1, and the hover shade keeps it above 4.5:1.
     danger:
-      "bg-[linear-gradient(180deg,#B43625,#8F2A1B)] text-[var(--color-parchment-elevated)] " +
+      "bg-[#8F2A1B] text-[var(--color-parchment-elevated)] " +
       "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_-14px_rgba(4,16,8,0.8)] " +
-      "hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#C0392B,#A5301F)]",
+      "hover:-translate-y-0.5 hover:bg-[#A03020]",
   },
   light: {
     primary:
@@ -74,9 +77,9 @@ const VARIANTS: Record<ButtonTone, Record<ButtonVariant, string>> = {
       "bg-transparent text-[var(--color-text-on-light-soft)] " +
       "hover:bg-[rgba(40,84,48,0.08)] hover:text-[var(--color-text-on-light)]",
     danger:
-      "bg-[linear-gradient(180deg,#B43625,#8F2A1B)] text-[var(--color-parchment-elevated)] " +
+      "bg-[#8F2A1B] text-[var(--color-parchment-elevated)] " +
       "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_-14px_rgba(4,16,8,0.7)] " +
-      "hover:-translate-y-0.5 hover:bg-[linear-gradient(180deg,#C0392B,#A5301F)]",
+      "hover:-translate-y-0.5 hover:bg-[#A03020]",
   },
 };
 
