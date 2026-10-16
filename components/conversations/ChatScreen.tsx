@@ -385,6 +385,25 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         blocked={isBlocked}
         muted={isMuted}
         sending={sendMutation.isPending}
+        blockedAction={
+          isBlocked && otherParticipant ? (
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await unblockMutation.mutateAsync(otherParticipant.userId);
+                  markBlockedRoom(roomId, false);
+                  toast.push("User unblocked.", "success");
+                } catch (error) {
+                  toast.push(errorMessage(error), "error");
+                }
+              }}
+              className="focus-ring-light h-9 rounded-[var(--radius-control)] border border-[var(--app-pane-control-border)] px-3 font-ui text-[13px] font-medium text-[var(--app-pane-text)]"
+            >
+              Unblock
+            </button>
+          ) : undefined
+        }
       />
 
       {room?.type === "GROUP" && (
