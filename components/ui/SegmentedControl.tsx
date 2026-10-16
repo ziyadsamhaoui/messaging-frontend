@@ -2,6 +2,7 @@
 
 import React, { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { CountBadge } from "./Badge";
 
 /**
  * Geometry of the track, in pixels. These mirror the classes below (`p-1`,
@@ -16,6 +17,12 @@ const TRACK_GAP_PX = 8;
 export interface SegmentedOption<T extends string> {
   value: T;
   label: string;
+  /**
+   * Count shown as a badge inside the segment (pending requests, unread
+   * notifications). Zero or undefined renders no badge. The number is also added to
+   * the tab's accessible name, because a badge alone is not announced.
+   */
+  count?: number;
 }
 
 interface SegmentedControlProps<T extends string> {
@@ -159,6 +166,9 @@ export function SegmentedControl<T extends string>({
             id={segmentedTabId(idBase, option.value)}
             aria-selected={selected}
             aria-controls={segmentedPanelId(idBase)}
+            aria-label={
+              option.count && option.count > 0 ? `${option.label}, ${option.count}` : undefined
+            }
             tabIndex={tabIndex}
             onClick={() => {
               setFocusIndex(index);
@@ -179,6 +189,9 @@ export function SegmentedControl<T extends string>({
             )}
           >
             {option.label}
+            {option.count !== undefined && option.count > 0 && (
+              <CountBadge count={option.count} max={9} className="ml-1.5" />
+            )}
           </button>
         );
       })}

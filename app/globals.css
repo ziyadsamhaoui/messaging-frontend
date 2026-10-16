@@ -72,6 +72,63 @@
 
   /* ---------- Layout ---------- */
   --content-max: 72rem;
+
+  /*
+   * ---------------------------------------------------------------------------
+   * App screen (authenticated) semantic aliases
+   * ---------------------------------------------------------------------------
+   * Every value below REFERENCES an existing palette entry — no new brand colour is
+   * introduced. They exist because the app screen is built from four distinct
+   * surfaces (rail, panel, parchment pane, raised pane) and the same nominal
+   * "secondary" text has four different measured contrasts on them; naming the
+   * surface lets a component pick the value that was actually measured.
+   *
+   * The ratio after each comment is the measured pair, produced by
+   * `node scripts/contrast.mjs` (never estimated). Values that failed were not
+   * used: #A4BE7B on the panel is 4.26:1 and #8AAE76 on the panel 3.50:1, so
+   * neither is used as panel text; #C0392B on parchment is 3.87:1, so danger text
+   * on parchment uses the deeper #8F2A1B (already used by the danger button) at
+   * 5.94:1.
+   */
+  --app-rail: var(--color-bg); /* #1A3A20, darkest forest */
+  --app-rail-text: var(--color-text-secondary); /* 6.13:1 on rail */
+  --app-rail-text-strong: var(--color-text-primary); /* 8.94:1 on rail */
+  --app-rail-hover: rgba(229, 217, 182, 0.07);
+  --app-rail-active: rgba(164, 190, 123, 0.16); /* strong text on it 7.5:1 */
+
+  --app-panel: var(--color-surface); /* #285430, a shade lighter than the rail */
+  --app-panel-raised: var(--color-surface-2);
+  --app-panel-text: var(--color-text-primary); /* 6.22:1 on panel */
+  --app-panel-text-soft: var(--color-sage-light); /* #C2D6A0 5.59:1 on panel */
+  --app-panel-hover: rgba(229, 217, 182, 0.06);
+  --app-panel-active: rgba(164, 190, 123, 0.14);
+  --app-panel-divider: rgba(164, 190, 123, 0.16);
+  --app-panel-field: var(--color-field); /* #1D3E24 */
+  --app-panel-field-border: rgba(229, 217, 182, 0.7); /* 3.68:1 vs the panel */
+
+  --app-pane: var(--color-parchment); /* #E5D9B6 */
+  --app-pane-raised: var(--color-parchment-elevated); /* #F1E9D2 */
+  --app-pane-text: var(--color-text-on-light); /* 6.22:1 on parchment */
+  --app-pane-text-soft: var(--color-text-on-light-soft); /* #3F5E39 5.20:1 */
+  --app-pane-placeholder: rgba(40, 84, 48, 0.7); /* 4.64:1 on parchment */
+  --app-pane-divider: rgba(40, 84, 48, 0.28);
+  --app-pane-control-border: rgba(40, 84, 48, 0.7); /* 3.30:1 on parchment */
+  --app-pane-hover: rgba(40, 84, 48, 0.07);
+
+  --app-bubble-in: var(--color-parchment-elevated);
+  --app-bubble-in-border: rgba(40, 84, 48, 0.5);
+  --app-bubble-in-text: var(--color-text-on-light); /* 7.22:1 */
+  --app-bubble-out: var(--color-forest);
+  --app-bubble-out-text: var(--color-parchment); /* 6.22:1 */
+
+  --app-badge-fill: var(--color-sage); /* forest text on it 6.13:1 */
+  --app-badge-text: var(--color-forest-deep);
+  --app-danger-on-dark: var(--color-danger); /* #F7B3A8 4.98:1 on panel */
+  --app-danger-on-light: #8F2A1B; /* 5.94:1 on parchment; also the danger button shade */
+  --app-warning-dot: var(--color-warning);
+
+  --app-tooltip-surface: #234829; /* raised forest */
+  --app-tooltip-text: var(--color-text-primary); /* 7.2:1 */
 }
 
 @theme inline {
@@ -158,11 +215,103 @@ button {
  * outer ring from light surfaces; on dark surfaces the outer ring carries the
  * contrast. Measured against both the parchment and forest surfaces.
  */
-.focus-ring:focus-visible {
+/*
+ * The shared focus treatment above is tuned for dark surfaces (a dark inner ring
+ * plus a sage outer ring). On the parchment pane and its raised popovers the sage
+ * outer ring measures 1.6:1 against the surface, so the light surfaces get their
+ * own pair: a parchment inner ring and a forest outer ring, 6.22:1 on parchment.
+ */
+.focus-ring-light:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 2px var(--color-focus-offset),
-    0 0 0 4px var(--color-focus);
+    0 0 0 2px var(--app-pane),
+    0 0 0 4px var(--color-forest);
+}
+
+/*
+ * Themed thin scrollbars. The browser default is a light, wide bar that lands as
+ * a bright stripe down a dark panel (and vice versa), so every scrollable zone in
+ * the app opts into one of these two. Firefox uses the standard properties;
+ * Chromium/WebKit need the vendor pseudo-elements, which is why both are set.
+ */
+.app-scroll-dark {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(164, 190, 123, 0.45) transparent;
+}
+
+.app-scroll-dark::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-scroll-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scroll-dark::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: content-box;
+  background-color: rgba(164, 190, 123, 0.45);
+}
+
+.app-scroll-dark::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(164, 190, 123, 0.7);
+}
+
+.app-scroll-light {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(40, 84, 48, 0.4) transparent;
+}
+
+.app-scroll-light::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.app-scroll-light::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.app-scroll-light::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: content-box;
+  background-color: rgba(40, 84, 48, 0.4);
+}
+
+.app-scroll-light::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(40, 84, 48, 0.6);
+}
+
+/*
+ * Tooltip reveal. A delay on the way in and none on the way out is what keeps
+ * tooltips from flickering while the pointer crosses a rail; it needs no timer in
+ * JS, and the delay survives a keyboard focus because `:focus-visible` starts the
+ * same transition.
+ */
+.app-tooltip {
+  opacity: 0;
+  transform: translateX(-2px);
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
+  transition-delay: 0ms;
+}
+
+.app-tooltip-trigger:hover .app-tooltip,
+.app-tooltip-trigger:focus-visible .app-tooltip {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 300ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-tooltip,
+  .app-tooltip-trigger:hover .app-tooltip,
+  .app-tooltip-trigger:focus-visible .app-tooltip {
+    transition: none;
+  }
 }
 
 /*

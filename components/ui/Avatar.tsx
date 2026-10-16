@@ -1,41 +1,129 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { OnlineStatus } from "@/lib/types";
-import { presenceDotClass } from "@/lib/presence";
+import { presenceDotClass, presenceLabel } from "@/lib/presence";
 
-interface AvatarProps {
-  name: string;
-  className?: string;
-  status?: OnlineStatus;
+export type AvatarSize = 28 | 40 | 48 | 96;
+
+/*
+ * Tonal variants of the existing palette, one per person and stable across the
+ * app, so the same face is always the same colour. Each pair was measured with
+ * `scripts/contrast.mjs` and every one is at or above 4.5:1 for the initials:
+ * sage-light 8.04, sage 6.13, sage-muted 4.98, success 4.98, fern-dark 4.70,
+ * forest 7.22. A blank gradient circle is what this replaces — including for rooms,
+ * which fall back to the room's initials.
+ */
+const VARIANTS: Array<{ fill: string; text: string }> = [
+  { fill: "#C2D6A0", text: "#1A3A20" },
+  { fill: "#A4BE7B", text: "#1A3A20" },
+  { fill: "#8FAD62", text: "#1A3A20" },
+  { fill: "#7FB069", text: "#1A3A20" },
+  { fill: "#4A7040", text: "#F1E9D2" },
+  { fill: "#285430", text: "#F1E9D2" },
+];
+
+/** Stable, order-independent hash so the variant does not depend on list position. */
+function variantFor(seed: string) {
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) % 100_000;
+  }
+  return VARIANTS[hash % VARIANTS.length];
 }
 
-export function Avatar({ name, className, status }: AvatarProps) {
-  const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+function initialsFor(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const SIZES: Record<AvatarSize, string> = {
+  28: "h-7 w-7 text-[11px]",
+  40: "h-10 w-10 text-xs",
+  48: "h-12 w-12 text-sm",
+  96: "h-24 w-24 text-2xl",
+};
+
+const DOT_SIZES: Record<AvatarSize, string> = {
+  28: "h-2.5 w-2.5 border-2",
+  40: "h-3 w-3 border-2",
+  48: "h-3.5 w-3.5 border-2",
+  96: "h-5 w-5 border-[3px]",
+};
+
+/**
+ * Only absolute http(s) URLs are used as an image; anything else (a relative path,
+ * a `javascript:` string) falls back to initials rather than being injected into a
+ * CSS `url()`.
+ */
+function asImageUrl(src: string | null | undefined): string | null {
+  if (!src) return null;
+  try {
+    const parsed = new URL(src);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
+interface AvatarProps {
+  /** Display name: used for the initials and for colour selection when `seed` is absent. */
+  name: string;
+  /** Stable identity for the tonal variant (user id or room id). Defaults to `name`. */
+  seed?: string;
+  src?: string | null;
+  size?: AvatarSize;
+  status?: OnlineStatus;
+  className?: string;
+  /** Colour the presence dot is ringed with, so it sits on the surface behind it. */
+  presenceRing?: string;
+}
+
+export function Avatar({
+  name,
+  seed,
+  src,
+  size = 40,
+  status,
+  className,
+  presenceRing = "var(--app-panel)",
+}: AvatarProps) {
+  const variant = variantFor(seed ?? name);
+  const imageUrl = asImageUrl(src);
+  const initials = initialsFor(name);
 
   return (
-    <div className="relative flex-shrink-0">
-      <div
+    <span className={cn("relative inline-flex shrink-0", className)}>
+      <span
+        aria-hidden="true"
         className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[var(--color-sage)] to-[var(--color-fern)] text-xs font-semibold text-[var(--color-parchment)]",
-          className
+          "flex items-center justify-center overflow-hidden rounded-full font-ui font-semibold uppercase",
+          SIZES[size]
         )}
+        style={
+          imageUrl
+            ? { backgroundImage: `url(${JSON.stringify(imageUrl)})`, backgroundSize: "cover", backgroundPosition: "center" }
+            : { backgroundColor: variant.fill, color: variant.text }
+        }
       >
-        {initials || "?"}
-      </div>
+        {!imageUrl && initials}
+      </span>
       {status && (
-        <span
-          aria-label={`Presence: ${status}`}
-          className={cn(
-            "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-[rgba(26,58,32,0.9)]",
-            presenceDotClass[status]
-          )}
-        />
+        <>
+          <span
+            aria-hidden="true"
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 rounded-full",
+              DOT_SIZES[size],
+              presenceDotClass[status]
+            )}
+            style={{ borderColor: presenceRing }}
+          />
+          <span className="sr-only">{presenceLabel(status)}</span>
+        </>
       )}
-    </div>
+    </span>
   );
 }
