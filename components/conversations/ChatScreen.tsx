@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, UsersRound } from "lucide-react";
+import { ArrowLeft, MoreVertical, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useRooms } from "@/hooks/useRooms";
@@ -26,7 +26,7 @@ import { flattenPages } from "@/lib/pagination";
 import { errorMessage, isApiError } from "@/lib/errors";
 import { STOMP_DESTINATIONS } from "@/lib/stompClient";
 import { classifyRoomFrame } from "@/lib/realtimeFrames";
-import { formatLastSeen } from "@/lib/presence";
+import { derivePresence, formatLastSeen, presenceLabel } from "@/lib/presence";
 import { removeParticipant } from "@/lib/services/rooms";
 import { getUser } from "@/lib/services/users";
 import { CHATS_HREF } from "@/lib/appRoute";
@@ -37,6 +37,8 @@ import { MessageInput } from "@/components/chat/MessageInput";
 import { ParticipantsDrawer } from "@/components/chat/ParticipantsDrawer";
 import { MainPane } from "@/components/layout/MainPane";
 import { IconButton } from "@/components/ui/IconButton";
+import { Avatar } from "@/components/ui/Avatar";
+import { Popover, PopoverItem } from "@/components/ui/Popover";
 
 interface ActiveTyping {
   userId: string;
@@ -233,15 +235,28 @@ export function ChatScreen({ roomId }: { roomId: string }) {
 
   const title =
     room?.type === "DIRECT" ? otherUserQuery.data?.username ?? "Conversation" : room?.name ?? "Group";
-  const subtitle = typing
+  const peerLastSeen = otherUserQuery.data?.lastSeen ?? null;
+  const peerPresence = peerLastSeen ? derivePresence(peerLastSeen) : null;
+
+  /*
+   * One status line, in priority order: who is typing, then for a direct chat the
+   * other person's presence, then the member count for a group. The presence text
+   * only claims what `lastSeen` supports — when the profile has not loaded yet the
+   * line stays empty rather than asserting "Offline".
+   */
+  const statusLine = typing
     ? room?.type === "GROUP"
       ? `${typing.label} is typing…`
       : "typing…"
     : room?.type === "DIRECT"
-      ? otherUserQuery.data?.lastSeen
-        ? formatLastSeen(otherUserQuery.data.lastSeen)
-        : "Offline"
-      : `${participants.length} member${participants.length === 1 ? "" : "s"}`;
+      ? peerPresence === "ONLINE"
+        ? "Online"
+        : peerLastSeen
+          ? `${presenceLabel(peerPresence ?? "OFFLINE")} · ${formatLastSeen(peerLastSeen)}`
+          : ""
+      : room
+        ? `${participants.length} member${participants.length === 1 ? "" : "s"}`
+        : "";
 
   const draft = drafts[roomId] ?? "";
 
@@ -260,62 +275,59 @@ export function ChatScreen({ roomId }: { roomId: string }) {
       <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[var(--app-pane-divider)] px-4">
         <Link
           href={CHATS_HREF}
-          className="focus-ring-light flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] text-[var(--app-pane-text-soft)] md:hidden"
+          className="focus-ring-light flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-[var(--app-pane-text-soft)] md:hidden"
           aria-label="Back to conversations"
         >
           <ArrowLeft size={20} strokeWidth={1.75} aria-hidden="true" />
         </Link>
+        <Avatar
+          name={title}
+          seed={room?.type === "DIRECT" ? otherParticipant?.userId ?? roomId : roomId}
+          src={room?.type === "DIRECT" ? otherUserQuery.data?.profilePictureUrl : undefined}
+          size={40}
+          status={room?.type === "DIRECT" ? peerPresence ?? undefined : undefined}
+          presenceRing="var(--app-pane)"
+        />
         <div className="min-w-0">
           <h1 className="truncate font-display text-[17px] font-semibold text-[var(--app-pane-text)]">
             {title}
           </h1>
-          <p className="truncate font-ui text-[13px] text-[var(--app-pane-text-soft)]">{subtitle}</p>
+          {statusLine && (
+            <p className="truncate font-ui text-[13px] text-[var(--app-pane-text-soft)]">{statusLine}</p>
+          )}
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          {room?.type === "GROUP" && (
-            // The room details panel is the destination for this in the rework; until
-            // it lands, the member list keeps its existing entry point rather than
-            // becoming unreachable.
-            <IconButton
-              surface="pane"
-              size="sm"
-              label="Room details"
-              tooltip="Room details"
-              onClick={() => setMembersOpen(true)}
-            >
-              <UsersRound size={20} strokeWidth={1.75} aria-hidden="true" />
-            </IconButton>
-          )}
-          {room?.type === "DIRECT" && otherParticipant && (
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  if (isBlocked) {
-                    await unblockMutation.mutateAsync(otherParticipant.userId);
-                    markBlockedRoom(roomId, false);
-                    toast.push("User unblocked.", "success");
-                  } else {
-                    await blockMutation.mutateAsync(otherParticipant.userId);
-                    markBlockedRoom(roomId, true);
-                    toast.push("User blocked.", "success");
-                  }
-                } catch (error) {
-                  toast.push(errorMessage(error), "error");
-                }
-              }}
-              className="focus-ring-light rounded-[var(--radius-control)] border border-[var(--app-pane-control-border)] px-3 py-1.5 font-ui text-[13px] text-[var(--app-pane-text)]"
-            >
-              {isBlocked ? "Unblock" : "Block"}
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={handleLeave}
-            className="focus-ring-light rounded-[var(--radius-control)] border border-[var(--app-pane-control-border)] px-3 py-1.5 font-ui text-[13px] text-[var(--app-pane-text)]"
+        <div className="ml-auto flex items-center gap-1">
+          <IconButton
+            surface="pane"
+            size="sm"
+            label="Room details"
+            tooltip="Room details"
+            onClick={() => setMembersOpen(true)}
           >
-            Leave
-          </button>
+            <UsersRound size={20} strokeWidth={1.75} aria-hidden="true" />
+          </IconButton>
+          <RoomMenu
+            isDirect={room?.type === "DIRECT"}
+            isGroup={room?.type === "GROUP"}
+            isBlocked={isBlocked}
+            onToggleBlock={async () => {
+              if (!otherParticipant) return;
+              try {
+                if (isBlocked) {
+                  await unblockMutation.mutateAsync(otherParticipant.userId);
+                  markBlockedRoom(roomId, false);
+                  toast.push("User unblocked.", "success");
+                } else {
+                  await blockMutation.mutateAsync(otherParticipant.userId);
+                  markBlockedRoom(roomId, true);
+                  toast.push("User blocked.", "success");
+                }
+              } catch (error) {
+                toast.push(errorMessage(error), "error");
+              }
+            }}
+            onLeave={handleLeave}
+          />
         </div>
       </header>
 
@@ -383,5 +395,102 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         />
       )}
     </MainPane>
+  );
+}
+
+/**
+ * The chat's overflow actions.
+ *
+ * Only what the API supports is offered: blocking is a direct-chat action, leaving
+ * is a group action, and leaving asks before it acts because it cannot be undone
+ * from the UI. There is deliberately no "mute notifications" entry — muting is the
+ * participant `isMuted` flag, which the backend uses to stop *you sending*, and
+ * only an owner or admin may change it, so offering it here would misrepresent what
+ * it does.
+ */
+function RoomMenu({
+  isDirect,
+  isGroup,
+  isBlocked,
+  onToggleBlock,
+  onLeave,
+}: {
+  isDirect: boolean;
+  isGroup: boolean;
+  isBlocked: boolean;
+  onToggleBlock: () => Promise<void>;
+  onLeave: () => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
+
+  function close() {
+    setOpen(false);
+    setConfirming(false);
+  }
+
+  if (!isDirect && !isGroup) return null;
+
+  return (
+    <>
+      <IconButton
+        ref={setTrigger}
+        surface="pane"
+        size="sm"
+        label="More actions"
+        tooltip="More actions"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => (open ? close() : setOpen(true))}
+      >
+        <MoreVertical size={20} strokeWidth={1.75} aria-hidden="true" />
+      </IconButton>
+      <Popover open={open} onClose={close} anchor={trigger} label="Chat actions" align="end">
+        {confirming ? (
+          <div className="flex flex-col gap-2 p-1">
+            <p className="font-ui text-[13px] text-[var(--app-pane-text)]">Leave this chat?</p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  void onLeave();
+                }}
+                className="focus-ring-light h-8 rounded-lg bg-[var(--app-danger-on-light)] px-2.5 font-ui text-[13px] font-semibold text-[var(--color-parchment-elevated)]"
+              >
+                Leave
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="focus-ring-light h-8 rounded-lg border border-[var(--app-pane-control-border)] px-2.5 font-ui text-[13px] text-[var(--app-pane-text)]"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {isDirect && (
+              <PopoverItem
+                danger={!isBlocked}
+                onClick={() => {
+                  close();
+                  void onToggleBlock();
+                }}
+              >
+                {isBlocked ? "Unblock" : "Block"}
+              </PopoverItem>
+            )}
+            {isGroup && (
+              <PopoverItem danger onClick={() => setConfirming(true)}>
+                Leave chat
+              </PopoverItem>
+            )}
+          </>
+        )}
+      </Popover>
+    </>
   );
 }

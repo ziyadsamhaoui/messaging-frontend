@@ -59,6 +59,12 @@ interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> 
   tone?: "default" | "danger";
   /** Promote to a 44 px target below the 768 px breakpoint. */
   touch?: boolean;
+  /**
+   * React 19 passes `ref` as a normal prop; callers that need to anchor a popover
+   * to this control (or return focus to it) use a callback ref, not `useRef` read
+   * during render.
+   */
+  ref?: React.Ref<HTMLButtonElement>;
   children: React.ReactNode;
 }
 
