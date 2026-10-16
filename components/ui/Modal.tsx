@@ -132,23 +132,24 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         className={cn(
-          "w-full max-w-lg rounded-3xl border border-[rgba(164,190,123,0.2)] bg-gradient-to-br from-[rgba(40,84,48,0.95)] to-[rgba(26,58,32,0.95)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.4)] focus:outline-none",
+          // A solid raised-forest surface with one border: the gradient fill and the
+          // gradient-clipped title this dialog used to carry are not part of the
+          // design system, and the flat panel also keeps its heading at a measured
+          // 7.9:1 instead of varying with the gradient behind it.
+          "w-full max-w-lg rounded-3xl border border-[rgba(164,190,123,0.25)] bg-[var(--color-surface-raised)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.45)] focus:outline-none",
           className
         )}
       >
         <div className="flex items-center justify-between">
           {title && (
-            <h3
-              id={titleId}
-              className="text-lg font-semibold text-transparent bg-gradient-to-r from-[var(--color-parchment)] to-[var(--color-sage)] bg-clip-text"
-            >
+            <h3 id={titleId} className="font-display text-lg font-semibold text-[var(--app-panel-text)]">
               {title}
             </h3>
           )}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full px-2 py-1 text-[rgba(164,190,123,0.85)] hover:text-[var(--color-parchment)]"
+            className="focus-ring flex h-8 w-8 items-center justify-center rounded-full text-[var(--app-panel-text-soft)] hover:bg-[var(--app-panel-hover)] hover:text-[var(--app-panel-text)]"
             aria-label="Close modal"
           >
             <X className="h-4 w-4" aria-hidden="true" />
