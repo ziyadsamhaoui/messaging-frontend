@@ -342,6 +342,8 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         messages={messages}
         currentUserId={currentUserId}
         roomCreatedById={room?.createdBy}
+        isGroupRoom={room?.type === "GROUP"}
+        typingLabel={typing ? (room?.type === "GROUP" ? typing.label : "Someone") : null}
         loading={messagesQuery.isLoading}
         hasMore={Boolean(messagesQuery.hasNextPage)}
         onLoadMore={() => messagesQuery.fetchNextPage()}
