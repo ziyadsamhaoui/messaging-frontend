@@ -1,4 +1,7 @@
 import {
+  ConnectionAcceptedFrame,
+  InvitationAcceptedFrame,
+  InvitationSentFrame,
   MessageDeletedFrame,
   ParticipantFrame,
   ReactionFrame,
@@ -17,6 +20,82 @@ const PARTICIPANT_EVENTS = new Set([
   "PARTICIPANT_MUTED",
   "PARTICIPANT_UNMUTED",
 ]);
+
+/*
+ * Frames delivered to `/topic/users/{id}`: the ones the sender or the recipient
+ * needs regardless of which room is open. Only the three events the realtime
+ * gateway actually forwards are recognised — it does not fan out
+ * `INVITATION_REJECTED` or `MESSAGE_DELETED` to a user queue, so a decline reaches
+ * the sender as "no longer pending" on the next refetch and nothing here invents a
+ * finer-grained signal.
+ */
+export type UserFrame =
+  | { kind: "invitation-sent"; frame: InvitationSentFrame }
+  | { kind: "invitation-accepted"; frame: InvitationAcceptedFrame }
+  | { kind: "connection-accepted"; frame: ConnectionAcceptedFrame };
+
+export function classifyUserFrame(raw: unknown): UserFrame | null {
+  if (!raw || typeof raw !== "object") return null;
+  const value = raw as Record<string, unknown>;
+  const asString = (candidate: unknown): string | null =>
+    typeof candidate === "string" ? candidate : null;
+
+  if (value.eventType === "INVITATION_SENT") {
+    const invitationId = asString(value.invitationId);
+    const roomId = asString(value.roomId);
+    if (!invitationId || !roomId) return null;
+    return {
+      kind: "invitation-sent",
+      frame: {
+        eventType: "INVITATION_SENT",
+        invitationId,
+        roomId,
+        invitedId: asString(value.invitedId) ?? "",
+        inviterId: asString(value.inviterId) ?? "",
+        roomName: asString(value.roomName),
+        inviterUsername: asString(value.inviterUsername),
+        sentAt: asString(value.sentAt),
+      },
+    };
+  }
+
+  if (value.eventType === "INVITATION_ACCEPTED") {
+    const invitationId = asString(value.invitationId);
+    const roomId = asString(value.roomId);
+    if (!invitationId || !roomId) return null;
+    return {
+      kind: "invitation-accepted",
+      frame: {
+        eventType: "INVITATION_ACCEPTED",
+        invitationId,
+        roomId,
+        invitedId: asString(value.invitedId),
+        inviterId: asString(value.inviterId) ?? "",
+        invitedUsername: asString(value.invitedUsername),
+        acceptedAt: asString(value.acceptedAt),
+      },
+    };
+  }
+
+  if (value.eventType === "USER_CONNECTION_ACCEPTED") {
+    const userIdA = asString(value.userIdA);
+    const userIdB = asString(value.userIdB);
+    if (!userIdA || !userIdB) return null;
+    return {
+      kind: "connection-accepted",
+      frame: {
+        eventType: "USER_CONNECTION_ACCEPTED",
+        userIdA,
+        userIdB,
+        userAUsername: asString(value.userAUsername),
+        userBUsername: asString(value.userBUsername),
+        acceptedAt: asString(value.acceptedAt),
+      },
+    };
+  }
+
+  return null;
+}
 
 export function classifyRoomFrame(raw: unknown): RoomFrame | null {
   if (!raw || typeof raw !== "object") return null;
