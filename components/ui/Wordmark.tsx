@@ -26,7 +26,7 @@ export function Wordmark({
     <Link
       href={href}
       className={cn(
-        "focus-ring flex items-center gap-2.5 rounded-[var(--radius-control)]",
+        "focus-ring flex items-center gap-2.5 rounded-[var(--radius-control)] ml-0 max-w-fit",
         className
       )}
     >

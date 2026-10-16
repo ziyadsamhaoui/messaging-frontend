@@ -85,12 +85,21 @@
   box-sizing: border-box;
 }
 
-html,
-body {
+/*
+ * `height: 100%` on BOTH elements used to squeeze tall pages. The body is a flex
+ * column, so a page root with `min-h-dvh` became a flex item with `flex-shrink: 1`
+ * and an overridden automatic minimum size: it was squashed to the viewport height,
+ * and because those roots carry `overflow-hidden`, everything below the fold was
+ * clipped and unreachable — `/why` reported scrollHeight === clientHeight and could
+ * not be scrolled at all. A minimum height keeps short pages filling the viewport
+ * while letting tall ones grow and scroll.
+ */
+html {
   height: 100%;
 }
 
 body {
+  min-height: 100%;
   background: var(--color-bg);
   color: var(--color-text-primary);
   font-family: var(--font-body), ui-sans-serif, system-ui;
@@ -120,6 +129,22 @@ body::before {
     color: inherit;
     text-decoration: none;
   }
+
+  /*
+   * Tailwind v4's preflight leaves buttons on the default cursor, so every button,
+   * tab and label in the app showed an arrow while anchors showed a hand. This is in
+   * `@layer base` on purpose: a `cursor-not-allowed` or `cursor-default` utility must
+   * still be able to win over it, which it cannot do against an unlayered rule.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not(:disabled),
+  label[for],
+  summary,
+  select:not(:disabled),
+  a[href] {
+    cursor: pointer;
+  }
 }
 
 input,
@@ -138,6 +163,77 @@ button {
   box-shadow:
     0 0 0 2px var(--color-focus-offset),
     0 0 0 4px var(--color-focus);
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Cursor-driven effects (shared by the marketing and authentication pages)
+ * ---------------------------------------------------------------------------
+ * Both read their pointer position from the same custom properties, written on the
+ * element from a rAF-throttled handler so a pointermove never triggers a render.
+ * Geometry (position, inset, radius, pointer-events) stays in utilities on the
+ * element itself; these classes only paint.
+ */
+
+/* The grid revealed in a soft circle around the cursor. */
+.cursor-grid {
+  --cursor-grid-line: rgba(229, 217, 182, 0.3);
+  --cursor-grid-cell: 44px;
+  --cursor-grid-radius: 260px;
+  background-image:
+    linear-gradient(to right, var(--cursor-grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--cursor-grid-line) 1px, transparent 1px);
+  background-size: var(--cursor-grid-cell) var(--cursor-grid-cell);
+  /* The feathered stops are what "blur" the reveal at its edges. The mask is one
+     pass of the element's own box (no tiling); only the grid background repeats. */
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: radial-gradient(
+    circle var(--cursor-grid-radius) at var(--cursor-grid-x, -1000px) var(--cursor-grid-y, -1000px),
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.55) 46%,
+    rgba(0, 0, 0, 0) 72%
+  );
+  mask-image: radial-gradient(
+    circle var(--cursor-grid-radius) at var(--cursor-grid-x, -1000px) var(--cursor-grid-y, -1000px),
+    rgba(0, 0, 0, 1) 0%,
+    rgba(0, 0, 0, 0.55) 46%,
+    rgba(0, 0, 0, 0) 72%
+  );
+}
+
+/* On the parchment pages the lines have to go the other way to stay visible. */
+.cursor-grid--light {
+  --cursor-grid-line: rgba(40, 84, 48, 0.22);
+}
+
+/* A soft pool of light that tracks the pointer inside a card. */
+.spotlight-glow {
+  background-image: radial-gradient(
+    circle 240px at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(255, 255, 255, 0.55),
+    rgba(164, 190, 123, 0.2) 44%,
+    transparent 70%
+  );
+  opacity: var(--spot-opacity, 0);
+  transition: opacity 220ms ease-out;
+}
+
+/* A one-pixel border that lights up around the pointer: the gradient is masked to
+   the padding box, so only the 1px ring survives. */
+.spotlight-ring {
+  padding: 1px;
+  background-image: radial-gradient(
+    circle 200px at var(--spot-x, 50%) var(--spot-y, 50%),
+    rgba(95, 141, 78, 0.9),
+    rgba(95, 141, 78, 0) 66%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: var(--spot-opacity, 0);
+  transition: opacity 220ms ease-out;
 }
 
 @keyframes fade-in {
@@ -200,55 +296,6 @@ button {
   animation: shimmer 1.5s linear infinite;
 }
 
-@keyframes float-y {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes float-y-slow {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(12px);
-  }
-}
-
-/*
- * A third float with a little lateral drift and rotation, so a cluster of
- * bubbles never looks like it is moving on rails.
- */
-@keyframes float-drift {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) rotate(0deg);
-  }
-  33% {
-    transform: translate3d(5px, -9px, 0) rotate(-0.7deg);
-  }
-  66% {
-    transform: translate3d(-5px, 7px, 0) rotate(0.7deg);
-  }
-}
-
-.animate-float {
-  animation: float-y 6s ease-in-out infinite;
-}
-
-.animate-float-slow {
-  animation: float-y-slow 9s ease-in-out infinite;
-}
-
-.animate-float-drift {
-  animation: float-drift 11s ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -259,10 +306,7 @@ button {
   .animate-fade-in,
   .animate-fade-up,
   .animate-shake,
-  .animate-shimmer,
-  .animate-float,
-  .animate-float-slow,
-  .animate-float-drift {
+  .animate-shimmer {
     animation: none;
   }
 }

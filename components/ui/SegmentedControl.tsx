@@ -3,6 +3,16 @@
 import React, { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Geometry of the track, in pixels. These mirror the classes below (`p-1`,
+ * `gap-2`) and are what let the moving indicator be positioned in CSS rather
+ * than by measuring the DOM: the offset and width of a segment are then correct
+ * on the very first paint, with no measurement effect, no ref read during render
+ * and no flash of an unpositioned pill.
+ */
+const TRACK_PADDING_PX = 4;
+const TRACK_GAP_PX = 8;
+
 export interface SegmentedOption<T extends string> {
   value: T;
   label: string;
@@ -41,7 +51,8 @@ export function segmentedPanelId(idBase: string) {
  * Conventions are the caller's original shape — `rounded-2xl` track, `p-1`, a
  * `rounded-xl` segment on a `--color-surface-2` track that is a shade lighter
  * than the card. The active segment is a SOLID cream fill: no gradient, per the
- * design constraints.
+ * design constraints. It is drawn by one shared pill that slides between
+ * segments, so switching animates instead of snapping.
  *
  * Semantics are a manual-activation tab list: arrows/Home/End move focus, and
  * Enter or Space activates the focused tab. Focus never leaves the control, and
@@ -59,6 +70,16 @@ export function SegmentedControl<T extends string>({
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
   const selectedIndex = options.findIndex((option) => option.value === value);
+  const count = options.length;
+
+  /*
+   * Both consumers (the auth card and the Connections modal) rely on the track's
+   * own `p-1`/`gap-2`, so a segment is `(100% - padding - gaps) / count` wide and
+   * `index` segments over is `index * (100% + gap)`. Expressed against the pill's
+   * own width, that needs no measurement at all.
+   */
+  const pillWidth = `calc((100% - ${TRACK_PADDING_PX * 2 + TRACK_GAP_PX * (count - 1)}px) / ${count})`;
+  const pillOffset = `calc(${Math.max(selectedIndex, 0)} * (100% + ${TRACK_GAP_PX}px))`;
 
   const moveFocus = useCallback(
     (index: number) => {
@@ -105,10 +126,24 @@ export function SegmentedControl<T extends string>({
       role="tablist"
       aria-label={label}
       className={cn(
-        "flex h-11 w-full items-center gap-2 rounded-2xl bg-[var(--color-surface-2)] p-1",
+        "relative flex h-11 w-full items-center gap-2 rounded-2xl bg-[var(--color-surface-2)] p-1",
         className
       )}
     >
+      {/*
+        The sliding active-segment fill. Purely decorative — the selected state is
+        carried by `aria-selected` and the tabs' own foreground colour — so it is
+        hidden from assistive tech and never takes pointer events. `motion-reduce`
+        switches it instantly, like every other transition in the app.
+      */}
+      <div
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute top-1 bottom-1 left-1 rounded-xl bg-[var(--color-parchment)]",
+          "transition-[transform,width] duration-200 ease-out motion-reduce:transition-none"
+        )}
+        style={{ width: pillWidth, transform: `translateX(${pillOffset})` }}
+      />
       {options.map((option, index) => {
         const selected = option.value === value;
         const tabIndex =
@@ -135,10 +170,11 @@ export function SegmentedControl<T extends string>({
               // The interface face is correct for a control, but the unlayered
               // `button { font-family: inherit }` rule in globals.css outranks a
               // plain utility, so the important modifier is what makes it land.
-              "focus-ring flex h-full flex-1 items-center justify-center rounded-xl px-3 font-ui! text-sm font-medium",
+              // `z-10` keeps the label above the sliding fill.
+              "focus-ring relative z-10 flex h-full flex-1 items-center justify-center rounded-xl px-3 font-ui! text-sm font-medium",
               "transition-colors duration-200 motion-reduce:transition-none",
               selected
-                ? "bg-[var(--color-parchment)] text-[var(--color-forest)]"
+                ? "bg-transparent text-[var(--color-forest)]"
                 : "bg-transparent text-[var(--color-sage-light)] hover:text-[var(--color-parchment)]"
             )}
           >

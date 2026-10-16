@@ -50,6 +50,20 @@ export interface AuthValues {
   confirmPassword: string;
 }
 
+/**
+ * The one email rule, shared by sign-in, registration, and password recovery, so
+ * the three cannot drift apart. Mirrors `@NotBlank @Email @Size(max = 255)`.
+ */
+export function validateEmail(email: string): string | undefined {
+  const value = email.trim();
+  if (!value) return "Email address is required.";
+  if (value.length > AUTH_RULES.emailMaxLength) {
+    return `Email address must be ${AUTH_RULES.emailMaxLength} characters or fewer.`;
+  }
+  if (!EMAIL_PATTERN.test(value)) return "Enter a valid email address.";
+  return undefined;
+}
+
 export function validateField(
   field: keyof AuthValues,
   values: AuthValues,
@@ -57,13 +71,7 @@ export function validateField(
 ): string | undefined {
   switch (field) {
     case "email": {
-      const email = values.email.trim();
-      if (!email) return "Email address is required.";
-      if (email.length > AUTH_RULES.emailMaxLength) {
-        return `Email address must be ${AUTH_RULES.emailMaxLength} characters or fewer.`;
-      }
-      if (!EMAIL_PATTERN.test(email)) return "Enter a valid email address.";
-      return undefined;
+      return validateEmail(values.email);
     }
     case "username": {
       if (mode !== "register") return undefined;
@@ -124,6 +132,111 @@ function formatLockoutTime(message: string): string | null {
   const at = new Date(match[1]);
   if (Number.isNaN(at.getTime())) return null;
   return at.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Password recovery
+ * ---------------------------------------------------------------------------
+ * Two screens use these: the request screen (`/forgot-password`) and the screen
+ * the emailed link opens (`/reset-password`). Both read their rules from the same
+ * contract constants above, and the reset password rule is the same
+ * `@Size(min = 8, max = 128)` the Auth service enforces on `ResetPasswordRequest`.
+ */
+export interface RecoveryFieldErrors {
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+}
+
+export type RecoveryPhase = "forgot" | "reset";
+
+export interface RecoveryError {
+  fieldErrors: RecoveryFieldErrors;
+  formError: string | null;
+  /** The server rejected the token itself, so the UI can offer a fresh link. */
+  invalidLink?: boolean;
+}
+
+/** The same rule the Auth service applies to a new password. */
+export function validateNewPassword(password: string): string | undefined {
+  if (!password) return "Password is required.";
+  if (password.length < AUTH_RULES.passwordMinLength) {
+    return `Password must be at least ${AUTH_RULES.passwordMinLength} characters.`;
+  }
+  if (password.length > AUTH_RULES.passwordMaxLength) {
+    return `Password must be ${AUTH_RULES.passwordMaxLength} characters or fewer.`;
+  }
+  return undefined;
+}
+
+/** Reuses the wording of the registration confirmation field. */
+export function validatePasswordConfirmation(
+  password: string,
+  confirmPassword: string
+): string | undefined {
+  if (!confirmPassword) return "Please confirm your password.";
+  if (confirmPassword !== password) return "Passwords do not match.";
+  return undefined;
+}
+
+/** A generic retry line for a failure that carries no usable server message. */
+const RECOVERY_FALLBACK = "Something went wrong. Please try again.";
+
+/**
+ * Maps a thrown value from either recovery endpoint.
+ *
+ * Unlike the sign-in path, these endpoints DO carry meaningful server text for the
+ * two cases the copy depends on: the reset email rate limiter (429) explains which
+ * limit was hit, and the mail circuit breaker (502) says delivery is unavailable.
+ * Where the server is silent, a fixed line is used — no retry duration is invented.
+ */
+export function mapRecoveryError(error: unknown, phase: RecoveryPhase): RecoveryError {
+  const apiError: ApiError = toApiError(error);
+  const fieldErrors: RecoveryFieldErrors = {};
+  const emailMessage = apiError.fieldErrors.email;
+  const passwordMessage = apiError.fieldErrors.password ?? apiError.fieldErrors.newPassword;
+  if (emailMessage) fieldErrors.email = emailMessage;
+  if (passwordMessage) fieldErrors.password = passwordMessage;
+  if (Object.keys(fieldErrors).length > 0) return { fieldErrors, formError: null };
+
+  // The reset token is the credential on this endpoint: a 401 means the link is
+  // invalid, expired, or already used — not that a password was wrong.
+  if (phase === "reset" && (apiError.status === 401 || apiError.kind === "unauthenticated")) {
+    return {
+      fieldErrors: {},
+      formError: "This reset link is no longer valid. Request a new one to continue.",
+      invalidLink: true,
+    };
+  }
+
+  if (apiError.status === 502) {
+    return {
+      fieldErrors: {},
+      formError: "We could not send the reset email right now. Please try again shortly.",
+    };
+  }
+
+  switch (apiError.kind) {
+    case "rate-limit":
+      // The Auth service explains the cooldown or the hourly limit here, so its
+      // message is shown as-is rather than a duration invented on the client.
+      return { fieldErrors: {}, formError: apiError.message.trim() || "Too many attempts. Please wait a moment and try again." };
+    case "validation":
+      // The service returns raw bean-validation text ("size must be between 8 and
+      // 128"). Rather than attribute it to a field the client already validated,
+      // the requirement is restated from the same contract constants.
+      return phase === "reset"
+        ? {
+            fieldErrors: {},
+            formError: `Your new password must be between ${AUTH_RULES.passwordMinLength} and ${AUTH_RULES.passwordMaxLength} characters.`,
+          }
+        : { fieldErrors: {}, formError: RECOVERY_FALLBACK };
+    case "unavailable":
+      return { fieldErrors: {}, formError: "The service is temporarily unavailable. Please try again." };
+    default:
+      return { fieldErrors: {}, formError: RECOVERY_FALLBACK };
+  }
 }
 
 /**

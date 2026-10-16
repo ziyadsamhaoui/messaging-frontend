@@ -1,8 +1,9 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 import { buttonClasses } from "@/components/ui/Button";
 import { Wordmark } from "@/components/ui/Wordmark";
 
-/**
+/**class
  * The public header: cream bar, mark pinned to the far left, actions to the far
  * right, both bleeding to the viewport edges rather than sitting in the hero
  * container.
@@ -21,12 +22,24 @@ export function SiteHeader() {
   return (
     <header className="relative z-20 border-b border-[rgba(40,84,48,0.25)] bg-[var(--color-parchment)]">
       <div className="flex h-[68px] w-full items-center justify-between gap-4 px-4 sm:px-6">
-        <Wordmark hideNameOnMobile className={HEADER_WORDMARK_SIZE} />
+        <Wordmark hideNameOnMobile className={cn(HEADER_WORDMARK_SIZE, "ml-0")} />
+        {/*
+          A matched pair of pills: a bordered, translucent "Log in" and the solid
+          "Sign up". "Sign up" is the primary action, so it leads to /register —
+          previously both controls pointed at /login and new visitors had no way to
+          reach the registration form from the public site.
+        */}
         <nav aria-label="Primary" className="flex items-center gap-2">
-          <Link href="/login" className={buttonClasses({ variant: "ghost", tone: "light" })}>
+          <Link
+            href="/login"
+            className={buttonClasses({ variant: "secondary", tone: "light", className: "rounded-full" })}
+          >
             Log in
           </Link>
-          <Link href="/login" className={buttonClasses({ variant: "primary", tone: "light" })}>
+          <Link
+            href="/register"
+            className={buttonClasses({ variant: "primary", tone: "light", className: "rounded-full" })}
+          >
             Sign up
           </Link>
         </nav>

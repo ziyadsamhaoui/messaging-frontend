@@ -1,60 +1,33 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { AuthQuietLink, FormMessageRegion } from "@/components/auth/AuthFormParts";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PasswordField } from "@/components/ui/PasswordField";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import {
   SegmentedControl,
   segmentedPanelId,
   segmentedTabId,
 } from "@/components/ui/SegmentedControl";
+import {
+  AUTH_CARD_SURFACE,
+  AUTH_CARD_WIDTH,
+  AUTH_FIELD_CLASS,
+} from "@/components/auth/AuthLayout";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/components/ui/Toast";
 import {
-  AUTH_RULES,
   AuthFieldErrors,
   AuthMode,
   AuthValues,
-  PASSWORD_RULE_HINT,
   mapAuthError,
   validateField,
   validateForm,
 } from "@/lib/authValidation";
-
-/*
- * Labels already render in Source Sans 3 (the interface/chrome face), but the
- * fields did not: `globals.css` still carries an UNLAYERED
- * `input, textarea, button { font-family: inherit }` rule, and unlayered
- * declarations outrank every layered Tailwind utility, so the `font-ui` class
- * that Input already applies was silently losing to the inherited body serif.
- * That left labels sans and typed text/placeholders serif in the same form.
- *
- * Scoped here on purpose: moving that rule into `@layer base` would change every
- * input, textarea and <button> in the app, which is outside this task. `!` is
- * needed because no ordinary utility can outrank an unlayered declaration, and
- * 16px keeps mobile browsers from zooming on focus.
- */
-const AUTH_FIELD_CLASS = "font-ui! text-[16px]";
-
-/*
- * Four levels for the meter's four segments. The written label — not the hue — is
- * what carries the meaning, so strength is never communicated by colour alone.
- *
- * No new colour is introduced here, but the level that reaches for
- * `--color-success` keeps that token on the 4px BAR only: its 4.10:1 against the
- * card misses the 4.5:1 text floor, so the Strong label uses `--color-sage-light`
- * (6.61:1) instead, staying inside the existing palette.
- */
-const STRENGTH_LEVELS = [
-  { label: "Weak", bar: "bg-[var(--color-danger)]", text: "text-[var(--color-danger)]" },
-  { label: "Fair", bar: "bg-[var(--color-warning)]", text: "text-[var(--color-warning)]" },
-  { label: "Good", bar: "bg-[var(--color-sage)]", text: "text-[var(--color-sage)]" },
-  { label: "Strong", bar: "bg-[var(--color-success)]", text: "text-[var(--color-sage-light)]" },
-];
 
 const TABS_ID = "auth-mode";
 
@@ -113,24 +86,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   const usernameError = mode === "register" ? fieldErrors.username : undefined;
   const confirmError = mode === "register" ? fieldErrors.confirmPassword : undefined;
   const values: AuthValues = { email, username, password, confirmPassword };
-
-  /*
-   * The backend only enforces `@Size(min = 8, max = 128)` on registration, so the
-   * extra criteria here guide without pretending to be requirements, and the score
-   * is clamped to at least one level whenever anything has been typed: a bare grey
-   * bar with no label would be ambiguous.
-   */
-  const strengthLevel = useMemo(() => {
-    if (!password) return 0;
-    let score = 0;
-    if (password.length >= AUTH_RULES.passwordMinLength) score += 1;
-    if (/[A-Z]/.test(password)) score += 1;
-    if (/[0-9]/.test(password)) score += 1;
-    if (/[^A-Za-z0-9]/.test(password)) score += 1;
-    return Math.min(STRENGTH_LEVELS.length, Math.max(1, score));
-  }, [password]);
-
-  const strength = strengthLevel > 0 ? STRENGTH_LEVELS[strengthLevel - 1] : null;
 
   /*
    * Focus the first field once, on the card's own mount — never on a mode switch.
@@ -225,7 +180,7 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   return (
     <section
       aria-labelledby="auth-heading"
-      className="h-fit w-full max-w-[30rem] rounded-[var(--radius-surface)] border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-6 shadow-[var(--shadow-card)] sm:p-8"
+      className={`${AUTH_CARD_SURFACE} ${AUTH_CARD_WIDTH}`}
     >
       <SegmentedControl
         idBase={TABS_ID}
@@ -321,56 +276,33 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             />
           )}
 
-          <PasswordField
-            label="Password"
-            value={password}
-            onChange={(event) => handleFieldChange("password", event.target.value)}
-            onBlur={() => handleFieldBlur("password")}
-            error={fieldErrors.password}
-            disabled={loading}
-            autoComplete={mode === "login" ? "current-password" : "new-password"}
-            className={AUTH_FIELD_CLASS}
-          />
+          {/*
+            The field and its recover link are one unit, on the same 6px rhythm the
+            Input uses between its own label and field, so the link reads as sitting
+            under the password field rather than floating between two fields.
+          */}
+          <div className="flex flex-col gap-1.5">
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={(event) => handleFieldChange("password", event.target.value)}
+              onBlur={() => handleFieldBlur("password")}
+              error={fieldErrors.password}
+              disabled={loading}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              className={AUTH_FIELD_CLASS}
+            />
+            {/* Only sign-in offers recovery: the screen it leads to resets an
+                existing password, which has no meaning while creating an account. */}
+            {mode === "login" && (
+              <div className="flex justify-end">
+                <AuthQuietLink href="/forgot-password">Forgot password?</AuthQuietLink>
+              </div>
+            )}
+          </div>
 
-          {mode === "register" && password.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between font-ui text-xs text-[var(--color-text-secondary)]">
-                <span>Password strength</span>
-                {strength && (
-                  <span className={`text-[12px] font-medium ${strength.text}`} aria-hidden="true">
-                    {strength.label}
-                  </span>
-                )}
-              </div>
-              <div className="grid grid-cols-4 gap-2" aria-hidden="true">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`h-1 rounded-[var(--radius-pill)] ${
-                      strength && index < strengthLevel
-                        ? strength.bar
-                        : "bg-[rgba(229,217,182,0.2)]"
-                    }`}
-                  />
-                ))}
-              </div>
-              {/*
-                12px text, so it needs the 4.5:1 pair: `--color-text-muted` (the
-                Input's own hint token) only reaches 4.14:1 on this card surface,
-                while `--color-text-secondary` measures 5.04:1.
-              */}
-              <p className="font-ui text-[12px] text-[var(--color-text-secondary)]">
-                {PASSWORD_RULE_HINT}
-              </p>
-              {/*
-                The visible label is hidden from assistive tech so the change is
-                announced once, as a full sentence rather than a bare adjective.
-              */}
-              <p className="sr-only" role="status" aria-live="polite">
-                {strength ? `Password strength: ${strength.label}` : ""}
-              </p>
-            </div>
-          )}
+          {/* Directly below the Password field, and hidden while it is empty. */}
+          {mode === "register" && <PasswordStrengthMeter password={password} />}
 
           {mode === "register" && (
             <PasswordField
@@ -385,25 +317,21 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             />
           )}
 
-          {/*
-            A reserved, single live region for form-level messages. Keeping the slot
-            in the layout means an error never shifts the primary button sideways
-            and never moves the card's top edge.
-          */}
-          <div className="flex min-h-9 items-center" aria-live="polite">
-            {error && (
-              <div className="flex items-start gap-3 rounded-[var(--radius-control)] border border-[rgba(247,179,168,0.35)] bg-[var(--color-error-surface)] px-3.5 py-3 font-ui text-sm text-[var(--color-danger)]">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-                <span>{error}</span>
-              </div>
-            )}
-          </div>
+          <FormMessageRegion message={error} />
 
           <Button
             type="submit"
             size="lg"
             tone="dark"
-            className="w-full"
+            /*
+              `font-ui!` matches the fields, labels and tabs of this form. The
+              unlayered `button { font-family: inherit }` rule in globals.css
+              outranks the plain `font-ui` utility inside Button, so without it the
+              submit label rendered in the body serif (Newsreader) while every other
+              piece of chrome in the same form used Source Sans 3. Scoped to this
+              call site: no other Button consumer changes.
+            */
+            className="w-full font-ui!"
             disabled={loading}
             aria-busy={loading}
           >
