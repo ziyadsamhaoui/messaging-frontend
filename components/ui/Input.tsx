@@ -16,9 +16,32 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
   error?: string | null;
   hint?: string;
   size?: FieldSize;
+  /**
+   * The surface the field sits on, so foreground and border stay legible on both.
+   * `dark` is the default and is what the authentication cards and the public pages
+   * already use; `light` is for the parchment panes of the app screen.
+   */
+  tone?: "dark" | "light";
   /** Rendered inside the field on the right edge (e.g. a visibility toggle). */
   trailing?: React.ReactNode;
 }
+
+const TONES = {
+  dark: {
+    field:
+      "border-[var(--color-field-border)] bg-[var(--color-field)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)] hover:bg-[var(--color-field-hover)]",
+    label: "text-[var(--color-text-secondary)]",
+    ring: "focus-ring",
+  },
+  // On parchment: forest text at 6.22:1, a 3.30:1 control border and a 4.64:1
+  // placeholder, all measured against the pane.
+  light: {
+    field:
+      "border-[var(--app-pane-control-border)] bg-[var(--app-pane-raised)] text-[var(--app-pane-text)] placeholder:text-[var(--app-pane-placeholder)]",
+    label: "text-[var(--app-pane-text-soft)]",
+    ring: "focus-ring-light",
+  },
+} as const;
 
 export function Input({
   className,
@@ -26,6 +49,7 @@ export function Input({
   error,
   hint,
   size = "lg",
+  tone = "dark",
   trailing,
   id,
   ...props
@@ -35,13 +59,14 @@ export function Input({
   const errorId = error ? `${inputId}-error` : undefined;
   const hintId = hint && !error ? `${inputId}-hint` : undefined;
   const describedBy = [errorId, hintId].filter(Boolean).join(" ") || undefined;
+  const styles = TONES[tone];
 
   return (
     <div className="flex w-full flex-col gap-1.5">
       {label && (
         <label
           htmlFor={inputId}
-          className="font-ui text-[13px] font-medium text-[var(--color-text-secondary)]"
+          className={cn("font-ui text-[13px] font-medium", styles.label)}
         >
           {label}
         </label>
@@ -52,7 +77,9 @@ export function Input({
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
           className={cn(
-            "focus-ring w-full rounded-[var(--radius-control)] border border-[var(--color-field-border)] bg-[var(--color-field)] font-ui text-[var(--color-text-primary)] transition-colors placeholder:text-[var(--color-text-placeholder)] hover:bg-[var(--color-field-hover)] disabled:cursor-not-allowed disabled:opacity-60",
+            "w-full rounded-[var(--radius-control)] border font-ui transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+            styles.ring,
+            styles.field,
             trailing && "pr-12",
             HEIGHTS[size],
             className
