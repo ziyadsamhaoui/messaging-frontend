@@ -151,6 +151,7 @@ export function NewChatView({
             </p>
 
             <UserSearchCombobox
+              variant="search"
               label="Search people"
               value={query}
               onValueChange={setQuery}

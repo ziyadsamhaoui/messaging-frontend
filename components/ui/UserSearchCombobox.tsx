@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { PublicUserDto } from "@/lib/types";
 import { useUserSearch } from "@/hooks/useUserSearch";
 import { Input } from "./Input";
+import { SearchInput } from "./SearchInput";
 import { cn } from "@/lib/utils";
 
 interface UserSearchComboboxProps {
@@ -15,6 +16,14 @@ interface UserSearchComboboxProps {
   inputClassName?: string;
   renderOption?: (user: PublicUserDto, active: boolean) => React.ReactNode;
   closeOnSelect?: boolean;
+  /**
+   * `search` renders the shared SearchInput (magnifier, clear button, 40 px); `field`
+   * keeps the labelled form field used inside dialogs. Both are the same field style,
+   * so a person search never looks different from a list search.
+   */
+  variant?: "field" | "search";
+  /** Surface the field and its results sit on. Defaults to the dark panel. */
+  tone?: "dark" | "light";
 }
 
 export function UserSearchCombobox({
@@ -26,6 +35,8 @@ export function UserSearchCombobox({
   inputClassName,
   renderOption,
   closeOnSelect = true,
+  variant = "field",
+  tone = "dark",
 }: UserSearchComboboxProps) {
   const search = useUserSearch(value);
   const results = useMemo(() => search.data ?? [], [search.data]);
@@ -94,34 +105,77 @@ export function UserSearchCombobox({
     }
   }
 
+  const handleChange = (next: string) => {
+    onValueChange(next);
+    setActiveIndex(0);
+    setOpen(true);
+  };
+
+  const shared = {
+    onFocus: () => setOpen(true),
+    onKeyDown: handleKeyDown,
+    placeholder,
+    role: "combobox" as const,
+    "aria-expanded": showList,
+    "aria-controls": listboxId,
+    "aria-autocomplete": "list" as const,
+    "aria-haspopup": "listbox" as const,
+    "aria-activedescendant":
+      showList && results[safeIndex] ? optionId(safeIndex) : undefined,
+    autoComplete: "off",
+  };
+
   return (
     <div ref={wrapperRef} className="relative">
-      <Input
-        label={label}
-        value={value}
-        onChange={(event) => {
-          onValueChange(event.target.value);
-          setActiveIndex(0);
-          setOpen(true);
-        }}
-        onFocus={() => setOpen(true)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className={inputClassName}
-        role="combobox"
-        aria-expanded={showList}
-        aria-controls={listboxId}
-        aria-autocomplete="list"
-        aria-haspopup="listbox"
-        aria-activedescendant={showList && results[safeIndex] ? optionId(safeIndex) : undefined}
-        autoComplete="off"
-      />
+      {variant === "search" ? (
+        <SearchInput
+          {...shared}
+          value={value}
+          onValueChange={handleChange}
+          aria-label={label ?? placeholder ?? "Search people"}
+          className={inputClassName}
+          tone={tone}
+        />
+      ) : (
+        <Input
+          {...shared}
+          label={label}
+          value={value}
+          onChange={(event) => handleChange(event.target.value)}
+          className={inputClassName}
+        />
+      )}
       {showList && (
-        <div className="absolute z-20 mt-1 w-full rounded-xl border border-[rgba(164,190,123,0.2)] bg-[rgba(26,58,32,0.98)] shadow-lg">
+        <div
+          className={cn(
+            "absolute z-20 mt-1 w-full rounded-xl border shadow-lg",
+            tone === "light"
+              ? "border-[var(--app-pane-control-border)] bg-[var(--app-pane-raised)]"
+              : "border-[rgba(164,190,123,0.2)] bg-[rgba(26,58,32,0.98)]"
+          )}
+        >
           {search.isFetching && results.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-[rgba(164,190,123,0.9)]">Searching…</div>
+            <div
+              className={cn(
+                "px-3 py-2 font-ui text-xs",
+                tone === "light"
+                  ? "text-[var(--app-pane-text-soft)]"
+                  : "text-[rgba(164,190,123,0.9)]"
+              )}
+            >
+              Searching…
+            </div>
           ) : results.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-[rgba(164,190,123,0.9)]">No people found.</div>
+            <div
+              className={cn(
+                "px-3 py-2 font-ui text-xs",
+                tone === "light"
+                  ? "text-[var(--app-pane-text-soft)]"
+                  : "text-[rgba(164,190,123,0.9)]"
+              )}
+            >
+              No people found.
+            </div>
           ) : (
             <ul
               id={listboxId}
@@ -143,8 +197,17 @@ export function UserSearchCombobox({
                     }}
                     onMouseEnter={() => setActiveIndex(index)}
                     className={cn(
-                      "flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm text-[var(--color-parchment)]",
-                      active ? "bg-[rgba(95,141,78,0.35)]" : "hover:bg-[rgba(95,141,78,0.2)]"
+                      "flex cursor-pointer items-center justify-between gap-3 px-3 py-2 font-ui text-sm",
+                      tone === "light"
+                        ? "text-[var(--app-pane-text)]"
+                        : "text-[var(--color-parchment)]",
+                      active
+                        ? tone === "light"
+                          ? "bg-[var(--app-pane-hover)]"
+                          : "bg-[rgba(95,141,78,0.35)]"
+                        : tone === "light"
+                          ? "hover:bg-[var(--app-pane-hover)]"
+                          : "hover:bg-[rgba(95,141,78,0.2)]"
                     )}
                   >
                     {renderOption ? (

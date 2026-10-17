@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { MessageSquareText, Search, SquarePen } from "lucide-react";
+import { MessageSquareText, SquarePen } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useRooms } from "@/hooks/useRooms";
@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { RoomResponse } from "@/lib/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/IconButton";
-import { Input } from "@/components/ui/Input";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
@@ -90,19 +90,15 @@ export function ConversationsPanel({
         }
         toolbar={
           <div className="flex flex-col gap-2">
-            {/*
-              The shared field, not a hand-rolled input: same height, radius, border and
-              placeholder contrast as every other field in the app, with the magnifier as
-              a `leading` adornment rather than a second element beside it.
-            */}
-            <Input
-              type="search"
-              size="md"
+            {/* One shared search field for the whole app: the magnifier sits 12 px in
+                and the text starts clear of it, with a clear button once there is a
+                value. */}
+            <SearchInput
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onValueChange={setQuery}
               placeholder="Search chats"
               aria-label="Search chats"
-              leading={<Search size={16} strokeWidth={1.75} />}
+              id="chats-search"
             />
             <div className="flex items-center gap-1.5" role="group" aria-label="Filter chats">
               {FILTERS.map((option) => (

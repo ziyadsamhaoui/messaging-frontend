@@ -2,14 +2,14 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, Search, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Check, UserPlus, X } from "lucide-react";
 import {
   SegmentedControl,
   segmentedPanelId,
   segmentedTabId,
 } from "@/components/ui/SegmentedControl";
 import { Avatar } from "@/components/ui/Avatar";
-import { Input } from "@/components/ui/Input";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { IconButton } from "@/components/ui/IconButton";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -124,14 +124,11 @@ export function ConnectionsPanel({
             value={segment}
             onChange={setSegment}
           />
-          <Input
-            type="search"
-            size="md"
+          <SearchInput
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onValueChange={setQuery}
             placeholder={segment === "requests" ? "Search requests" : "Search connections"}
             aria-label={segment === "requests" ? "Search requests" : "Search connections"}
-            leading={<Search size={16} strokeWidth={1.75} />}
           />
         </div>
       }
@@ -373,6 +370,7 @@ function AddConnectionView({ onViewRequests }: { onViewRequests: () => void }) {
       </p>
 
       <UserSearchCombobox
+        variant="search"
         label="Find people by username"
         value={value}
         onValueChange={setValue}
@@ -473,9 +471,9 @@ function RequestsList({ query }: { query: string }) {
   return (
     <div className="flex flex-col gap-3 px-1">
       <section className="flex flex-col gap-1">
-        <h3 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
+        <h2 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
           Received
-        </h3>
+        </h2>
         {incoming.length === 0 ? (
           <p className="px-1 py-1 font-ui text-[13px] text-[var(--app-panel-text-soft)]">
             Nothing waiting on you.
@@ -493,9 +491,9 @@ function RequestsList({ query }: { query: string }) {
         )}
       </section>
       <section className="flex flex-col gap-1">
-        <h3 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
+        <h2 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
           Sent
-        </h3>
+        </h2>
         {outgoing.length === 0 ? (
           <p className="px-1 py-1 font-ui text-[13px] text-[var(--app-panel-text-soft)]">
             No requests sent.
