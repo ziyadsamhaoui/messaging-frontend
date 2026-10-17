@@ -10,6 +10,19 @@ import { MessageBubble } from "./MessageBubble";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 const GROUP_WINDOW_MS = 5 * 60_000;
+
+/**
+ * A stable tone index for a sender's name in a group chat: the same person keeps the
+ * same colour across reloads and sessions, because it is derived from the id rather
+ * than from the order people happen to appear in.
+ */
+function toneForSender(senderId: string): number {
+  let hash = 0;
+  for (let index = 0; index < senderId.length; index += 1) {
+    hash = (hash * 31 + senderId.charCodeAt(index)) % 997;
+  }
+  return hash % 4;
+}
 const BOTTOM_THRESHOLD_PX = 80;
 const TOP_THRESHOLD_PX = 48;
 
@@ -237,9 +250,21 @@ export function MessageList({
         role="log"
         aria-live="polite"
         aria-label="Messages"
+        /*
+         * Equal side padding, and the same value at every width: the list spans the
+         * pane and both sides start 16 px in. The asymmetry this replaces came from
+         * the message action column, which reserved 40 px on the outgoing side only.
+         */
         className="app-scroll-light h-full overflow-y-auto px-4 py-4"
       >
-        <div className="mx-auto flex w-full max-w-[820px] flex-col">
+        {/*
+          The column uses the whole pane. It used to be a centred 820 px strip, which
+          on a wide screen left the conversation floating in the middle of two empty
+          margins and made the bubbles harder to associate with the pane they belong
+          to. Line length is still bounded — by the bubble's own measure — so this is
+          width without unreadable paragraphs.
+        */}
+        <div className="flex w-full flex-col">
           {loading && ordered.length === 0 ? (
             <div className="flex flex-col gap-3">
               {Array.from({ length: 6 }).map((_, index) => (
@@ -281,9 +306,17 @@ export function MessageList({
                 const isOwn = message.senderId === currentUserId;
 
                 return (
-                  <div key={row.id} className="flex items-end gap-2">
+                  <div key={row.id} className="flex items-end gap-1.5">
+                    {/*
+                      A group chat shows the sender's avatar once per group, aligned to
+                      the group's last bubble. It reserves its 28 px in every row of the
+                      group so the bubbles above and below stay in one column.
+                    */}
                     {isGroupRoom && !isOwn && (
-                      <span className={cn("w-7 shrink-0", !row.isLastOfGroup && "invisible")}>
+                      <span
+                        className={cn("w-7 shrink-0", !row.isLastOfGroup && "invisible")}
+                        aria-hidden={!row.isLastOfGroup}
+                      >
                         <Avatar
                           name={message.senderUsername || "?"}
                           seed={message.senderId}
@@ -298,8 +331,8 @@ export function MessageList({
                         isOwn={isOwn}
                         showSenderName={row.showSenderName && Boolean(isGroupRoom) && !isOwn}
                         isFirstOfGroup={row.isFirstOfGroup}
-                        isLastOfGroup={row.isLastOfGroup}
                         senderName={message.senderUsername}
+                        senderTone={toneForSender(message.senderId)}
                         canDeleteAsOwner={Boolean(roomCreatedBy && roomCreatedBy === currentUserId)}
                         currentUserId={currentUserId}
                         onEdit={isOwn ? onEdit : undefined}

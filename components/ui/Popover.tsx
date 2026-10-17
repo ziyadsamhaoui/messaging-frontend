@@ -42,6 +42,12 @@ interface PopoverProps {
   align?: "start" | "end" | "center";
   side?: "top" | "bottom";
   className?: string;
+  /**
+   * `menu` is for a popover that holds menu items — the message options, a member's
+   * gear menu — so the items are announced as `menuitem`s of a real menu instead of
+   * as buttons inside a dialog.
+   */
+  role?: "dialog" | "menu";
   children: React.ReactNode;
 }
 
@@ -62,6 +68,7 @@ export function Popover({
   align = "start",
   side = "bottom",
   className,
+  role = "dialog",
   children,
 }: PopoverProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -95,10 +102,20 @@ export function Popover({
   useLayoutEffect(() => {
     if (!open) return;
     place();
+  }, [open, place]);
+
+  /*
+   * Focus is moved into the panel only once it has been positioned, because until
+   * then the panel is `visibility: hidden` — and a hidden element cannot take focus,
+   * so the call would silently do nothing and the popover would open with focus still
+   * on the trigger. That is what made the message menu unreachable by arrow keys.
+   */
+  useEffect(() => {
+    if (!open || !position) return;
     const panel = panelRef.current;
     const initial = panel?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR) ?? panel;
     initial?.focus({ preventScroll: true });
-  }, [open, place]);
+  }, [open, position]);
 
   useEffect(() => {
     if (!open) return;
@@ -173,7 +190,7 @@ export function Popover({
   return createPortal(
     <div
       ref={panelRef}
-      role="dialog"
+      role={role}
       aria-label={label}
       tabIndex={-1}
       style={{
