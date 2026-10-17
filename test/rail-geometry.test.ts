@@ -47,10 +47,23 @@ describe("collapsed rail geometry", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("wraps the icon and the avatar in the 48 px icon box", () => {
-    // Two boxes in the destination row (outer 48 px, inner 24 px the badge anchors to)
-    // and one around the profile avatar.
+  it("wraps every icon and the avatar in the 48 px icon box", () => {
+    // Destination-row box, sign-out box and profile-avatar box. Every icon-bearing
+    // row in the rail shares the same 48 px anchor, which is what keeps all of them
+    // on the 36 px axis when the labels are removed from layout.
     const boxes = rail.match(/h-11 w-12 shrink-0 items-center justify-center/g) ?? [];
-    expect(boxes.length).toBe(2);
+    expect(boxes.length).toBe(3);
+  });
+
+  it("marks the active destination with a left line and no background fill", () => {
+    // The active row's background must stay the rail's own; only the marker and the
+    // stronger text colour distinguish it. `aria-current` carries the meaning for
+    // assistive tech, so the marker is decorative.
+    const activeBranch = rail.match(/active\s*\?\s*"(text-\[[^"]*)"\s*:/);
+    expect(activeBranch, "the active branch must exist").not.toBeNull();
+    expect(activeBranch![1]).not.toContain("bg-[");
+    expect(activeBranch![1]).toContain("--app-rail-text-strong");
+    expect(rail).toContain('aria-current={active ? "page" : undefined}');
+    expect(rail).toMatch(/aria-hidden="true"[\s\S]{0,200}bg-\[var\(--color-sage\)\]/);
   });
 });

@@ -94,7 +94,12 @@
   --app-rail-text: var(--color-text-secondary); /* 6.13:1 on rail */
   --app-rail-text-strong: var(--color-text-primary); /* 8.94:1 on rail */
   --app-rail-hover: rgba(229, 217, 182, 0.07);
-  --app-rail-active: rgba(164, 190, 123, 0.16); /* strong text on it 7.5:1 */
+  /*
+   * There is deliberately no `--app-rail-active` fill: the active destination is
+   * marked by the sage line on the rail's left edge and a change of text colour,
+   * not by a tinted row. The line (--color-sage on the rail) is 6.13:1, above the
+   * 3:1 non-text floor, and the active label keeps the 8.94:1 cream it had.
+   */
 
   --app-panel: var(--color-surface); /* #285430, a shade lighter than the rail */
   --app-panel-raised: var(--color-surface-2);

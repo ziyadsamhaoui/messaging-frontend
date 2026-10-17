@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Bell,
+  LogOut,
   MailPlus,
   MessagesSquare,
   PanelLeftClose,
@@ -28,7 +29,7 @@ import { usePendingInvitations } from "@/hooks/useInvitations";
 import { usePendingConnections } from "@/hooks/useConnections";
 import { Avatar } from "@/components/ui/Avatar";
 import { CountBadge, RailBadge } from "@/components/ui/Badge";
-import { Popover, PopoverItem, popoverItemClasses } from "@/components/ui/Popover";
+import { Popover, popoverItemClasses } from "@/components/ui/Popover";
 import { Tooltip, tooltipTriggerClass } from "@/components/ui/Tooltip";
 
 const ICON_SIZE = 22;
@@ -88,6 +89,11 @@ export function Rail({ route }: RailProps) {
 
   const username = auth.user?.username ?? "Signed in";
   const active: AppDestination | "settings" = route.isSettings ? "settings" : route.destination;
+
+  async function signOut() {
+    await auth.logout();
+    router.replace("/login");
+  }
 
   /*
    * The shortcut is registered on the document rather than on a focused element,
@@ -186,6 +192,30 @@ export function Rail({ route }: RailProps) {
             icon={<Settings size={ICON_SIZE} strokeWidth={1.75} aria-hidden="true" />}
           />
         </li>
+        <li>
+          {/*
+            Signing out lives in the rail itself, not only inside the account
+            popover: it is the one action a person may need before they trust the
+            screen they are on, and burying it behind a menu reads as a trap.
+          */}
+          <button
+            type="button"
+            onClick={() => void signOut()}
+            aria-label="Sign out"
+            className={cn(
+              "app-rail-row focus-ring relative flex h-11 w-full items-center gap-1 rounded-[var(--radius-control)] font-ui text-[15px] font-medium text-[var(--app-rail-text)] transition-colors duration-150 motion-reduce:transition-none hover:bg-[var(--app-rail-hover)] hover:text-[var(--app-rail-text-strong)]",
+              tooltipTriggerClass
+            )}
+          >
+            <span className="flex h-11 w-12 shrink-0 items-center justify-center">
+              <span className="relative flex h-6 w-6 items-center justify-center">
+                <LogOut size={ICON_SIZE} strokeWidth={1.75} aria-hidden="true" />
+              </span>
+            </span>
+            <span className="app-rail-label min-w-0 flex-1 truncate text-left">Sign out</span>
+            <Tooltip label="Sign out" side="right" />
+          </button>
+        </li>
       </ul>
 
       <ProfileBlock
@@ -193,10 +223,6 @@ export function Rail({ route }: RailProps) {
         avatarUrl={auth.user?.profilePictureUrl}
         seed={auth.session?.userId}
         connected={socketState === "connected"}
-        onSignOut={async () => {
-          await auth.logout();
-          router.replace("/login");
-        }}
       />
     </nav>
   );
@@ -230,15 +256,19 @@ function RailLink({
       className={cn(
         "app-rail-row focus-ring relative flex h-11 items-center gap-1 rounded-[var(--radius-control)] font-ui text-[15px] font-medium transition-colors duration-150 motion-reduce:transition-none",
         tooltipTriggerClass,
+        // Selection is carried by the left marker alone: the active row keeps the
+        // rail's own background, so the rail reads as one surface with a pointer
+        // into it instead of a stack of tinted pills. Colour is never the only
+        // signal — `aria-current="page"` plus the marker carry it.
         active
-          ? "bg-[var(--app-rail-active)] text-[var(--app-rail-text-strong)]"
+          ? "text-[var(--app-rail-text-strong)]"
           : "text-[var(--app-rail-text)] hover:bg-[var(--app-rail-hover)] hover:text-[var(--app-rail-text-strong)]"
       )}
     >
       {active && (
         <span
           aria-hidden="true"
-          className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--color-sage)]"
+          className="absolute left-0 top-1/2 h-8 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--color-sage)]"
         />
       )}
       {/*
@@ -267,13 +297,11 @@ function ProfileBlock({
   avatarUrl,
   seed,
   connected,
-  onSignOut,
 }: {
   username: string;
   avatarUrl?: string | null;
   seed?: string;
   connected: boolean;
-  onSignOut: () => Promise<void>;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   // The trigger is held in state rather than a ref: the popover needs the element
@@ -339,15 +367,6 @@ function ProfileBlock({
           <Bell size={16} strokeWidth={1.75} aria-hidden="true" />
           Notification preferences
         </Link>
-        <PopoverItem
-          danger
-          onClick={() => {
-            setMenuOpen(false);
-            void onSignOut();
-          }}
-        >
-          Sign out
-        </PopoverItem>
       </Popover>
     </div>
   );
