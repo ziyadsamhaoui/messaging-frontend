@@ -103,8 +103,8 @@ export function formatRelative(iso: string | null | undefined): string {
 
 /**
  * Counts on badges. The cap is the caller's because a rail badge has room for one
- * digit while a conversation row does not: `formatCount(1240)` is "999+",
- * `formatCount(12, 9)` is "9+".
+ * digit while a conversation row does not: `formatCount(12, 9)` is "9+" and
+ * `formatCount(1240)` is "99+" at the 99 default.
  */
 export function formatCount(count: number, max = 99): string {
   if (!Number.isFinite(count) || count <= 0) return "0";
