@@ -2,18 +2,16 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, MailPlus, Settings, Smile, UserPlus } from "lucide-react";
+import { Bell, Info, MailPlus, MessageSquareText, Smile } from "lucide-react";
 import {
   SegmentedControl,
   segmentedPanelId,
   segmentedTabId,
 } from "@/components/ui/SegmentedControl";
-import { Dot } from "@/components/ui/Badge";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { SectionPanel } from "@/components/layout/SectionPanel";
-import { Tooltip, tooltipTriggerClass } from "@/components/ui/Tooltip";
 import { useToast } from "@/components/ui/Toast";
 import {
   useMarkAllNotificationsRead,
@@ -23,7 +21,7 @@ import {
 import { errorMessage } from "@/lib/errors";
 import { formatDayLabel, formatRelative } from "@/lib/time";
 import { flattenPages } from "@/lib/pagination";
-import { invitationHref, NOTIFICATION_PREFERENCES_HREF } from "@/lib/appRoute";
+import { invitationHref } from "@/lib/appRoute";
 import { cn } from "@/lib/utils";
 import { NotificationResponse, NotificationType } from "@/lib/types";
 
@@ -34,12 +32,16 @@ const SEGMENTS_ID = "notifications-segments";
 /*
  * Per-type icon and tint. The type is never printed as an uppercase label: an
  * icon carries it, and the text of the row says what happened.
+ *
+ * A message is a message, not a bell. The bell belongs to the section itself (the
+ * rail destination and the empty state); reusing it for MESSAGE made a new message
+ * look like a notification about a notification.
  */
 const TYPE_ICONS: Record<NotificationType, typeof Bell> = {
-  MESSAGE: Bell,
+  MESSAGE: MessageSquareText,
   REACTION: Smile,
   INVITATION: MailPlus,
-  SYSTEM: UserPlus,
+  SYSTEM: Info,
 };
 
 /**
@@ -54,7 +56,9 @@ const TYPE_ICONS: Record<NotificationType, typeof Bell> = {
  */
 export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean }) {
   const toast = useToast();
-  const [segment, setSegment] = useState<Segment>("all");
+  // Unread is the default: the feed is a queue of things that happened, and a tab
+  // that opens on the read history makes the reader hunt for what is new.
+  const [segment, setSegment] = useState<Segment>("unread");
   const feed = useNotificationFeed(true);
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
@@ -82,29 +86,24 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
       title="Notifications"
       hideOnNarrow={hideOnNarrow}
       actions={
-        <>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await markAll.mutateAsync();
-              } catch (error) {
-                toast.push(errorMessage(error), "error");
-              }
-            }}
-            className="focus-ring h-9 rounded-[var(--radius-control)] px-2.5 font-ui text-[13px] font-medium text-[var(--app-panel-text-soft)] hover:bg-[var(--app-panel-hover)] hover:text-[var(--app-panel-text)]"
-          >
-            Mark all read
-          </button>
-          <Link
-            href={NOTIFICATION_PREFERENCES_HREF}
-            aria-label="Notification preferences"
-            className={`focus-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-[var(--app-panel-text-soft)] hover:bg-[var(--app-panel-hover)] hover:text-[var(--app-panel-text)] ${tooltipTriggerClass}`}
-          >
-            <Settings size={20} strokeWidth={1.75} aria-hidden="true" />
-            <Tooltip label="Notification preferences" side="bottom" />
-          </Link>
-        </>
+        // No preferences gear in the panel header: preferences are an account
+        // setting, and this button sat there as an icon-only duplicate of a page
+        // already reachable from Settings. The one action the feed itself owns is
+        // clearing the queue.
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await markAll.mutateAsync();
+            } catch (error) {
+              toast.push(errorMessage(error), "error");
+            }
+          }}
+          disabled={unreadCount === 0 || markAll.isPending}
+          className="focus-ring h-9 rounded-[var(--radius-control)] px-2.5 font-ui text-[13px] font-medium text-[var(--app-panel-text-soft)] hover:bg-[var(--app-panel-hover)] hover:text-[var(--app-panel-text)] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Mark all read
+        </button>
       }
       toolbar={
         <SegmentedControl
@@ -188,7 +187,7 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
 }
 
 function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead: () => void }) {
-  const Icon = TYPE_ICONS[item.type] ?? Settings;
+  const Icon = TYPE_ICONS[item.type] ?? Bell;
   // Only an invitation notification carries an id this app can resolve to a screen.
   const href = item.type === "INVITATION" && item.sourceId ? invitationHref(item.sourceId) : null;
 
@@ -209,7 +208,9 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
         <span
           className={cn(
             "block font-ui text-[15px] leading-snug",
-            item.read ? "text-[var(--app-panel-text-soft)]" : "text-[var(--app-panel-text)]"
+            item.read
+              ? "text-[var(--app-panel-text-soft)]"
+              : "font-medium text-[var(--app-panel-text)]"
           )}
         >
           {item.content}
@@ -218,18 +219,28 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
           {formatRelative(item.createdAt)}
         </span>
       </span>
-      {!item.read && <Dot className="mt-2 bg-[var(--color-sage)]" />}
     </>
   );
 
-  const className = cn(
-    "focus-ring flex w-full items-start gap-3 rounded-[var(--radius-control)] px-2 py-2 text-left",
-    item.read ? "" : "bg-[rgba(164,190,123,0.08)]"
-  );
+  const className =
+    "focus-ring relative flex w-full items-start gap-3 rounded-[var(--radius-control)] px-2 py-2 text-left hover:bg-[var(--app-panel-hover)]";
+
+  /*
+   * Unread is marked with the same left line the rail and the conversation list
+   * use, plus a heavier line of text. It replaces the tinted row background: the
+   * row should not become a differently coloured block just because it is new.
+   */
+  const marker = !item.read ? (
+    <span
+      aria-hidden="true"
+      className="absolute left-0 top-1/2 h-8 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--color-sage)]"
+    />
+  ) : null;
 
   if (href) {
     return (
       <Link href={href} className={className} onClick={() => !item.read && onRead()}>
+        {marker}
         {body}
       </Link>
     );
@@ -240,6 +251,7 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
     // activating it marks it read.
     return (
       <button type="button" className={className} onClick={onRead}>
+        {marker}
         {body}
       </button>
     );
@@ -247,5 +259,10 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
 
   // Read and not navigable: nothing to activate, so it is plain content rather than
   // a div pretending to be a button.
-  return <div className={className}>{body}</div>;
+  return (
+    <div className={className}>
+      {marker}
+      {body}
+    </div>
+  );
 }
