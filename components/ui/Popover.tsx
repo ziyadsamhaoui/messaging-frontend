@@ -176,10 +176,21 @@ export function Popover({
     };
   }, [open, onClose, anchor]);
 
+  /*
+   * Focus goes back to the control that opened it — but only when the popover was
+   * actually open first. Without that guard the effect also ran on mount, at the
+   * moment the trigger's ref was attached, so a page with several popovers moved
+   * focus to whichever one mounted last: opening a group's member list stole focus
+   * from the panel's own heading.
+   */
+  const wasOpenRef = useRef(false);
   useEffect(() => {
-    if (open) return;
-    // Focus goes back to the control that opened it, which is what makes the
-    // popover usable from the keyboard.
+    if (open) {
+      wasOpenRef.current = true;
+      return;
+    }
+    if (!wasOpenRef.current) return;
+    wasOpenRef.current = false;
     if (anchor && document.contains(anchor)) {
       anchor.focus({ preventScroll: true });
     }
