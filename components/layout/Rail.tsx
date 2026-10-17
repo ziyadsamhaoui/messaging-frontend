@@ -34,6 +34,22 @@ import { Tooltip, tooltipTriggerClass } from "@/components/ui/Tooltip";
 
 const ICON_SIZE = 22;
 
+/**
+ * The row's alignment anchor and the only thing that shows hover, active or focus:
+ * a 48 px box with a fixed 44 x 44 square centred inside it. The box never moves and
+ * the square never grows with the rail, so the icon's centre stays 36 px from the
+ * rail's edge in both the collapsed and the expanded state.
+ */
+function RailSquare({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex h-11 w-12 shrink-0 items-center justify-center">
+      <span className="app-rail-square relative flex h-11 w-11 items-center justify-center rounded-xl">
+        {children}
+      </span>
+    </span>
+  );
+}
+
 const DESTINATIONS: Array<{
   value: AppDestination;
   label: string;
@@ -41,7 +57,7 @@ const DESTINATIONS: Array<{
   /** Counts are capped per affordance: the rail badge only has room for one digit. */
   countKey?: "unread" | "requests" | "invites";
 }> = [
-  { value: "chats", label: "Conversations", Icon: MessagesSquare },
+  { value: "chats", label: "Chats", Icon: MessagesSquare },
   { value: "connections", label: "Connections", Icon: Users, countKey: "requests" },
   { value: "invites", label: "Invites", Icon: MailPlus, countKey: "invites" },
   { value: "notifications", label: "Notifications", Icon: Bell, countKey: "unread" },
@@ -144,15 +160,17 @@ export function Rail({ route }: RailProps) {
           aria-controls="primary-rail"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "app-rail-toggle focus-ring ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-[var(--app-rail-text)] hover:bg-[var(--app-rail-hover)] hover:text-[var(--app-rail-text-strong)]",
+            "app-rail-row app-rail-toggle ml-auto flex h-11 w-11 shrink-0 items-center justify-center text-[var(--app-rail-text)] ",
             "max-md:hidden"
           )}
         >
-          {collapsed ? (
-            <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden="true" />
-          ) : (
-            <PanelLeftClose size={20} strokeWidth={1.75} aria-hidden="true" />
-          )}
+          <span className="app-rail-square flex h-11 w-11 items-center justify-center rounded-xl">
+            {collapsed ? (
+              <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden="true" />
+            ) : (
+              <PanelLeftClose size={20} strokeWidth={1.75} aria-hidden="true" />
+            )}
+          </span>
         </button>
       </div>
 
@@ -203,15 +221,13 @@ export function Rail({ route }: RailProps) {
             onClick={() => void signOut()}
             aria-label="Sign out"
             className={cn(
-              "app-rail-row focus-ring relative flex h-11 w-full items-center gap-1 rounded-[var(--radius-control)] font-ui text-[15px] font-medium text-[var(--app-rail-text)] transition-colors duration-150 motion-reduce:transition-none hover:bg-[var(--app-rail-hover)] hover:text-[var(--app-rail-text-strong)]",
+              "app-rail-row group/rail relative flex h-11 w-full items-center gap-1 font-ui text-[15px] font-medium text-[var(--app-rail-text)] transition-colors duration-150 motion-reduce:transition-none hover:text-[var(--app-rail-text-strong)]",
               tooltipTriggerClass
             )}
           >
-            <span className="flex h-11 w-12 shrink-0 items-center justify-center">
-              <span className="relative flex h-6 w-6 items-center justify-center">
-                <LogOut size={ICON_SIZE} strokeWidth={1.75} aria-hidden="true" />
-              </span>
-            </span>
+            <RailSquare>
+              <LogOut size={ICON_SIZE} strokeWidth={1.75} aria-hidden="true" />
+            </RailSquare>
             <span className="app-rail-label min-w-0 flex-1 truncate text-left">Sign out</span>
             <Tooltip label="Sign out" side="right" />
           </button>
@@ -253,16 +269,17 @@ function RailLink({
       href={href}
       aria-label={accessibleName}
       aria-current={active ? "page" : undefined}
+      data-active={active ? "true" : undefined}
       className={cn(
-        "app-rail-row focus-ring relative flex h-11 items-center gap-1 rounded-[var(--radius-control)] font-ui text-[15px] font-medium transition-colors duration-150 motion-reduce:transition-none",
+        "app-rail-row group/rail relative flex h-11 items-center gap-1 font-ui text-[15px] font-medium transition-colors duration-150 motion-reduce:transition-none",
         tooltipTriggerClass,
-        // Selection is carried by the left marker alone: the active row keeps the
-        // rail's own background, so the rail reads as one surface with a pointer
-        // into it instead of a stack of tinted pills. Colour is never the only
-        // signal — `aria-current="page"` plus the marker carry it.
+        // The row itself is never filled. Selection is carried by the left marker,
+        // the 44 px square behind the icon and the label's weight — and, for assistive
+        // tech, by `aria-current="page"`. Colour is never the only signal.
         active
           ? "text-[var(--app-rail-text-strong)]"
-          : "text-[var(--app-rail-text)] hover:bg-[var(--app-rail-hover)] hover:text-[var(--app-rail-text-strong)]"
+          : "text-[var(--app-rail-text)] hover:text-[var(--app-rail-text-strong)]",
+        active && "font-semibold"
       )}
     >
       {active && (
@@ -271,20 +288,10 @@ function RailLink({
           className="absolute left-0 top-1/2 h-8 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--color-sage)]"
         />
       )}
-      {/*
-        The 48 px icon box. It is the row's alignment anchor: fixed width, centred
-        content, so the icon's centre is 36 px from the rail's edge in both states.
-
-        The badge is anchored to the *inner* 24 px box rather than to the 48 px one,
-        because anchoring it to the outer box would pin it to the row's top-right corner
-        and leave it floating away from the icon it counts.
-      */}
-      <span className="flex h-11 w-12 shrink-0 items-center justify-center">
-        <span className="relative flex h-6 w-6 items-center justify-center">
-          {icon}
-          <RailBadge count={count} max={9} />
-        </span>
-      </span>
+      <RailSquare>
+        {icon}
+        <RailBadge count={count} max={9} />
+      </RailSquare>
       <span className="app-rail-label min-w-0 flex-1 truncate">{label}</span>
       {count > 0 && <CountBadge count={count} max={9} />}
       <Tooltip label={accessibleName} side="right" />
@@ -318,13 +325,14 @@ function ProfileBlock({
         aria-haspopup="dialog"
         aria-expanded={menuOpen}
         className={cn(
-          "focus-ring app-rail-row flex w-full items-center gap-1 rounded-[var(--radius-control)] py-1.5 text-left hover:bg-[var(--app-rail-hover)]",
+          "app-rail-row group/rail flex w-full items-center gap-1 py-1.5 text-left text-[var(--app-rail-text)] transition-colors duration-150 motion-reduce:transition-none hover:text-[var(--app-rail-text-strong)]",
           tooltipTriggerClass
         )}
       >
-        {/* The same 48 px icon box as the destination rows, so the avatar's centre is
-            also 36 px when the rail is collapsed. */}
-        <span className="flex h-11 w-12 shrink-0 items-center justify-center">
+        {/* The same 48 px box and 44 px square as the destination rows, so the avatar's
+            centre is also 36 px when the rail is collapsed and its hover highlight is
+            the same size as every other icon's. */}
+        <RailSquare>
           <Avatar
             name={username}
             seed={seed}
@@ -332,7 +340,7 @@ function ProfileBlock({
             status={connected ? "ONLINE" : "OFFLINE"}
             presenceRing="var(--app-rail)"
           />
-        </span>
+        </RailSquare>
         <span className="app-rail-label min-w-0 flex-1">
           <span className="block truncate font-ui text-[15px] font-medium text-[var(--app-rail-text-strong)]">
             {username}

@@ -338,6 +338,14 @@ button {
  */
 :root {
   --app-rail-width: 248px;
+  /*
+   * The two fills of the row highlight. It is a 44 x 44 square centred on the icon,
+   * never the row: a full-width tint reads as a selected *row*, which is what the
+   * panel list uses, and it made the rail look like a stack of blocks. Both values are
+   * cream over the darkest forest, so the cream icon on them stays at 8.94:1.
+   */
+  --app-rail-icon-hover: rgba(229, 217, 182, 0.08);
+  --app-rail-icon-active: rgba(229, 217, 182, 0.16);
 }
 
 html[data-sidebar="collapsed"] {
@@ -383,6 +391,43 @@ html[data-sidebar="collapsed"] .app-rail-label {
  */
 .app-rail-row {
   padding-inline: 12px;
+}
+
+/*
+ * The row is the hit area — icon, label and the free space after it — but the only
+ * thing that ever changes colour is the 44 x 44 square around the icon. Hovering the
+ * label therefore lights the icon square, exactly as hovering the icon does.
+ *
+ * The square sits inside the 48 px icon box, centred, so its centre is still 36 px
+ * from the rail's edge (12 + 24) and it stays there when the rail widens: the box is
+ * the fixed anchor, the label is what grows.
+ */
+.app-rail-square {
+  transition:
+    background-color 150ms ease-out,
+    color 150ms ease-out;
+}
+
+.app-rail-row:hover .app-rail-square {
+  background-color: var(--app-rail-icon-hover);
+}
+
+.app-rail-row[data-active="true"] .app-rail-square {
+  background-color: var(--app-rail-icon-active);
+}
+
+/*
+ * Keyboard focus is shown on the square, not around the whole row, so the indicator
+ * is the same size and in the same place as the pointer highlight. The row's own
+ * outline is suppressed: two nested outlines on one focus state read as noise.
+ */
+.app-rail-row:focus-visible {
+  outline: none;
+}
+
+.app-rail-row:focus-visible .app-rail-square {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 html[data-sidebar="collapsed"] .app-rail-row {
@@ -454,7 +499,8 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
 
 @media (prefers-reduced-motion: reduce) {
   .app-rail,
-  .app-rail-label {
+  .app-rail-label,
+  .app-rail-square {
     transition: none;
   }
 }
@@ -667,3 +713,4 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
     animation: none;
   }
 }
+

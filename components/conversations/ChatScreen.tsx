@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, MoreVertical, UsersRound } from "lucide-react";
+import { ArrowLeft, MoreVertical, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { useRooms } from "@/hooks/useRooms";
@@ -29,16 +29,16 @@ import { classifyRoomFrame } from "@/lib/realtimeFrames";
 import { derivePresence, formatLastSeen, presenceLabel } from "@/lib/presence";
 import { removeParticipant } from "@/lib/services/rooms";
 import { getUser } from "@/lib/services/users";
-import { CHATS_HREF } from "@/lib/appRoute";
+import { CHATS_HREF, connectionHref } from "@/lib/appRoute";
 import { ChatMessage, RoomResponse, TypingEvent } from "@/lib/types";
 import { useToast } from "@/components/ui/Toast";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
-import { ParticipantsDrawer } from "@/components/chat/ParticipantsDrawer";
+import { GroupInfoPanel, GROUP_INFO_PANEL_ID } from "@/components/chat/GroupInfoPanel";
 import { MainPane } from "@/components/layout/MainPane";
 import { IconButton } from "@/components/ui/IconButton";
 import { Avatar } from "@/components/ui/Avatar";
-import { Popover, PopoverItem } from "@/components/ui/Popover";
+import { Popover, PopoverItem, popoverItemClasses } from "@/components/ui/Popover";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface ActiveTyping {
@@ -69,7 +69,10 @@ export function ChatScreen({ roomId }: { roomId: string }) {
   const markBlockedRoom = useUiStore((state) => state.markBlockedRoom);
 
   const [typing, setTyping] = useState<ActiveTyping | null>(null);
-  const [membersOpen, setMembersOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  // Held as state rather than a ref because focus returns here when the details pane
+  // closes, and reading a ref during render is not allowed.
+  const [detailsTrigger, setDetailsTrigger] = useState<HTMLButtonElement | null>(null);
   const lastTypingRef = useRef(0);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userLabelsRef = useRef<Record<string, string>>({});
@@ -260,9 +263,19 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         : "";
 
   const draft = drafts[roomId] ?? "";
+  const isGroup = room?.type === "GROUP";
+
+  function closeDetails() {
+    setDetailsOpen(false);
+    // Focus goes back to the control that opened the pane, which is what makes the
+    // details reachable from the keyboard without tabbing through the conversation.
+    detailsTrigger?.focus({ preventScroll: true });
+  }
 
   return (
     <MainPane>
+      <div className="relative flex min-h-0 flex-1">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {socketState !== "connected" && socketState !== "offline" && (
         <p
           role="status"
@@ -277,40 +290,78 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         <Link
           href={CHATS_HREF}
           className="focus-ring-light flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-[var(--app-pane-text-soft)] md:hidden"
-          aria-label="Back to conversations"
+          aria-label="Back to chats"
         >
           <ArrowLeft size={20} strokeWidth={1.75} aria-hidden="true" />
         </Link>
-        <Avatar
-          name={title}
-          seed={room?.type === "DIRECT" ? otherParticipant?.userId ?? roomId : roomId}
-          src={room?.type === "DIRECT" ? otherUserQuery.data?.profilePictureUrl : undefined}
-          size={40}
-          status={room?.type === "DIRECT" ? peerPresence ?? undefined : undefined}
-          presenceRing="var(--app-pane)"
-        />
-        <div className="min-w-0">
-          <h1 className="truncate font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
-            {title}
-          </h1>
-          {statusLine && (
-            <p className="truncate font-ui text-[13px] text-[var(--app-pane-text-soft)]">{statusLine}</p>
-          )}
-        </div>
-        <div className="ml-auto flex items-center gap-1">
-          <IconButton
-            surface="pane"
-            size="sm"
-            label="Room details"
-            tooltip="Room details"
-            onClick={() => setMembersOpen(true)}
+        {room?.type === "DIRECT" && otherParticipant ? (
+          // A direct chat's header is the other person, so it opens their profile —
+          // the same destination a connection row links to.
+          <Link
+            href={connectionHref(otherParticipant.userId)}
+            className="focus-ring-light flex min-w-0 items-center gap-3 rounded-[var(--radius-control)]"
           >
-            <UsersRound size={20} strokeWidth={1.75} aria-hidden="true" />
-          </IconButton>
+            <Avatar
+              name={title}
+              seed={otherParticipant.userId}
+              src={otherUserQuery.data?.profilePictureUrl}
+              size={40}
+              status={peerPresence ?? undefined}
+              presenceRing="var(--app-pane)"
+            />
+            <span className="min-w-0">
+              {/* The pane keeps a heading of its own even when its title is also the
+                  link to the other person's profile. */}
+              <h2 className="truncate font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
+                {title}
+              </h2>
+              {statusLine && (
+                <span className="block truncate font-ui text-[13px] text-[var(--app-pane-text-soft)]">
+                  {statusLine}
+                </span>
+              )}
+            </span>
+          </Link>
+        ) : (
+          <>
+            <Avatar name={title} seed={roomId} size={40} presenceRing="var(--app-pane)" />
+            <div className="min-w-0">
+              <h2 className="truncate font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
+                {title}
+              </h2>
+              {statusLine && (
+                <p className="truncate font-ui text-[13px] text-[var(--app-pane-text-soft)]">
+                  {statusLine}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+        <div className="ml-auto flex items-center gap-1">
+          {isGroup && (
+            <IconButton
+              ref={setDetailsTrigger}
+              surface="pane"
+              size="sm"
+              label={detailsOpen ? "Hide group info" : "Show group info"}
+              tooltip="Group info"
+              aria-expanded={detailsOpen}
+              aria-controls={GROUP_INFO_PANEL_ID}
+              onClick={() => (detailsOpen ? closeDetails() : setDetailsOpen(true))}
+            >
+              <UsersRound size={20} strokeWidth={1.75} aria-hidden="true" />
+            </IconButton>
+          )}
           <RoomMenu
             isDirect={room?.type === "DIRECT"}
-            isGroup={room?.type === "GROUP"}
+            isGroup={isGroup}
             isBlocked={isBlocked}
+            peerHref={
+              room?.type === "DIRECT" && otherParticipant
+                ? connectionHref(otherParticipant.userId)
+                : null
+            }
+            onOpenDetails={() => setDetailsOpen(true)}
             onToggleBlock={async () => {
               if (!otherParticipant) return;
               try {
@@ -407,15 +458,17 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         }
       />
 
-      {room?.type === "GROUP" && (
-        <ParticipantsDrawer
-          open={membersOpen}
-          onClose={() => setMembersOpen(false)}
-          room={room}
-          currentUserId={currentUserId}
-          onLeaveRoom={() => setMembersOpen(false)}
-        />
-      )}
+        </div>
+
+        {isGroup && detailsOpen && room && (
+          <GroupInfoPanel
+            room={room}
+            currentUserId={currentUserId}
+            onClose={closeDetails}
+            onLeft={() => setDetailsOpen(false)}
+          />
+        )}
+      </div>
     </MainPane>
   );
 }
@@ -434,12 +487,17 @@ function RoomMenu({
   isDirect,
   isGroup,
   isBlocked,
+  peerHref,
+  onOpenDetails,
   onToggleBlock,
   onLeave,
 }: {
   isDirect: boolean;
   isGroup: boolean;
   isBlocked: boolean;
+  /** The other person's profile, when this is a direct chat. */
+  peerHref: string | null;
+  onOpenDetails: () => void;
   onToggleBlock: () => Promise<void>;
   onLeave: () => Promise<void>;
 }) {
@@ -469,6 +527,12 @@ function RoomMenu({
         <MoreVertical size={20} strokeWidth={1.75} aria-hidden="true" />
       </IconButton>
       <Popover open={open} onClose={close} anchor={trigger} label="Chat actions" align="end">
+        {peerHref && (
+          <Link href={peerHref} className={popoverItemClasses()} onClick={close}>
+            <UserRound size={16} strokeWidth={1.75} aria-hidden="true" />
+            View profile
+          </Link>
+        )}
         {isDirect && (
           <PopoverItem
             danger={!isBlocked}
@@ -478,6 +542,17 @@ function RoomMenu({
             }}
           >
             {isBlocked ? "Unblock" : "Block"}
+          </PopoverItem>
+        )}
+        {isGroup && (
+          <PopoverItem
+            onClick={() => {
+              close();
+              onOpenDetails();
+            }}
+          >
+            <UsersRound size={16} strokeWidth={1.75} aria-hidden="true" />
+            Group info
           </PopoverItem>
         )}
         {isGroup && (

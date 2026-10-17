@@ -47,12 +47,47 @@ describe("collapsed rail geometry", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("wraps every icon and the avatar in the 48 px icon box", () => {
-    // Destination-row box, sign-out box and profile-avatar box. Every icon-bearing
-    // row in the rail shares the same 48 px anchor, which is what keeps all of them
-    // on the 36 px axis when the labels are removed from layout.
+  it("keeps exactly one 48 px icon box, shared by every icon-bearing row", () => {
+    // The anchor is defined once, in `RailSquare`, and used by the destination rows,
+    // the sign-out row and the user avatar. One definition is what stops the rows
+    // from drifting off the 36 px axis one at a time — the failure mode this test
+    // exists for.
     const boxes = rail.match(/h-11 w-12 shrink-0 items-center justify-center/g) ?? [];
-    expect(boxes.length).toBe(3);
+    expect(boxes.length).toBe(1);
+    const squares = rail.match(/<RailSquare>/g) ?? [];
+    expect(squares.length).toBeGreaterThanOrEqual(3);
+    expect(rail).toMatch(/<RailSquare>\s*\{icon\}/);
+    expect(rail).toContain("<Avatar");
+  });
+
+  it("fills the 44 px icon square, never the row", () => {
+    // The regression: `hover:bg-[var(--app-rail-hover)]` on `.app-rail-row` painted
+    // the whole row, so the highlight stretched with the expanded rail (248 px) and
+    // read as a selected row rather than an icon target. The fill must be on
+    // `.app-rail-square`, and the row's own rule must not set a background at all.
+    const rowBlock = css.match(/\n\.app-rail-row \{[^}]*\}/);
+    expect(rowBlock, "the row rule must exist").not.toBeNull();
+    expect(rowBlock![0]).toContain("padding-inline: 12px");
+    expect(rowBlock![0].includes("background")).toBe(false);
+
+    const hover = css.match(/\.app-rail-row:hover \.app-rail-square \{[^}]*\}/);
+    expect(hover, "hovering the row (icon or label) lights the icon square").not.toBeNull();
+    expect(hover![0]).toContain("background-color");
+
+    const active = css.match(/\.app-rail-row\[data-active="true"\] \.app-rail-square \{[^}]*\}/);
+    expect(active, "the active row lights the same square more strongly").not.toBeNull();
+
+    expect(css.match(/\n  --app-rail-icon-hover/), "hover token").not.toBeNull();
+    expect(css.match(/\n  --app-rail-icon-active/), "active token").not.toBeNull();
+  });
+
+  it("shows keyboard focus on the 44 px square, not around the row", () => {
+    const focus = css.match(/\.app-rail-row:focus-visible \.app-rail-square \{[^}]*\}/);
+    expect(focus, "the square must carry the focus ring").not.toBeNull();
+    expect(focus![0]).toContain("outline:");
+    const rowFocus = css.match(/\.app-rail-row:focus-visible \{[^}]*\}/);
+    expect(rowFocus, "the row's own outline is suppressed").not.toBeNull();
+    expect(rowFocus![0]).toContain("outline: none");
   });
 
   it("marks the active destination with a left line and no background fill", () => {
@@ -64,6 +99,10 @@ describe("collapsed rail geometry", () => {
     expect(activeBranch![1]).not.toContain("bg-[");
     expect(activeBranch![1]).toContain("--app-rail-text-strong");
     expect(rail).toContain('aria-current={active ? "page" : undefined}');
+    // The destination list is shared with the mobile bar, so the name lives in one
+    // place: "Chats" everywhere, never "Conversations".
+    expect(rail).toContain('label: "Chats"');
+    expect(rail).not.toContain('"Conversations"');
     expect(rail).toMatch(/aria-hidden="true"[\s\S]{0,200}bg-\[var\(--color-sage\)\]/);
   });
 });
