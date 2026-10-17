@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  formatCalendarDate,
   formatClock,
   formatCount,
   formatDayLabel,
@@ -60,6 +61,19 @@ describe("formatClock", () => {
   it("returns an empty string rather than an invalid date", () => {
     expect(at("nonsense")).toBe("");
     expect(at(null)).toBe("");
+  });
+});
+
+describe("formatCalendarDate", () => {
+  it("names the day rather than how long ago it was", () => {
+    freeze();
+    // "Today" is the wrong answer for a creation date, which is why this exists.
+    expect(formatCalendarDate(NOW.toISOString())).not.toBe("Today");
+    expect(formatCalendarDate(NOW.toISOString())).toMatch(/2026/);
+  });
+
+  it("returns an empty string for an unusable value", () => {
+    expect(formatCalendarDate(null)).toBe("");
   });
 });
 

@@ -116,6 +116,16 @@ export function formatListTime(iso: string | null | undefined): string {
   return value.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" });
 }
 
+/**
+ * A plain calendar date — `Oct 12, 2026`. Used where the moment matters rather than
+ * how long ago it was (a group's creation date), so it never reads "Today".
+ */
+export function formatCalendarDate(iso: string | null | undefined): string {
+  const value = parseTimestamp(iso);
+  if (!value) return "";
+  return value.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+}
+
 /** The sticky day separator in the message list and the day heading in notifications. */
 export function formatDayLabel(iso: string | null | undefined): string {
   const value = parseTimestamp(iso);
