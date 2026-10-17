@@ -65,7 +65,7 @@ function SettingsForm() {
   return (
     <MainPane>
       <header className="flex h-[72px] shrink-0 items-center border-b border-[var(--app-pane-divider)] px-6">
-        <h1 className="font-display text-[17px] font-semibold text-[var(--app-pane-text)]">Settings</h1>
+        <h1 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">Settings</h1>
       </header>
       <div className="app-scroll-light min-h-0 flex-1 overflow-y-auto px-6 py-6">
         <div className="flex max-w-xl flex-col gap-5">

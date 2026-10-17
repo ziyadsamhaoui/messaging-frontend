@@ -63,7 +63,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
 
   if (!authenticated) {
     return (
-      <div className="flex h-dvh items-center justify-center">
+      <div className="flex h-dvh items-center justify-center font-ui">
         <div className="flex flex-col items-center gap-4">
           <div
             aria-hidden="true"
@@ -76,7 +76,21 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-[var(--app-panel)]">
+    /*
+     * `font-ui` on the shell root, not on `body`.
+     *
+     * The base stylesheet sets `body { font-family: var(--font-body) }` — a serif — and
+     * `input, textarea, button { font-family: inherit }`, which is why placeholders,
+     * typed text and every button in the app screen rendered in serif while the labels
+     * beside them rendered in the interface sans. The fix belongs on the app's own root
+     * rather than on `body`, because the landing, login and register pages are painted
+     * on the same `body` and must keep their serif voice. Font-family inherits, so one
+     * declaration here covers the rail, every panel, both panes and every control that
+     * did not already set its own face.
+     *
+     * The single exception is the sidebar wordmark, which carries `font-display` itself.
+     */
+    <div className="flex h-dvh w-full overflow-hidden bg-[var(--app-panel)] font-ui">
       <a
         href="#main-pane"
         className="focus-ring absolute left-3 top-3 z-[60] -translate-y-[200%] rounded-[var(--radius-control)] bg-[var(--app-pane-raised)] px-3 py-2 font-ui text-sm font-medium text-[var(--app-pane-text)] shadow-lg transition-transform duration-150 focus:translate-y-0 motion-reduce:transition-none"

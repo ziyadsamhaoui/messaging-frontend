@@ -7,7 +7,9 @@ export type FieldSize = "sm" | "md" | "lg";
 
 const HEIGHTS: Record<FieldSize, string> = {
   sm: "h-[var(--control-height-sm)] px-3 text-[13px]",
-  md: "h-[var(--control-height-md)] px-3.5 text-sm",
+  // 15 px at the 40 px height: the app's fields are 15–16 px, and this is the size the
+  // panel search rows use.
+  md: "h-[var(--control-height-md)] px-3.5 text-[15px]",
   lg: "h-[var(--control-height-lg)] px-3.5 text-[15px]",
 };
 

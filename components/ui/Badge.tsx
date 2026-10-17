@@ -30,7 +30,9 @@ export function RailBadge({
     <span
       aria-hidden="true"
       className={cn(
-        "absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px]",
+        // 12 px, the app-wide floor for anything that carries a number; the badge is
+        // 20 px so the larger numeral still fits on a 24 px icon box.
+        "absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[12px]",
         "ring-2 ring-[var(--app-rail)]",
         FILL,
         className
@@ -56,7 +58,7 @@ export function CountBadge({
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px]",
+        "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[12px]",
         FILL,
         className
       )}

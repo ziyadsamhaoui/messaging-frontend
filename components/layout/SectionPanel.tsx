@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export const SECTION_PANEL_HEADING_ID = "section-panel-heading";
 
 interface SectionPanelProps {
-  /** Panel title in the display serif, e.g. "Chats". */
+  /** Panel title in the interface sans at 20 px semibold, e.g. "Chats". */
   title: string;
   /** Icon buttons on the right of the header. */
   actions?: React.ReactNode;
@@ -47,7 +47,7 @@ export function SectionPanel({
         <h2
           id={SECTION_PANEL_HEADING_ID}
           tabIndex={-1}
-          className="font-display text-[22px] font-semibold text-[var(--app-panel-text)] focus:outline-none"
+          className="font-ui text-[20px] font-semibold text-[var(--app-panel-text)] focus:outline-none"
         >
           {title}
         </h2>

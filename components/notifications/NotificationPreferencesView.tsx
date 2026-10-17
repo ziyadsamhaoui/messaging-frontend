@@ -35,7 +35,7 @@ export function NotificationPreferencesView() {
   return (
     <MainPane>
       <header className="flex h-[72px] shrink-0 items-center border-b border-[var(--app-pane-divider)] px-6">
-        <h1 className="font-display text-[17px] font-semibold text-[var(--app-pane-text)]">
+        <h1 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
           Notification preferences
         </h1>
       </header>
@@ -97,7 +97,7 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
   return (
     <div className="flex max-w-xl flex-col gap-4">
       <section className="flex flex-col gap-2">
-        <h2 className="font-ui text-[15px] font-semibold text-[var(--app-pane-text)]">Mute by type</h2>
+        <h2 className="font-ui text-[13px] font-semibold text-[var(--app-pane-text)]">Mute by type</h2>
         <p className="font-ui text-[13px] text-[var(--app-pane-text-soft)]">
           A muted type still arrives in this list; it stops sending you a notification.
         </p>
@@ -135,7 +135,7 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
       </section>
 
       <section className="flex flex-col gap-2">
-        <h2 className="font-ui text-[15px] font-semibold text-[var(--app-pane-text)]">Push</h2>
+        <h2 className="font-ui text-[13px] font-semibold text-[var(--app-pane-text)]">Push</h2>
         <div className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-[var(--app-pane-control-border)] px-3 py-2">
           <span className="font-ui text-[15px] text-[var(--app-pane-text)]">Push notifications</span>
           <Switch

@@ -33,7 +33,7 @@ export function SelectionPrompt({
           className="h-[240px] w-auto opacity-90"
           priority={false}
         />
-        <h2 className="font-display text-[22px] font-semibold text-[var(--app-pane-text)]">{title}</h2>
+        <h2 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">{title}</h2>
         <p className="max-w-[42ch] font-ui text-[15px] text-[var(--app-pane-text-soft)]">{description}</p>
         {action}
       </div>

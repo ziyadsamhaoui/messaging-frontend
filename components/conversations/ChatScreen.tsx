@@ -290,7 +290,7 @@ export function ChatScreen({ roomId }: { roomId: string }) {
           presenceRing="var(--app-pane)"
         />
         <div className="min-w-0">
-          <h1 className="truncate font-display text-[17px] font-semibold text-[var(--app-pane-text)]">
+          <h1 className="truncate font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
             {title}
           </h1>
           {statusLine && (
