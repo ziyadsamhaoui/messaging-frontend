@@ -455,6 +455,39 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
 }
 
 /*
+ * ---------------------------------------------------------------------------
+ * Resizable section panel
+ * ---------------------------------------------------------------------------
+ * The width lives in `--app-panel-width` on the document element: written by the
+ * bootstrap script in `app/app/layout.tsx` before the first paint, and updated by the
+ * resize handle while dragging.
+ *
+ * On the document element rather than on the panel itself, deliberately. An
+ * element-level custom property cannot be overridden by a stylesheet rule — the
+ * element's own declaration wins over anything an ancestor or a media query says — so
+ * a width set on the panel could not be clamped for narrow viewports in CSS. Set on the
+ * root, the media query below can simply outrank it.
+ */
+.app-panel {
+  width: var(--app-panel-width, 340px);
+}
+
+/*
+ * Below 1024 px the panel is a fixed 300 px and resizing is off. `display: none` also
+ * removes the handle from the tab order, so a keyboard user never lands on a control
+ * that would do nothing.
+ */
+@media (max-width: 1023px) {
+  .app-panel {
+    width: 300px !important;
+  }
+
+  .app-panel-resize-handle {
+    display: none;
+  }
+}
+
+/*
  * Tooltip reveal. A delay on the way in and none on the way out is what keeps
  * tooltips from flickering while the pointer crosses a rail; it needs no timer in
  * JS, and the delay survives a keyboard focus because `:focus-visible` starts the

@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { PanelResizeHandle } from "./PanelResizeHandle";
 
 /** Id the shell focuses after a destination change. */
 export const SECTION_PANEL_HEADING_ID = "section-panel-heading";
@@ -38,7 +39,9 @@ export function SectionPanel({
     <aside
       aria-label={title}
       className={cn(
-        "flex h-full min-h-0 w-[340px] shrink-0 flex-col border-r border-[var(--app-panel-divider)] bg-[var(--app-panel)] max-md:w-[300px]",
+        // The width comes from `--app-panel-width` (see `.app-panel` in globals.css),
+        // which the resize handle drives and the media query clamps below 1024 px.
+        "app-panel relative flex h-full min-h-0 shrink-0 flex-col border-r border-[var(--app-panel-divider)] bg-[var(--app-panel)]",
         hideOnNarrow && "max-md:hidden",
         className
       )}
@@ -55,6 +58,7 @@ export function SectionPanel({
       </div>
       {toolbar && <div className="shrink-0 px-3 pb-2">{toolbar}</div>}
       <div className="app-scroll-dark min-h-0 flex-1 overflow-y-auto pb-3">{children}</div>
+      <PanelResizeHandle />
     </aside>
   );
 }
