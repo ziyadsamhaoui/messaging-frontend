@@ -351,18 +351,57 @@ html[data-sidebar="collapsed"] {
   transition: opacity 120ms ease-out;
 }
 
+/*
+ * `display: none`, not `opacity`/`visibility`.
+ *
+ * A label that is only invisible still occupies layout, and in a centred row that is
+ * the difference between an icon at 36 px and an icon pushed off-axis. Removing it from
+ * layout is what makes the collapsed geometry exact — and it is also why the rail can
+ * animate its width without the icons drifting sideways at any frame: the icon box is
+ * pinned to the rail's left edge, so the animated edge is always the far one.
+ */
 html[data-sidebar="collapsed"] .app-rail-label {
-  opacity: 0;
-  visibility: hidden;
+  display: none;
 }
 
-/* Destination rows are 48 px wide and centred when collapsed, full width otherwise. */
+/*
+ * The icon column is the alignment anchor, and it is the same 48 px box at the same
+ * 12 px inset in BOTH states — so an icon's centre is 36 px from the rail's edge
+ * whether the rail is expanded or collapsed, and 36 px is exactly half of the
+ * collapsed 72 px rail.
+ *
+ * The row must therefore keep its 12 px inset when collapsed. Centring the row's
+ * contents instead (the previous rule) is what pushed the icons off-centre: the label
+ * was still laid out — hidden with `opacity`/`visibility` rather than removed — so the
+ * row centred the icon *and* the space the invisible label occupied, which put the
+ * icon's centre well left of 36 px.
+ */
 .app-rail-row {
   padding-inline: 12px;
 }
 
 html[data-sidebar="collapsed"] .app-rail-row {
-  justify-content: center;
+  padding-inline: 12px;
+}
+
+/*
+ * Collapsed header: the mark above the toggle, both centred on the same 36 px axis.
+ * The header keeps its 12 px inset, so its 48 px content box centres anything up to
+ * 48 px wide on 12 + 24 = 36 px without a single per-child offset.
+ */
+html[data-sidebar="collapsed"] .app-rail-header {
+  height: auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px;
+}
+
+html[data-sidebar="collapsed"] .app-rail-header .app-rail-toggle {
+  margin-left: 0;
+}
+
+html[data-sidebar="collapsed"] .app-rail-header .app-rail-brand {
   padding-inline: 0;
 }
 
@@ -385,8 +424,25 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
     display: none;
   }
 
+  /* Same 12 px inset and 48 px icon box as the collapsed desktop rail, so the icon
+     centre is 36 px here too rather than 24 px. */
   .app-rail-row {
-    justify-content: center;
+    padding-inline: 12px;
+  }
+
+  .app-rail-header {
+    height: auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 12px;
+  }
+
+  .app-rail-header .app-rail-toggle {
+    margin-left: 0;
+  }
+
+  .app-rail-header .app-rail-brand {
     padding-inline: 0;
   }
 }
