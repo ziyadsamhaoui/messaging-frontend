@@ -104,19 +104,26 @@ export function Input({
           id={inputId}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
+          /*
+           * The size tokens come FIRST, then the adornment padding, then the caller's
+           * own classes. Tailwind-merge keeps the last class of a conflicting group, so
+           * with `HEIGHTS` last its `px-*` used to win over `pl-10`/`pr-12` — the icon
+           * and the text ended up on top of each other, which is exactly the reported
+           * "magnifier over the placeholder" in the Chats panel.
+           */
           className={cn(
             "w-full rounded-[var(--radius-control)] border font-ui transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+            HEIGHTS[size],
             styles.ring,
             styles.field,
             leading && "pl-10",
             trailing && "pr-12",
-            HEIGHTS[size],
             className
           )}
           {...props}
         />
         {trailing && (
-          <span className="absolute inset-y-0 right-1.5 flex items-center">{trailing}</span>
+          <span className="absolute inset-y-0 right-2 flex items-center">{trailing}</span>
         )}
       </div>
       {hint && !error && (
