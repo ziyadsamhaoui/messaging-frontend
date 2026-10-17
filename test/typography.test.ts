@@ -31,7 +31,6 @@ const APP_DIRS = [
   join(ROOT, "components", "settings"),
   join(ROOT, "components", "invites"),
   join(ROOT, "components", "chat"),
-  join(ROOT, "components", "sidebar"),
   join(ROOT, "components", "ui"),
   join(ROOT, "app", "app"),
 ];
