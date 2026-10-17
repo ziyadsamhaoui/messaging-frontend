@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Check, UserPlus, X } from "lucide-react";
+import { Check, Search, UserPlus, X } from "lucide-react";
 import {
   SegmentedControl,
   segmentedPanelId,
   segmentedTabId,
 } from "@/components/ui/SegmentedControl";
 import { Avatar } from "@/components/ui/Avatar";
+import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
@@ -77,13 +78,14 @@ export function ConnectionsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean }) {
             value={segment}
             onChange={setSegment}
           />
-          <input
+          <Input
             type="search"
+            size="md"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search connections"
             aria-label="Search connections"
-            className="focus-ring h-10 w-full rounded-[var(--radius-control)] border border-[var(--app-panel-field-border)] bg-[var(--app-panel-field)] px-3 font-ui text-sm text-[var(--app-panel-text)] placeholder:text-[var(--app-rail-text)]"
+            leading={<Search size={16} strokeWidth={1.75} />}
           />
         </div>
       }
@@ -353,7 +355,7 @@ function RequestsList({ query }: { query: string }) {
         <div className="flex flex-col gap-3">
           {incoming.length > 0 && (
             <section className="flex flex-col gap-1">
-              <h3 className="px-1 font-ui text-xs font-semibold uppercase tracking-wide text-[var(--app-panel-text-soft)]">
+              <h3 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
                 Received
               </h3>
               {incoming.map((connection) => (
@@ -369,7 +371,7 @@ function RequestsList({ query }: { query: string }) {
           )}
           {outgoing.length > 0 && (
             <section className="flex flex-col gap-1">
-              <h3 className="px-1 font-ui text-xs font-semibold uppercase tracking-wide text-[var(--app-panel-text-soft)]">
+              <h3 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
                 Sent
               </h3>
               {outgoing.map((connection) => (

@@ -124,7 +124,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(40,84,48,0.6)] backdrop-blur-sm px-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(12,28,16,0.82)] px-4">
       <div
         ref={dialogRef}
         role="dialog"
@@ -142,7 +142,7 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
       >
         <div className="flex items-center justify-between">
           {title && (
-            <h3 id={titleId} className="font-display text-lg font-semibold text-[var(--app-panel-text)]">
+            <h3 id={titleId} className="font-ui text-[17px] font-semibold text-[var(--app-panel-text)]">
               {title}
             </h3>
           )}

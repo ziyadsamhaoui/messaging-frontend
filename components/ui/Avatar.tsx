@@ -31,11 +31,32 @@ function variantFor(seed: string) {
   return VARIANTS[hash % VARIANTS.length];
 }
 
-function initialsFor(name: string): string {
+/**
+ * The initials shown when there is no profile picture.
+ *
+ * A single-word name takes its first letter plus, in this order of preference, a
+ * trailing digit or the second letter: `admin` reads AD, `admin2` reads A2 and
+ * `admin3` reads A3. Taking the first two letters of every name is what produced
+ * three identical "AD" avatars for three different people — the second letter of
+ * `admin2` is `d`, so the digit that actually distinguishes the accounts was
+ever reached.
+ *
+ * A multi-word name keeps first-plus-last ("Emma Stone" is ES), because there the
+ * second word already carries the distinguishing information.
+ *
+ * Exported so the rule can be asserted directly in a test rather than only through
+ * a rendered avatar.
+ */
+export function initialsFor(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  if (parts.length > 1) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  const word = parts[0];
+  const last = word[word.length - 1];
+  if (/\d/.test(last) && word.length > 1) return (word[0] + last).toUpperCase();
+  return word.slice(0, 2).toUpperCase();
 }
 
 const SIZES: Record<AvatarSize, string> = {

@@ -133,7 +133,7 @@ export function SegmentedControl<T extends string>({
       role="tablist"
       aria-label={label}
       className={cn(
-        "relative flex h-11 w-full items-center gap-2 rounded-2xl bg-[var(--color-surface-2)] p-1",
+        "relative flex h-11 w-full items-center gap-2 rounded-[var(--radius-control)] bg-[var(--color-surface-2)] p-1",
         className
       )}
     >
@@ -146,7 +146,7 @@ export function SegmentedControl<T extends string>({
       <div
         aria-hidden="true"
         className={cn(
-          "pointer-events-none absolute top-1 bottom-1 left-1 rounded-xl bg-[var(--color-parchment)]",
+          "pointer-events-none absolute top-1 bottom-1 left-1 rounded-[10px] bg-[var(--color-parchment)]",
           "transition-[transform,width] duration-200 ease-out motion-reduce:transition-none"
         )}
         style={{ width: pillWidth, transform: `translateX(${pillOffset})` }}
@@ -181,7 +181,7 @@ export function SegmentedControl<T extends string>({
               // `button { font-family: inherit }` rule in globals.css outranks a
               // plain utility, so the important modifier is what makes it land.
               // `z-10` keeps the label above the sliding fill.
-              "focus-ring relative z-10 flex h-full flex-1 items-center justify-center rounded-xl px-3 font-ui! text-sm font-medium",
+              "focus-ring relative z-10 flex h-full flex-1 items-center justify-center rounded-[10px] px-3 font-ui! text-sm font-medium",
               "transition-colors duration-200 motion-reduce:transition-none",
               selected
                 ? "bg-transparent text-[var(--color-forest)]"

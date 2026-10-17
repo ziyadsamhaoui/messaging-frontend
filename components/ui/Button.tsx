@@ -3,8 +3,20 @@ import { cn } from "@/lib/utils";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
-/** The surface the control sits on, so the foreground stays legible on both. */
-export type ButtonTone = "dark" | "light";
+/**
+ * The surface the control sits on, so the foreground stays legible on both.
+ *
+ * `dark` and `light` are the marketing and authentication surfaces: a sculpted fill
+ * with a specular top edge and a contact shadow, which is what those pages were
+ * designed around and which this task must not restyle.
+ *
+ * `panel` and `pane` are the authenticated app screen — the forest panels and the
+ * parchment pane. They are FLAT: one opaque fill, no inner sheen, no contact shadow,
+ * no hover lift, and one radius. That is the design rule for the app, and keeping it
+ * on its own tones is what lets the landing, login and register pages keep the look
+ * they already had.
+ */
+export type ButtonTone = "dark" | "light" | "panel" | "pane";
 
 const BASE =
   "focus-ring inline-flex items-center justify-center gap-2 font-ui font-semibold tracking-[0.01em] " +
@@ -80,6 +92,42 @@ const VARIANTS: Record<ButtonTone, Record<ButtonVariant, string>> = {
       "bg-[#8F2A1B] text-[var(--color-parchment-elevated)] " +
       "shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_10px_22px_-14px_rgba(4,16,8,0.7)] " +
       "hover:-translate-y-0.5 hover:bg-[#A03020]",
+  },
+  /*
+   * Authenticated app, dark panels (section panel, rail, dialogs). Flat by rule:
+   * `font-medium text-sm` is repeated on every variant because the app screen sets
+   * buttons at 14 px medium while the marketing surfaces keep their own scale, and
+   * `cn` is a tailwind-merge so the later class wins over BASE's `font-semibold`.
+   *
+   * Measured pairs — parchment label on `--color-primary` 4.96:1, parchment on the
+   * danger fill #8F2A1B 5.94:1, panel text on `--app-panel-field-border` above 3:1.
+   */
+  panel: {
+    primary:
+      "bg-[var(--color-primary)] text-[var(--color-parchment)] " +
+      "font-medium text-sm hover:bg-[var(--color-primary-hover)]",
+    secondary:
+      "border border-[var(--app-panel-field-border)] bg-transparent text-[var(--app-panel-text)] " +
+      "font-medium text-sm hover:bg-[var(--app-panel-hover)]",
+    ghost:
+      "bg-transparent text-[var(--app-panel-text-soft)] font-medium text-sm " +
+      "hover:bg-[var(--app-panel-hover)] hover:text-[var(--app-panel-text)]",
+    danger:
+      "bg-[#8F2A1B] text-[var(--color-parchment)] font-medium text-sm hover:bg-[#A03020]",
+  },
+  /* Authenticated app, parchment pane (page editors, empty states). Flat, as above. */
+  pane: {
+    primary:
+      "bg-[var(--color-primary)] text-[var(--color-parchment)] " +
+      "font-medium text-sm hover:bg-[var(--color-primary-hover)]",
+    secondary:
+      "border border-[var(--app-pane-control-border)] bg-transparent text-[var(--app-pane-text)] " +
+      "font-medium text-sm hover:bg-[var(--app-pane-hover)]",
+    ghost:
+      "bg-transparent text-[var(--app-pane-text-soft)] font-medium text-sm " +
+      "hover:bg-[var(--app-pane-hover)] hover:text-[var(--app-pane-text)]",
+    danger:
+      "bg-[#8F2A1B] text-[var(--color-parchment)] font-medium text-sm hover:bg-[#A03020]",
   },
 };
 

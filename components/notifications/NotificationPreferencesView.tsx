@@ -6,6 +6,7 @@ import { MainPane } from "@/components/layout/MainPane";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { buttonClasses } from "@/components/ui/Button";
+import { Switch } from "@/components/ui/Switch";
 import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
@@ -100,14 +101,22 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
         <p className="font-ui text-[13px] text-[var(--app-pane-text-soft)]">
           A muted type still arrives in this list; it stops sending you a notification.
         </p>
+        {/*
+          A row per type with a real `role="switch"` on the right. The native checkbox
+          this replaces was announced as a checkbox rather than as an on/off setting,
+          and rendered as the platform's own square with a blue focus ring in the middle
+          of a parchment page. The wrapper is a plain div now: a switch is a control, not
+          a label target, and nesting it inside a <label> would give it two names.
+        */}
         {NOTIFICATION_TYPES.map((type) => (
-          <label
+          <div
             key={type}
-            className="flex items-center justify-between gap-3 rounded-xl border border-[var(--app-pane-control-border)] px-3 py-2"
+            className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-[var(--app-pane-control-border)] px-3 py-2"
           >
             <span className="font-ui text-[15px] text-[var(--app-pane-text)]">{TYPE_LABELS[type]}</span>
-            <input
-              type="checkbox"
+            <Switch
+              surface="pane"
+              label={`Mute ${TYPE_LABELS[type]}`}
               checked={mutedTypes.has(type)}
               onChange={() =>
                 setMutedTypes((previous) => {
@@ -120,25 +129,22 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
                   return next;
                 })
               }
-              className="focus-ring-light h-5 w-5 accent-[var(--color-primary)]"
-              aria-label={`Mute ${TYPE_LABELS[type]}`}
             />
-          </label>
+          </div>
         ))}
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="font-ui text-[15px] font-semibold text-[var(--app-pane-text)]">Push</h2>
-        <label className="flex items-center justify-between gap-3 rounded-xl border border-[var(--app-pane-control-border)] px-3 py-2">
+        <div className="flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-[var(--app-pane-control-border)] px-3 py-2">
           <span className="font-ui text-[15px] text-[var(--app-pane-text)]">Push notifications</span>
-          <input
-            type="checkbox"
+          <Switch
+            surface="pane"
+            label="Enable push notifications"
             checked={pushEnabled}
-            onChange={(event) => setPushEnabled(event.target.checked)}
-            className="focus-ring-light h-5 w-5 accent-[var(--color-primary)]"
-            aria-label="Enable push notifications globally"
+            onChange={setPushEnabled}
           />
-        </label>
+        </div>
         <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--app-pane-control-border)] px-3 py-2">
           <span>
             <span className="block font-ui text-[15px] text-[var(--app-pane-text)]">This device</span>

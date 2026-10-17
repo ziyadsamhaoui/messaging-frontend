@@ -148,7 +148,15 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
           <div className="flex flex-col gap-2">
             {groups.map(([label, group]) => (
               <section key={label} className="flex flex-col gap-0.5">
-                <h3 className="sticky top-0 z-10 -mx-1 bg-[var(--app-panel)] px-3 py-1 font-ui text-xs font-semibold uppercase tracking-wide text-[var(--app-panel-text-soft)]">
+                {/*
+                  Sentence case at 13 px. This was an uppercase micro-label with
+                  letter-spacing ("MONDAY"), which is both harder to read at that
+                  size and a different case convention from every other heading in
+                  the app; the negative inline margin that used to bleed it past the
+                  panel's padding is also gone, because it was what put a horizontal
+                  scrollbar under the list.
+                */}
+                <h3 className="sticky top-0 z-10 bg-[var(--app-panel)] px-2 py-1.5 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
                   {label}
                 </h3>
                 <ul className="flex flex-col gap-0.5 px-1">

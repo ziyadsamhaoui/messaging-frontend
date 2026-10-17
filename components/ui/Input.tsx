@@ -22,6 +22,8 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
    * already use; `light` is for the parchment panes of the app screen.
    */
   tone?: "dark" | "light";
+  /** Rendered inside the field on the left edge (e.g. a search icon). */
+  leading?: React.ReactNode;
   /** Rendered inside the field on the right edge (e.g. a visibility toggle). */
   trailing?: React.ReactNode;
 }
@@ -32,6 +34,8 @@ const TONES = {
       "border-[var(--color-field-border)] bg-[var(--color-field)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)] hover:bg-[var(--color-field-hover)]",
     label: "text-[var(--color-text-secondary)]",
     ring: "focus-ring",
+    // The placeholder token, so the icon reads as a hint rather than as content.
+    adornment: "text-[var(--color-text-placeholder)]",
   },
   // On parchment: forest text at 6.22:1, a 3.30:1 control border and a 4.64:1
   // placeholder, all measured against the pane.
@@ -40,9 +44,19 @@ const TONES = {
       "border-[var(--app-pane-control-border)] bg-[var(--app-pane-raised)] text-[var(--app-pane-text)] placeholder:text-[var(--app-pane-placeholder)]",
     label: "text-[var(--app-pane-text-soft)]",
     ring: "focus-ring-light",
+    adornment: "text-[var(--app-pane-placeholder)]",
   },
 } as const;
 
+/**
+ * The one text field style per surface.
+ *
+ * Panels and panes each get exactly one height, radius, border and placeholder
+ * contrast, and a search field is this component with a `leading` magnifier rather
+ * than a hand-rolled `<input type="search">` with its own classes — which is how the
+ * chat and connections panels ended up with a field that did not match the fields
+ * inside the dialogs.
+ */
 export function Input({
   className,
   label,
@@ -50,6 +64,7 @@ export function Input({
   hint,
   size = "lg",
   tone = "dark",
+  leading,
   trailing,
   id,
   ...props
@@ -72,6 +87,17 @@ export function Input({
         </label>
       )}
       <div className="relative">
+        {leading && (
+          <span
+            aria-hidden="true"
+            className={cn(
+              "pointer-events-none absolute inset-y-0 left-3 flex items-center",
+              styles.adornment
+            )}
+          >
+            {leading}
+          </span>
+        )}
         <input
           id={inputId}
           aria-invalid={error ? true : undefined}
@@ -80,6 +106,7 @@ export function Input({
             "w-full rounded-[var(--radius-control)] border font-ui transition-colors disabled:cursor-not-allowed disabled:opacity-60",
             styles.ring,
             styles.field,
+            leading && "pl-10",
             trailing && "pr-12",
             HEIGHTS[size],
             className

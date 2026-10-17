@@ -39,6 +39,7 @@ import { MainPane } from "@/components/layout/MainPane";
 import { IconButton } from "@/components/ui/IconButton";
 import { Avatar } from "@/components/ui/Avatar";
 import { Popover, PopoverItem } from "@/components/ui/Popover";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 interface ActiveTyping {
   userId: string;
@@ -468,50 +469,50 @@ function RoomMenu({
         <MoreVertical size={20} strokeWidth={1.75} aria-hidden="true" />
       </IconButton>
       <Popover open={open} onClose={close} anchor={trigger} label="Chat actions" align="end">
-        {confirming ? (
-          <div className="flex flex-col gap-2 p-1">
-            <p className="font-ui text-[13px] text-[var(--app-pane-text)]">Leave this chat?</p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  close();
-                  void onLeave();
-                }}
-                className="focus-ring-light h-8 rounded-lg bg-[var(--app-danger-on-light)] px-2.5 font-ui text-[13px] font-semibold text-[var(--color-parchment-elevated)]"
-              >
-                Leave
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                className="focus-ring-light h-8 rounded-lg border border-[var(--app-pane-control-border)] px-2.5 font-ui text-[13px] text-[var(--app-pane-text)]"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <>
-            {isDirect && (
-              <PopoverItem
-                danger={!isBlocked}
-                onClick={() => {
-                  close();
-                  void onToggleBlock();
-                }}
-              >
-                {isBlocked ? "Unblock" : "Block"}
-              </PopoverItem>
-            )}
-            {isGroup && (
-              <PopoverItem danger onClick={() => setConfirming(true)}>
-                Leave chat
-              </PopoverItem>
-            )}
-          </>
+        {isDirect && (
+          <PopoverItem
+            danger={!isBlocked}
+            onClick={() => {
+              close();
+              void onToggleBlock();
+            }}
+          >
+            {isBlocked ? "Unblock" : "Block"}
+          </PopoverItem>
+        )}
+        {isGroup && (
+          <PopoverItem
+            danger
+            onClick={() => {
+              // The menu must get out of the way before the dialog takes focus, or the
+              // popover's own focus-restore would pull focus back out of the dialog.
+              setOpen(false);
+              setConfirming(true);
+            }}
+          >
+            Leave group
+          </PopoverItem>
         )}
       </Popover>
+
+      {/*
+        Leaving is the one action here that cannot be undone from the interface, so it
+        asks through the shared confirmation dialog rather than a second click inside
+        the menu: the menu closes, focus moves to the dialog's cancel button, and the
+        answer is an explicit button rather than whatever is under the pointer.
+      */}
+      <ConfirmDialog
+        open={confirming}
+        title="Leave this group?"
+        description="You will stop receiving its messages. The group and its history stay for everyone else."
+        confirmLabel="Leave group"
+        danger
+        onConfirm={() => {
+          setConfirming(false);
+          void onLeave();
+        }}
+        onCancel={() => setConfirming(false)}
+      />
     </>
   );
 }

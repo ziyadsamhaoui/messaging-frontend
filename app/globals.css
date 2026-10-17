@@ -211,16 +211,30 @@ button {
 }
 
 /*
- * Shared keyboard focus treatment. A dark inner ring separates the lighter
- * outer ring from light surfaces; on dark surfaces the outer ring carries the
- * contrast. Measured against both the parchment and forest surfaces.
+ * Shared keyboard focus treatment, in two halves because the two surfaces need
+ * different rings.
+ *
+ * `.focus-ring` is the dark half (rail, panels, raised dialogs): a 2 px sage outline
+ * with a 2 px offset, so the gap shows the surface behind the control and the ring
+ * never sits flush against the fill it outlines. `outline` rather than `box-shadow`
+ * on purpose — an outline never shifts layout and is not clipped by a scrolling
+ * ancestor. Measured as a non-text indicator against every dark surface it is used
+ * on: 6.13:1 on the rail (#1A3A20), 4.26:1 on the panel (#285430) and 5.04:1 on the
+ * raised surface (#234829), all above the 3:1 floor.
+ *
+ * This class was referenced by 24 components but had no rule at all, which is why
+ * rail rows, segmented controls and the new controls had no visible focus ring in
+ * the review captures.
+ *
+ * `.focus-ring-light` is the parchment half, for the pane and its raised popovers,
+ * where a sage ring measures 1.6:1 against the surface: a parchment inner ring and a
+ * forest outer ring, 6.22:1 on parchment and 7.22:1 on the raised pane.
  */
-/*
- * The shared focus treatment above is tuned for dark surfaces (a dark inner ring
- * plus a sage outer ring). On the parchment pane and its raised popovers the sage
- * outer ring measures 1.6:1 against the surface, so the light surfaces get their
- * own pair: a parchment inner ring and a forest outer ring, 6.22:1 on parchment.
- */
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
 .focus-ring-light:focus-visible {
   outline: none;
   box-shadow:
@@ -237,6 +251,12 @@ button {
 .app-scroll-dark {
   scrollbar-width: thin;
   scrollbar-color: rgba(164, 190, 123, 0.45) transparent;
+  /*
+   * A panel is a vertical list. A horizontal bar in one can only be the symptom of
+   * a row that failed to truncate, so the sideways axis is closed here and the rows
+   * themselves are what truncate.
+   */
+  overflow-x: hidden;
 }
 
 .app-scroll-dark::-webkit-scrollbar {
@@ -262,6 +282,7 @@ button {
 .app-scroll-light {
   scrollbar-width: thin;
   scrollbar-color: rgba(40, 84, 48, 0.4) transparent;
+  overflow-x: hidden;
 }
 
 .app-scroll-light::-webkit-scrollbar {
@@ -282,6 +303,19 @@ button {
 
 .app-scroll-light::-webkit-scrollbar-thumb:hover {
   background-color: rgba(40, 84, 48, 0.6);
+}
+
+/*
+ * Stepper arrows. Chromium can render a button at each end of a scrollbar; once the
+ * bar is only 10 px wide they read as two small boxes clipped onto the stripe, which
+ * is what showed up at the bottom and right of the notifications panel. Hidden here,
+ * not merely left unstyled.
+ */
+.app-scroll-dark::-webkit-scrollbar-button,
+.app-scroll-light::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 /*

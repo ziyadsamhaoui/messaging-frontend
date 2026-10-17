@@ -14,7 +14,7 @@ export default function ConnectionsPage() {
           className="m-auto"
           icon={<UserRoundSearch size={22} strokeWidth={1.75} />}
           title="Select a connection"
-          description="A person's profile, and the actions available for them, open here."
+          description="Choose someone to see their profile and actions."
         />
       </MainPane>
     </>

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { MessageSquareText, SquarePen } from "lucide-react";
+import { MessageSquareText, Search, SquarePen } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useRooms } from "@/hooks/useRooms";
@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { RoomResponse } from "@/lib/types";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/IconButton";
+import { Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
@@ -89,13 +90,19 @@ export function ConversationsPanel({
         }
         toolbar={
           <div className="flex flex-col gap-2">
-            <input
+            {/*
+              The shared field, not a hand-rolled input: same height, radius, border and
+              placeholder contrast as every other field in the app, with the magnifier as
+              a `leading` adornment rather than a second element beside it.
+            */}
+            <Input
               type="search"
+              size="md"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search chats"
               aria-label="Search chats"
-              className="focus-ring h-10 w-full rounded-[var(--radius-control)] border border-[var(--app-panel-field-border)] bg-[var(--app-panel-field)] px-3 font-ui text-sm text-[var(--app-panel-text)] placeholder:text-[var(--app-rail-text)]"
+              leading={<Search size={16} strokeWidth={1.75} />}
             />
             <div className="flex items-center gap-1.5" role="group" aria-label="Filter chats">
               {FILTERS.map((option) => (
