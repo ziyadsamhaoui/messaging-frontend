@@ -104,7 +104,7 @@ export function applySidebarAttribute(collapsed: boolean) {
 /**
  * Mirrors the section panel's width onto the document element, for the same reason the
  * sidebar state lives there: `--app-panel-width` is read by the panel's CSS, and the
- * bootstrap script in the app layout writes it before the first paint, so a reload
+ * bootstrap script in the root layout writes it before the first paint, so a reload
  * paints the remembered width instead of snapping to it once React catches up.
  */
 export function applyPanelWidth(width: number) {

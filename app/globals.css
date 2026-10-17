@@ -328,7 +328,7 @@ button {
  * Sidebar rail
  * ---------------------------------------------------------------------------
  * The collapsed state lives on the document element (set before the first paint by
- * the bootstrap script in `app/app/layout.tsx`), and the geometry is expressed from
+ * the bootstrap script in `app/layout.tsx`), and the geometry is expressed from
  * it in CSS. That is what keeps the rail from being painted at one width and then
  * snapping to another once React hydrates: the width is right in the server's own
  * HTML and stays right.
@@ -464,7 +464,7 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
  * Resizable section panel
  * ---------------------------------------------------------------------------
  * The width lives in `--app-panel-width` on the document element: written by the
- * bootstrap script in `app/app/layout.tsx` before the first paint, and updated by the
+ * bootstrap script in `app/layout.tsx` before the first paint, and updated by the
  * resize handle while dragging.
  *
  * On the document element rather than on the panel itself, deliberately. An
