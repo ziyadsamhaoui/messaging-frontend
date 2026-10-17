@@ -21,7 +21,7 @@ export default function NotificationsPage() {
           action={
             <Link
               href={NOTIFICATION_PREFERENCES_HREF}
-              className={buttonClasses({ variant: "secondary", size: "md", tone: "light" })}
+              className={buttonClasses({ variant: "secondary", size: "md", tone: "pane" })}
             >
               Notification preferences
             </Link>

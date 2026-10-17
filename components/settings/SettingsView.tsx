@@ -217,7 +217,7 @@ function ProfileForm() {
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className={buttonClasses({ variant: "primary", size: "md", tone: "light" })}
+          className={buttonClasses({ variant: "primary", size: "md", tone: "pane" })}
         >
           {saving ? "Saving…" : "Save changes"}
         </button>
@@ -318,7 +318,7 @@ function BlockedUserRow({
         type="button"
         onClick={() => void onUnblock()}
         disabled={pending}
-        className={buttonClasses({ variant: "secondary", size: "sm", tone: "light" })}
+        className={buttonClasses({ variant: "secondary", size: "sm", tone: "pane" })}
       >
         {pending ? "Unblocking…" : "Unblock"}
       </button>

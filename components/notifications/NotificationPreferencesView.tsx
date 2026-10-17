@@ -35,9 +35,11 @@ export function NotificationPreferencesView() {
   return (
     <MainPane>
       <header className="flex h-[72px] shrink-0 items-center border-b border-[var(--app-pane-divider)] px-6">
-        <h1 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
+        {/* Subordinate to the notifications panel's heading, which is the route's
+            `h1` — the preferences are a view of that section, not a second one. */}
+        <h2 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
           Notification preferences
-        </h1>
+        </h2>
       </header>
       <div className="app-scroll-light min-h-0 flex-1 overflow-y-auto px-6 py-6">
         {preferencesQuery.isError ? (
@@ -175,7 +177,7 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
               }
             }}
             disabled={!pushSupported || pushActive || subscribing}
-            className={buttonClasses({ variant: "secondary", size: "sm", tone: "light" })}
+            className={buttonClasses({ variant: "secondary", size: "sm", tone: "pane" })}
           >
             {subscribing ? "Subscribing…" : "Enable push"}
           </button>
@@ -193,7 +195,7 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
           type="button"
           onClick={() => void save()}
           disabled={saving}
-          className={buttonClasses({ variant: "primary", size: "md", tone: "light" })}
+          className={buttonClasses({ variant: "primary", size: "md", tone: "pane" })}
         >
           {saving ? "Saving…" : "Save"}
         </button>

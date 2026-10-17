@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Ban, MessageSquare, ShieldCheck, UserPlus, UserRoundX } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Ban, MessageSquare, ShieldCheck, UserPlus, UserRoundX } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useUser } from "@/hooks/useUser";
 import {
@@ -63,7 +64,7 @@ export function ConnectionProfile({ userId }: { userId: string }) {
 
   if (userQuery.isLoading) {
     return (
-      <MainPane hideOnNarrow>
+      <MainPane>
         <div className="flex flex-col gap-4 p-6">
           <Skeleton className="h-24 w-24 rounded-full" />
           <Skeleton className="h-6 w-40" />
@@ -75,7 +76,7 @@ export function ConnectionProfile({ userId }: { userId: string }) {
 
   if (userQuery.isError || !user) {
     return (
-      <MainPane hideOnNarrow>
+      <MainPane>
         <ErrorBlock
           title="Couldn't load this profile"
           reason="The profile did not come back from the server."
@@ -143,11 +144,23 @@ export function ConnectionProfile({ userId }: { userId: string }) {
   }
 
   return (
-    <MainPane hideOnNarrow>
+    <MainPane>
       <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[var(--app-pane-divider)] px-6">
-        <h1 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
+        {/*
+         * Below `md` the list panel is hidden and this pane is the whole screen, so the
+         * profile needs its own way back to the list — the same rule the open
+         * conversation follows.
+         */}
+        <Link
+          href="/app/connections"
+          aria-label="Back to connections"
+          className="focus-ring-light flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-control)] text-[var(--app-pane-text-soft)] md:hidden"
+        >
+          <ArrowLeft size={20} strokeWidth={1.75} aria-hidden="true" />
+        </Link>
+        <h2 className="font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
           Profile
-        </h1>
+        </h2>
       </header>
 
       <div className="app-scroll-light min-h-0 flex-1 overflow-y-auto px-6 py-8">
@@ -162,9 +175,9 @@ export function ConnectionProfile({ userId }: { userId: string }) {
               presenceRing="var(--app-pane)"
             />
             <div className="min-w-0">
-              <h2 className="truncate font-ui text-[24px] font-semibold text-[var(--app-pane-text)]">
+              <h3 className="truncate font-ui text-[24px] font-semibold text-[var(--app-pane-text)]">
                 {username}
-              </h2>
+              </h3>
               <p className="font-ui text-sm text-[var(--app-pane-text-soft)]">@{username}</p>
               <p className="mt-1 font-ui text-[13px] text-[var(--app-pane-text-soft)]">
                 {user.lastSeen ? formatLastSeen(user.lastSeen) : "Last seen unavailable"}
@@ -192,7 +205,7 @@ export function ConnectionProfile({ userId }: { userId: string }) {
                 type="button"
                 onClick={() => void openConversation()}
                 disabled={starting || blocked}
-                className={buttonClasses({ variant: "primary", size: "md", tone: "light" })}
+                className={buttonClasses({ variant: "primary", size: "md", tone: "pane" })}
               >
                 <MessageSquare size={16} strokeWidth={1.75} aria-hidden="true" />
                 {starting ? "Opening…" : "Message"}
@@ -203,7 +216,7 @@ export function ConnectionProfile({ userId }: { userId: string }) {
                   type="button"
                   onClick={() => void remove()}
                   disabled={busy !== null}
-                  className={buttonClasses({ variant: "secondary", size: "md", tone: "light" })}
+                  className={buttonClasses({ variant: "secondary", size: "md", tone: "pane" })}
                 >
                   <UserRoundX size={16} strokeWidth={1.75} aria-hidden="true" />
                   {busy === "remove" ? "Removing…" : "Remove connection"}
@@ -217,7 +230,7 @@ export function ConnectionProfile({ userId }: { userId: string }) {
                   type="button"
                   onClick={() => void sendRequest()}
                   disabled={busy !== null || blocked}
-                  className={buttonClasses({ variant: "secondary", size: "md", tone: "light" })}
+                  className={buttonClasses({ variant: "secondary", size: "md", tone: "pane" })}
                 >
                   <UserPlus size={16} strokeWidth={1.75} aria-hidden="true" />
                   {busy === "connect" ? "Sending…" : "Send request"}
@@ -228,7 +241,7 @@ export function ConnectionProfile({ userId }: { userId: string }) {
                 type="button"
                 onClick={() => void toggleBlock()}
                 disabled={busy !== null}
-                className={buttonClasses({ variant: "danger", size: "md", tone: "light" })}
+                className={buttonClasses({ variant: "danger", size: "md", tone: "pane" })}
               >
                 {blocked ? (
                   <ShieldCheck size={16} strokeWidth={1.75} aria-hidden="true" />
@@ -241,9 +254,9 @@ export function ConnectionProfile({ userId }: { userId: string }) {
           )}
 
           <p className="font-ui text-[13px] text-[var(--app-pane-text-soft)]">
-            <a href={CHATS_HREF} className="focus-ring-light rounded underline">
+            <Link href={CHATS_HREF} className="focus-ring-light rounded underline">
               Back to chats
-            </a>
+            </Link>
           </p>
         </div>
       </div>
