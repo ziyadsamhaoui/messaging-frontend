@@ -17,14 +17,45 @@
  * static render of the shell.
  */
 
+import type { TimeFormat } from "./prefs";
+
 const MINUTE = 60_000;
 const DAY = 86_400_000;
+
+/**
+ * The clock format every formatter in this file uses.
+ *
+ * It is a module value rather than a parameter because the same moment is rendered
+ * by a conversation row, a bubble, a notification and a tooltip, and none of them
+ * should have to know where the preference lives. `prefsStore` seeds it at start-up
+ * and updates it whenever the setting changes, so every surface switches together.
+ */
+let clockFormat: TimeFormat = "12h";
+
+export function setClockFormat(format: TimeFormat) {
+  clockFormat = format;
+}
+
+export function getClockFormat(): TimeFormat {
+  return clockFormat;
+}
 
 /** Parses an API timestamp, rejecting anything unusable instead of rendering "Invalid Date". */
 export function parseTimestamp(value: string | null | undefined): Date | null {
   if (!value) return null;
   const date = new Date(value);
   return Number.isFinite(date.getTime()) ? date : null;
+}
+
+/**
+ * True when an API timestamp is in the past (an invitation past its TTL, for
+ * example). It lives here, beside the parsers, so both the inbox and the invitation
+ * detail view apply exactly one expiry rule, and so a component never reads the
+ * clock inline.
+ */
+export function isPast(value: string | null | undefined): boolean {
+  const date = parseTimestamp(value);
+  return date !== null && date.getTime() <= Date.now();
 }
 
 /** Calendar days between two instants, so "yesterday" means the day before and not 24 hours. */
@@ -50,11 +81,24 @@ function isSameYear(value: Date, now = new Date()): boolean {
   return value.getFullYear() === now.getFullYear();
 }
 
-/** `14:32` — the clock stamp inside a bubble or a row. */
+/**
+ * `1:29 PM` or `13:29` — the clock stamp inside a bubble or a row.
+ *
+ * Built by hand rather than with `toLocaleTimeString`, which cannot produce a
+ * 12-hour clock without a leading zero: with `hour: "2-digit"` it renders "01:29 PM"
+ * (the reported bug), and with `hour: "numeric"` it is locale-dependent — some
+ * locales still pad. Both fields are formatted as integers and the hour is put on a
+ * 12-hour scale explicitly, so "01:29 AM" can no longer appear anywhere.
+ */
 export function formatClock(iso: string | null | undefined): string {
   const value = parseTimestamp(iso);
   if (!value) return "";
-  return value.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const hours24 = value.getHours();
+  const minutes = String(value.getMinutes()).padStart(2, "0");
+  if (clockFormat === "24h") return `${String(hours24).padStart(2, "0")}:${minutes}`;
+  const suffix = hours24 < 12 ? "AM" : "PM";
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+  return `${hours12}:${minutes} ${suffix}`;
 }
 
 /**
@@ -99,6 +143,27 @@ export function formatRelative(iso: string | null | undefined): string {
   if (hours < 24) return `${hours} h ago`;
   if (daysSince(value) === 1) return "Yesterday";
   return formatListTime(iso);
+}
+
+/**
+ * Relative time for an instant that is still ahead (an invitation's expiry).
+ *
+ * `formatRelative` cannot express this: it measures an elapsed interval from now, so a
+ * future timestamp collapses to "just now", which is what an invitation that expires in
+ * two days used to read as. This is its mirror, and it degrades to the same calendar
+ * words once the value is no longer in the future.
+ */
+export function formatUntil(iso: string | null | undefined): string {
+  const value = parseTimestamp(iso);
+  if (!value) return "";
+  const milliseconds = value.getTime() - Date.now();
+  if (milliseconds <= 0) return formatRelative(iso);
+  const minutes = Math.max(Math.round(milliseconds / MINUTE), 1);
+  if (minutes < 60) return `in ${minutes} min`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `in ${hours} h`;
+  const days = Math.round(hours / 24);
+  return days === 1 ? "in 1 day" : `in ${days} days`;
 }
 
 /**

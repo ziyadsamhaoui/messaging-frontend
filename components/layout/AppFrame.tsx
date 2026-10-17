@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppRealtime } from "@/hooks/useAppRealtime";
 import { parseAppRoute } from "@/lib/appRoute";
 import { registerServiceWorker } from "@/lib/push";
+import { applyStoredPrefs } from "@/store/prefsStore";
 import { Rail } from "./Rail";
 import { SECTION_PANEL_HEADING_ID } from "./SectionPanel";
 
@@ -42,6 +43,16 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     if (!authenticated) return;
     void registerServiceWorker();
   }, [authenticated]);
+
+  /*
+   * The device preferences (clock format, density, text size, motion) are mirrored
+   * onto the document element once the shell mounts, so the first authenticated paint
+   * already reflects them. The store seeds the time formatter at import time, which is
+   * why rows and bubbles can read it synchronously.
+   */
+  useEffect(() => {
+    applyStoredPrefs();
+  }, []);
 
   /*
    * Moving focus to the panel heading when the *destination* changes, and only
@@ -90,7 +101,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
      *
      * The single exception is the sidebar wordmark, which carries `font-display` itself.
      */
-    <div className="flex h-dvh w-full overflow-hidden bg-[var(--app-panel)] font-ui">
+    <div className="app-shell-root flex h-dvh w-full overflow-hidden bg-[var(--app-panel)] font-ui">
       <a
         href="#main-pane"
         className="focus-ring absolute left-3 top-3 z-[60] -translate-y-[200%] rounded-[var(--radius-control)] bg-[var(--app-pane-raised)] px-3 py-2 font-ui text-sm font-medium text-[var(--app-pane-text)] shadow-lg transition-transform duration-150 focus:translate-y-0 motion-reduce:transition-none"

@@ -1,11 +1,15 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  formatClock,
   formatCount,
   formatDayLabel,
   formatListTime,
   formatRelative,
+  formatUntil,
+  isPast,
   isSameDay,
   parseTimestamp,
+  setClockFormat,
 } from "./time";
 
 /*
@@ -22,6 +26,41 @@ function freeze() {
 
 afterEach(() => {
   vi.useRealTimers();
+});
+
+/*
+ * The clock stamp. `toLocaleTimeString` cannot express "no leading zero" without
+ * becoming locale-dependent, which is exactly how "01:29 AM" appeared beside
+ * "12:15 PM" in the same list. These cases pin the hand-built formatter.
+ */
+describe("formatClock", () => {
+  const at = (iso: string | null) => formatClock(iso);
+
+  afterEach(() => setClockFormat("12h"));
+
+  it("drops the leading zero in 12-hour form", () => {
+    setClockFormat("12h");
+    // Local-time inputs, so the expectation does not depend on the test machine's zone.
+    expect(at(new Date(2026, 9, 14, 1, 29).toISOString())).toBe("1:29 AM");
+    expect(at(new Date(2026, 9, 14, 13, 5).toISOString())).toBe("1:05 PM");
+  });
+
+  it("reads midnight and noon as 12, not 0", () => {
+    setClockFormat("12h");
+    expect(at(new Date(2026, 9, 14, 0, 15).toISOString())).toBe("12:15 AM");
+    expect(at(new Date(2026, 9, 14, 12, 15).toISOString())).toBe("12:15 PM");
+  });
+
+  it("pads the hour in 24-hour form", () => {
+    setClockFormat("24h");
+    expect(at(new Date(2026, 9, 14, 9, 7).toISOString())).toBe("09:07");
+    expect(at(new Date(2026, 9, 14, 21, 40).toISOString())).toBe("21:40");
+  });
+
+  it("returns an empty string rather than an invalid date", () => {
+    expect(at("nonsense")).toBe("");
+    expect(at(null)).toBe("");
+  });
 });
 
 describe("parseTimestamp", () => {
@@ -90,5 +129,30 @@ describe("formatListTime and formatRelative", () => {
     freeze();
     expect(formatListTime("garbage")).toBe("");
     expect(formatRelative(null)).toBe("");
+  });
+});
+
+describe("formatUntil and isPast", () => {
+  it("describes an instant that is still ahead", () => {
+    freeze();
+    expect(formatUntil("2026-10-14T12:20:00.000Z")).toBe("in 20 min");
+    expect(formatUntil("2026-10-14T18:00:00.000Z")).toBe("in 6 h");
+    expect(formatUntil("2026-10-15T12:00:00.000Z")).toBe("in 1 day");
+    expect(formatUntil("2026-10-17T12:00:00.000Z")).toBe("in 3 days");
+  });
+
+  it("falls back to the past tense once the instant has passed", () => {
+    freeze();
+    // An invitation that lapsed an hour ago must not read as "in 1 h".
+    expect(formatUntil("2026-10-14T11:00:00.000Z")).toBe("1 h ago");
+    expect(formatUntil("2026-10-14T11:59:30.000Z")).toBe("just now");
+  });
+
+  it("answers whether a timestamp is behind us, and refuses unusable input", () => {
+    freeze();
+    expect(isPast("2026-10-14T11:59:00.000Z")).toBe(true);
+    expect(isPast("2026-10-14T12:01:00.000Z")).toBe(false);
+    expect(isPast("garbage")).toBe(false);
+    expect(isPast(null)).toBe(false);
   });
 });

@@ -126,6 +126,19 @@
   --app-bubble-out: var(--color-forest);
   --app-bubble-out-text: var(--color-parchment); /* 6.22:1 */
 
+  /*
+   * Bubble geometry, so "Message density" is one set of numbers rather than a
+   * second copy of every class. Comfortable: a one-line bubble is 20 + 7 + 7 = 34 px.
+   * The gaps are the reference's: 2 px inside a sender group, 10 px between groups.
+   */
+  --app-bubble-py: 7px;
+  --app-bubble-px: 10px;
+  --app-bubble-radius: 10px;
+  --app-bubble-gap-in-group: 2px;
+  --app-bubble-gap-between-groups: 10px;
+  --app-bubble-tail-w: 6px;
+  --app-bubble-tail-h: 8px;
+
   --app-badge-fill: var(--color-sage); /* forest text on it 6.13:1 */
   --app-badge-text: var(--color-forest-deep);
   --app-danger-on-dark: var(--color-danger); /* #F7B3A8 4.98:1 on panel */
@@ -134,6 +147,30 @@
 
   --app-tooltip-surface: #234829; /* raised forest */
   --app-tooltip-text: var(--color-text-primary); /* 7.2:1 */
+}
+
+/*
+ * Compact density: tighter padding and gaps, same type and colours. It changes
+ * nothing but these five numbers, which is why the setting cannot drift away from
+ * what it claims to change.
+ */
+html[data-density="compact"] {
+  --app-bubble-py: 4px;
+  --app-bubble-px: 9px;
+  --app-bubble-gap-in-group: 1px;
+  --app-bubble-gap-between-groups: 6px;
+}
+
+/*
+ * Text size scales the shell rather than the root font size: the app's type scale is
+ * written in pixel utilities, where a root `font-size` would have no effect at all.
+ */
+html[data-text-size="small"] .app-shell-root {
+  zoom: 0.9;
+}
+
+html[data-text-size="large"] .app-shell-root {
+  zoom: 1.12;
 }
 
 @theme inline {
@@ -713,4 +750,5 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
     animation: none;
   }
 }
+
 
