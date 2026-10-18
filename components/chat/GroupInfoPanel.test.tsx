@@ -40,6 +40,18 @@ const BOB: ParticipantResponse = {
   mutedUntil: null,
 };
 
+function groupWith(size: number): ParticipantResponse[] {
+  return [
+    OWNER,
+    ...Array.from({ length: Math.max(size - 1, 0) }).map((_, index) => ({
+      ...BOB,
+      id: `p-extra-${index}`,
+      userId: `u-${String(index).padStart(2, "0")}`,
+      isMuted: false,
+    })),
+  ];
+}
+
 const state = vi.hoisted(() => ({
   participants: [] as unknown[],
   invitations: [] as unknown[],
@@ -264,24 +276,28 @@ describe("GroupInfoPanel", () => {
     expect(screen.queryByRole("button", { name: "Unmute" })).toBeNull();
   });
 
-  it("shows eight members and expands the rest in place", async () => {
-    state.participants = [
-      OWNER,
-      ...Array.from({ length: 9 }).map((_, index) => ({
-        ...BOB,
-        id: `p-extra-${index}`,
-        userId: `u-${String(index).padStart(2, "0")}`,
-        isMuted: false,
-      })),
-    ];
-    renderPanel();
+  it.each([3, 9, 100])(
+    "previews and expands a %i-member group in place",
+    async (size) => {
+      state.participants = groupWith(size);
+      renderPanel();
 
-    expect(screen.getAllByRole("button", { name: /member options/i })).toHaveLength(8);
-    const user = userEvent.setup();
-    await user.click(screen.getByRole("button", { name: "See all (2 more)" }));
-    expect(screen.getAllByRole("button", { name: /member options/i })).toHaveLength(10);
-    expect(screen.queryByRole("button", { name: /see all/i })).toBeNull();
-  });
+      const preview = Math.min(size, 8);
+      expect(screen.getAllByRole("button", { name: /member options/i })).toHaveLength(preview);
+
+      if (size <= 8) {
+        expect(screen.queryByRole("button", { name: /see all/i })).toBeNull();
+        return;
+      }
+
+      const user = userEvent.setup();
+      await user.click(
+        screen.getByRole("button", { name: `See all (${size - 8} more)` })
+      );
+      expect(screen.getAllByRole("button", { name: /member options/i })).toHaveLength(size);
+      expect(screen.queryByRole("button", { name: /see all/i })).toBeNull();
+    }
+  );
 
   it("filters members by name and handle from the inline search", async () => {
     renderPanel();
