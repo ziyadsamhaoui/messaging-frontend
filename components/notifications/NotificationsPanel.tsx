@@ -155,9 +155,9 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
                   panel's padding is also gone, because it was what put a horizontal
                   scrollbar under the list.
                 */}
-                <h3 className="sticky top-0 z-10 bg-[var(--app-panel)] px-2 py-1.5 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
+                <h2 className="sticky top-0 z-10 bg-[var(--app-panel)] px-2 py-1.5 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
                   {label}
-                </h3>
+                </h2>
                 <ul className="flex flex-col gap-0.5 px-1">
                   {group.map((item) => (
                     <li key={item.id}>

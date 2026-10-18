@@ -97,7 +97,7 @@ describe("MessageBubble controls", () => {
     expect(screen.getByRole("button", { name: "React with 🌿" })).toBeInTheDocument();
   });
 
-  it("opens a menu from the chevron with Copy, Edit and Delete in that order", async () => {
+  it("opens a menu from the chevron with React, Copy, Edit and Delete in that order", async () => {
     renderBubble();
 
     const user = userEvent.setup();
@@ -105,7 +105,17 @@ describe("MessageBubble controls", () => {
 
     const menu = screen.getByRole("menu", { name: "Message options" });
     const items = within(menu).getAllByRole("menuitem").map((item) => item.textContent);
-    expect(items).toEqual(["Copy", "Edit", "Delete"]);
+    expect(items).toEqual(["React", "Copy", "Edit", "Delete"]);
+  });
+
+  it("offers React in the menu for touch screens, which opens the picker", async () => {
+    renderBubble();
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole("button", { name: "Message options" }));
+    await user.click(screen.getByRole("menuitem", { name: "React" }));
+
+    expect(screen.getByRole("group", { name: "Reactions" })).toBeInTheDocument();
   });
 
   it("asks for confirmation inside the menu before deleting", async () => {
@@ -178,11 +188,17 @@ describe("MessageBubble controls", () => {
     expect(screen.getByText("Amina")).toBeInTheDocument();
   });
 
-  it("shows no controls on a tombstone", () => {
-    renderBubble({ message: { ...MESSAGE, isDeleted: true } });
+  it("shows no controls on a tombstone, but still renders it as a bubble", () => {
+    renderBubble({ message: { ...MESSAGE, isDeleted: true }, isOwn: false });
 
     expect(screen.queryByRole("button", { name: "React to this message" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Message options" })).toBeNull();
+
+    const text = screen.getByText("Message deleted");
+    // The tombstone is the received bubble, not a bare paragraph, and it keeps a time.
+    const bubble = text.closest("div");
+    expect(bubble?.className).toContain("bg-[var(--app-bubble-in)]");
+    expect(text.textContent).toMatch(/Message deleted\s*\d/);
   });
 
   it("offers Retry on a failed message instead of controls", async () => {

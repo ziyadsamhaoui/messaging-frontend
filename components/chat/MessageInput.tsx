@@ -54,6 +54,11 @@ export function MessageInput({
 }: MessageInputProps) {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [emojiTrigger, setEmojiTrigger] = useState<HTMLButtonElement | null>(null);
+  /*
+   * Tracked in state rather than with `:focus-within`, so the ring belongs to the
+   * field alone: focusing the emoji or send button must not light the whole composer.
+   */
+  const [focused, setFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const hasContent = value.trim().length > 0;
@@ -81,7 +86,7 @@ export function MessageInput({
       <div className="border-t border-[var(--app-pane-divider)] px-4 py-4">
         <div
           className={cn(
-            "mx-auto flex max-w-[820px] flex-wrap items-center justify-center gap-3 rounded-2xl border px-4 py-3 text-center",
+            "flex w-full flex-wrap items-center justify-center gap-3 rounded-2xl border px-4 py-3 text-center",
             blocked
               ? "border-[rgba(143,42,27,0.3)] bg-[rgba(143,42,27,0.08)]"
               : "border-[rgba(224,165,59,0.4)] bg-[rgba(224,165,59,0.12)]"
@@ -100,7 +105,23 @@ export function MessageInput({
 
   return (
     <div className="border-t border-[var(--app-pane-divider)] px-4 py-3">
-      <div className="mx-auto flex w-full max-w-[820px] items-end gap-2 rounded-3xl border border-[var(--app-pane-control-border)] bg-[var(--app-pane-raised)] p-1.5">
+      {/*
+        Focus is shown on the composer's own outline, not on the field inside it.
+
+        The textarea used to carry `focus-ring-light`, whose 2 px + 4 px box-shadow
+        followed the field's rectangle and drew a second, sharp-edged box inside the
+        rounded pill while typing — a control-within-a-control. Focus is now shown on
+        the pill itself: the same parchment-plus-forest double ring every other control
+        uses, following the composer's 24 px radius instead of the field's rectangle.
+      */}
+      <div
+        className={cn(
+          "flex w-full items-end gap-2 rounded-3xl border bg-[var(--app-pane-raised)] p-1.5 transition-[border-color,box-shadow] duration-150 motion-reduce:transition-none",
+          focused
+            ? "border-[var(--color-forest)] shadow-[0_0_0_2px_var(--app-pane),0_0_0_4px_var(--color-forest)]"
+            : "border-[var(--app-pane-control-border)]"
+        )}
+      >
         <IconButton
           ref={setEmojiTrigger}
           surface="pane"
@@ -132,11 +153,13 @@ export function MessageInput({
               submit();
             }
           }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           placeholder="Type a message"
           disabled={inputDisabled}
           className={cn(
-            "focus-ring-light max-h-[152px] min-h-[22px] flex-1 resize-none self-center bg-transparent px-1 py-2 font-ui text-[15px] text-[var(--app-pane-text)]",
-            "placeholder:text-[var(--app-pane-placeholder)] focus:outline-none"
+            "max-h-[152px] min-h-[22px] flex-1 resize-none self-center bg-transparent px-1 py-2 font-ui text-[15px] text-[var(--app-pane-text)]",
+            "placeholder:text-[var(--app-pane-placeholder)] focus:outline-none focus-visible:outline-none"
           )}
           style={{ height: LINE_HEIGHT_PX + 16 }}
         />

@@ -498,39 +498,16 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
 }
 
 /*
- * Below 768 px the rail is always the icon rail: a bottom tab bar is the planned
- * replacement for this breakpoint, and until then the navigation stays reachable
- * without a hover-only affordance.
+ * Below 768 px the rail is replaced, not narrowed.
+ *
+ * A 72 px icon rail on a phone spends a sixth of the width on five unlabelled icons;
+ * navigation moves to the bottom tab bar (`MobileNav`), where each destination keeps
+ * an icon *and* a name and the whole target is in thumb reach. The bar is a real flex
+ * child of the shell, so nothing is ever painted underneath it.
  */
 @media (max-width: 767px) {
   .app-rail {
-    width: 72px;
-  }
-
-  .app-rail-label {
     display: none;
-  }
-
-  /* Same 12 px inset and 48 px icon box as the collapsed desktop rail, so the icon
-     centre is 36 px here too rather than 24 px. */
-  .app-rail-row {
-    padding-inline: 12px;
-  }
-
-  .app-rail-header {
-    height: auto;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 12px;
-  }
-
-  .app-rail-header .app-rail-toggle {
-    margin-left: 0;
-  }
-
-  .app-rail-header .app-rail-brand {
-    padding-inline: 0;
   }
 }
 
@@ -572,6 +549,38 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
 
   .app-panel-resize-handle {
     display: none;
+  }
+}
+
+/*
+ * On a phone there is one zone at a time, so the zone that is left takes the whole
+ * width. Declared after the 300 px clamp so it wins: that clamp is a desk rule, and
+ * with the detail pane hidden it would leave a strip of empty panel beside the list.
+ */
+@media (max-width: 767px) {
+  .app-panel {
+    width: 100% !important;
+  }
+}
+
+@keyframes app-slide-in-right {
+  from {
+    transform: translateX(28px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.group-info-panel {
+  animation: app-slide-in-right 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .group-info-panel {
+    animation: none;
   }
 }
 
@@ -645,18 +654,6 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
 /* On the parchment pages the lines have to go the other way to stay visible. */
 .cursor-grid--light {
   --cursor-grid-line: rgba(40, 84, 48, 0.22);
-}
-
-/* A soft pool of light that tracks the pointer inside a card. */
-.spotlight-glow {
-  background-image: radial-gradient(
-    circle 240px at var(--spot-x, 50%) var(--spot-y, 50%),
-    rgba(255, 255, 255, 0.55),
-    rgba(164, 190, 123, 0.2) 44%,
-    transparent 70%
-  );
-  opacity: var(--spot-opacity, 0);
-  transition: opacity 220ms ease-out;
 }
 
 /* A one-pixel border that lights up around the pointer: the gradient is masked to

@@ -8,6 +8,7 @@ import { parseAppRoute } from "@/lib/appRoute";
 import { registerServiceWorker } from "@/lib/push";
 import { applyStoredPrefs } from "@/store/prefsStore";
 import { Rail } from "./Rail";
+import { MobileNav } from "./MobileNav";
 import { SECTION_PANEL_HEADING_ID } from "./SectionPanel";
 
 /**
@@ -101,7 +102,7 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
      *
      * The single exception is the sidebar wordmark, which carries `font-display` itself.
      */
-    <div className="app-shell-root flex h-dvh w-full overflow-hidden bg-[var(--app-panel)] font-ui">
+    <div className="app-shell-root flex h-dvh w-full flex-col overflow-hidden bg-[var(--app-panel)] font-ui md:flex-row">
       <a
         href="#main-pane"
         className="focus-ring absolute left-3 top-3 z-[60] -translate-y-[200%] rounded-[var(--radius-control)] bg-[var(--app-pane-raised)] px-3 py-2 font-ui text-sm font-medium text-[var(--app-pane-text)] shadow-lg transition-transform duration-150 focus:translate-y-0 motion-reduce:transition-none"
@@ -110,6 +111,8 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
       </a>
       <Rail route={route} />
       <div className="flex min-h-0 min-w-0 flex-1">{children}</div>
+      {/* Below 768 px the rail is hidden by CSS and this bar carries navigation. */}
+      <MobileNav route={route} />
     </div>
   );
 }

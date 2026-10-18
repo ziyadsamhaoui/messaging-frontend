@@ -21,6 +21,32 @@
 
 export type AppDestination = "chats" | "connections" | "invites" | "notifications";
 
+/**
+ * The settings editors. Each one is a route of its own, so a setting can be linked
+ * to, bookmarked and reached with the back button, and the panel's selected row is
+ * derived from the URL rather than tracked twice.
+ */
+export type SettingsSection =
+  | "profile"
+  | "account"
+  | "notifications"
+  | "push"
+  | "blocked"
+  | "appearance"
+  | "shortcuts"
+  | "about";
+
+export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
+  "profile",
+  "account",
+  "notifications",
+  "push",
+  "blocked",
+  "appearance",
+  "shortcuts",
+  "about",
+] as const;
+
 export const APP_DESTINATIONS: readonly AppDestination[] = [
   "chats",
   "connections",
@@ -34,8 +60,10 @@ export interface AppRoute {
   id: string | null;
   /** True on `/app/notifications/preferences`. */
   isPreferences: boolean;
-  /** True on `/app/settings`. */
+  /** True on `/app/settings` and every editor beneath it. */
   isSettings: boolean;
+  /** The open settings editor, or null on `/app/settings` itself. */
+  settingsSection: SettingsSection | null;
 }
 
 const FALLBACK: AppRoute = {
@@ -43,10 +71,15 @@ const FALLBACK: AppRoute = {
   id: null,
   isPreferences: false,
   isSettings: false,
+  settingsSection: null,
 };
 
 function isDestination(value: string): value is AppDestination {
   return (APP_DESTINATIONS as readonly string[]).includes(value);
+}
+
+function isSettingsSection(value: string | undefined): value is SettingsSection {
+  return typeof value === "string" && (SETTINGS_SECTIONS as readonly string[]).includes(value);
 }
 
 export function parseAppRoute(pathname: string | null | undefined): AppRoute {
@@ -56,14 +89,36 @@ export function parseAppRoute(pathname: string | null | undefined): AppRoute {
   if (segments[0] !== "app") return FALLBACK;
   const [, first, second] = segments;
 
-  if (first === "settings") return { ...FALLBACK, isSettings: true };
+  if (first === "settings") {
+    return {
+      ...FALLBACK,
+      isSettings: true,
+      settingsSection: isSettingsSection(second) ? second : null,
+    };
+  }
   if (!first || !isDestination(first)) return FALLBACK;
 
   if (first === "notifications") {
-    return { destination: "notifications", id: null, isPreferences: second === "preferences", isSettings: false };
+    return {
+      destination: "notifications",
+      id: null,
+      isPreferences: second === "preferences",
+      isSettings: false,
+      settingsSection: null,
+    };
   }
 
-  return { destination: first, id: second ?? null, isPreferences: false, isSettings: false };
+  return {
+    destination: first,
+    id: second ?? null,
+    isPreferences: false,
+    isSettings: false,
+    settingsSection: null,
+  };
+}
+
+export function settingsHref(section: SettingsSection): string {
+  return `${SETTINGS_HREF}/${section}`;
 }
 
 export function destinationHref(destination: AppDestination): string {

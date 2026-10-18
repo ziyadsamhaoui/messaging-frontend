@@ -134,6 +134,7 @@ export function MessageBubble({
   const [draft, setDraft] = useState(message.content);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerFromMenu, setPickerFromMenu] = useState(false);
   const [moreReactions, setMoreReactions] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [menuTrigger, setMenuTrigger] = useState<HTMLButtonElement | null>(null);
@@ -261,6 +262,7 @@ export function MessageBubble({
               aria-haspopup="dialog"
               aria-expanded={pickerOpen}
               onClick={() => {
+                setPickerFromMenu(false);
                 setPickerOpen((open) => !open);
                 setMoreReactions(false);
               }}
@@ -269,7 +271,7 @@ export function MessageBubble({
                 "border border-[var(--app-pane-control-border)] bg-[var(--app-pane-raised)] text-[var(--app-pane-text-soft)]",
                 "transition-opacity duration-150 motion-reduce:transition-none",
                 "opacity-0 hover:text-[var(--app-pane-text)] group-hover/message:opacity-100 group-focus-within/message:opacity-100",
-                "max-md:opacity-100",
+                "max-md:hidden",
                 isOwn ? "right-full mr-1.5" : "left-full ml-1.5"
               )}
             >
@@ -343,7 +345,17 @@ export function MessageBubble({
                 </span>
               </form>
             ) : message.isDeleted ? (
-              <p className="italic opacity-80">Message deleted</p>
+              /*
+                A tombstone is still the sender's message: it keeps the bubble, its side
+                of the conversation and its time, and only the content is replaced. The
+                old plain "Message deleted" line was rendered by the list, outside the
+                bubble, so on a receiver's screen it read as a system notice instead of
+                as the place where the message used to be.
+              */
+              <p className="flow-root italic opacity-80">
+                Message deleted
+                <span className={metaClasses}>{formatClock(message.createdAt)}</span>
+              </p>
             ) : (
               <p className="flow-root whitespace-pre-wrap [overflow-wrap:anywhere]">
                 <MessageText content={message.content} />
@@ -466,9 +478,10 @@ export function MessageBubble({
         open={pickerOpen}
         onClose={() => {
           setPickerOpen(false);
+          setPickerFromMenu(false);
           setMoreReactions(false);
         }}
-        anchor={pickerTrigger}
+        anchor={pickerFromMenu ? menuTrigger : pickerTrigger}
         label="React to this message"
         align="center"
         side="top"
@@ -561,6 +574,20 @@ export function MessageBubble({
             </div>
           ) : (
             <>
+              <button
+                type="button"
+                role="menuitem"
+                className={cn(popoverItemClasses(), "md:hidden")}
+                onClick={() => {
+                  setPickerFromMenu(true);
+                  setMenuOpen(false);
+                  setMoreReactions(false);
+                  setPickerOpen(true);
+                }}
+              >
+                <SmilePlus size={16} strokeWidth={1.75} aria-hidden="true" />
+                React
+              </button>
               <button
                 type="button"
                 role="menuitem"

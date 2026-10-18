@@ -4,16 +4,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Bell,
-  LogOut,
-  MailPlus,
-  MessagesSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Settings,
-  Users,
-} from "lucide-react";
+import { Bell, LogOut, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AppDestination,
@@ -31,6 +22,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { CountBadge, RailBadge } from "@/components/ui/Badge";
 import { Popover, popoverItemClasses } from "@/components/ui/Popover";
 import { Tooltip, tooltipTriggerClass } from "@/components/ui/Tooltip";
+import { NAV_DESTINATIONS } from "./navDestinations";
 
 const ICON_SIZE = 22;
 
@@ -49,19 +41,6 @@ function RailSquare({ children }: { children: React.ReactNode }) {
     </span>
   );
 }
-
-const DESTINATIONS: Array<{
-  value: AppDestination;
-  label: string;
-  Icon: typeof MessagesSquare;
-  /** Counts are capped per affordance: the rail badge only has room for one digit. */
-  countKey?: "unread" | "requests" | "invites";
-}> = [
-  { value: "chats", label: "Chats", Icon: MessagesSquare },
-  { value: "connections", label: "Connections", Icon: Users, countKey: "requests" },
-  { value: "invites", label: "Invites", Icon: MailPlus, countKey: "invites" },
-  { value: "notifications", label: "Notifications", Icon: Bell, countKey: "unread" },
-];
 
 interface RailProps {
   route: AppRoute;
@@ -136,7 +115,7 @@ export function Rail({ route }: RailProps) {
       aria-label="Primary"
       className="app-rail flex h-full shrink-0 flex-col bg-[var(--app-rail)]"
     >
-      <div className="app-rail-header flex h-[72px] shrink-0 items-center gap-2 px-3">
+      <div className="app-rail-header flex h-[72px] shrink-0 items-center gap-2 pl-3 pr-2">
         <Link
           href="/"
           className="app-rail-brand focus-ring flex min-w-0 items-center gap-3 rounded-[var(--radius-control)] px-1 py-1"
@@ -160,17 +139,17 @@ export function Rail({ route }: RailProps) {
           aria-controls="primary-rail"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           className={cn(
-            "app-rail-row app-rail-toggle ml-auto flex h-11 w-11 shrink-0 items-center justify-center text-[var(--app-rail-text)] ",
+            "app-rail-row app-rail-toggle ml-auto flex h-11 shrink-0 items-center justify-center text-[var(--app-rail-text)]",
             "max-md:hidden"
           )}
         >
-          <span className="app-rail-square flex h-11 w-11 items-center justify-center rounded-xl">
+          <RailSquare>
             {collapsed ? (
               <PanelLeftOpen size={20} strokeWidth={1.75} aria-hidden="true" />
             ) : (
               <PanelLeftClose size={20} strokeWidth={1.75} aria-hidden="true" />
             )}
-          </span>
+          </RailSquare>
         </button>
       </div>
 
@@ -181,7 +160,7 @@ export function Rail({ route }: RailProps) {
         and left it off the rail's 36 px axis.
       */}
       <ul className="flex flex-col gap-1">
-        {DESTINATIONS.map(({ value, label, Icon, countKey }) => {
+        {NAV_DESTINATIONS.map(({ value, label, Icon, countKey }) => {
           const count = countKey ? counts[countKey] : 0;
           return (
             <li key={value}>

@@ -149,7 +149,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
       role="complementary"
       aria-label={`Group info for ${room.name ?? "this group"}`}
       className={cn(
-        "absolute inset-0 z-20 flex h-full w-full shrink-0 flex-col border-[var(--app-pane-divider)] bg-[var(--app-pane)]",
+        "group-info-panel absolute inset-0 z-20 flex h-full w-full shrink-0 flex-col border-[var(--app-pane-divider)] bg-[var(--app-pane)]",
         "lg:static lg:z-auto lg:w-[340px] lg:border-l"
       )}
     >

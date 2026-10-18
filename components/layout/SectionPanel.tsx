@@ -37,6 +37,12 @@ export function SectionPanel({
 }: SectionPanelProps) {
   return (
     <aside
+      /*
+       * Stated, not implied: an `aside` inside `main` is not exposed as a landmark by
+       * browsers, so the destination panel needs the role written out to appear in a
+       * screen reader's landmark list.
+       */
+      role="complementary"
       aria-label={title}
       className={cn(
         // The width comes from `--app-panel-width` (see `.app-panel` in globals.css),
@@ -47,13 +53,18 @@ export function SectionPanel({
       )}
     >
       <div className="flex h-[72px] shrink-0 items-center justify-between gap-2 px-4">
-        <h2
+        {/*
+          The destination's heading, so each route has exactly one `h1` and everything
+          inside the pane below it is subordinate. It is also the element the shell
+          focuses after a destination change, so the tag and the id travel together.
+        */}
+        <h1
           id={SECTION_PANEL_HEADING_ID}
           tabIndex={-1}
           className="font-ui text-[20px] font-semibold text-[var(--app-panel-text)] focus:outline-none"
         >
           {title}
-        </h2>
+        </h1>
         {actions && <div className="flex items-center gap-1">{actions}</div>}
       </div>
       {toolbar && <div className="shrink-0 px-3 pb-2">{toolbar}</div>}

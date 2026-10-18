@@ -21,6 +21,11 @@ import { describe, expect, it } from "vitest";
 const ROOT = join(__dirname, "..");
 const css = readFileSync(join(ROOT, "app", "globals.css"), "utf8");
 const rail = readFileSync(join(ROOT, "components", "layout", "Rail.tsx"), "utf8");
+const destinations = readFileSync(
+  join(ROOT, "components", "layout", "navDestinations.ts"),
+  "utf8"
+);
+const mobileNav = readFileSync(join(ROOT, "components", "layout", "MobileNav.tsx"), "utf8");
 
 describe("collapsed rail geometry", () => {
   it("removes labels from layout when collapsed, rather than hiding them", () => {
@@ -58,6 +63,17 @@ describe("collapsed rail geometry", () => {
     expect(squares.length).toBeGreaterThanOrEqual(3);
     expect(rail).toMatch(/<RailSquare>\s*\{icon\}/);
     expect(rail).toContain("<Avatar");
+  });
+
+  it("sizes the sidebar toggle as a row around RailSquare, not a 44 px button", () => {
+    // `.app-rail-row` insets 12 px each side. A `w-11` button therefore has a 20 px
+    // content box, and the 44 px square inside it was squeezed to 20 x 44 — a narrow
+    // hover strip for the one control that sits in the header. It must size itself
+    // around the shared RailSquare, like every destination row.
+    const toggle = rail.match(/<button[\s\S]*?app-rail-toggle[\s\S]*?<\/button>/);
+    expect(toggle, "the toggle button must exist").not.toBeNull();
+    expect(toggle![0]).not.toMatch(/\bw-11\b/);
+    expect(toggle![0]).toContain("<RailSquare>");
   });
 
   it("fills the 44 px icon square, never the row", () => {
@@ -101,8 +117,11 @@ describe("collapsed rail geometry", () => {
     expect(rail).toContain('aria-current={active ? "page" : undefined}');
     // The destination list is shared with the mobile bar, so the name lives in one
     // place: "Chats" everywhere, never "Conversations".
-    expect(rail).toContain('label: "Chats"');
-    expect(rail).not.toContain('"Conversations"');
+    expect(destinations).toContain('label: "Chats"');
+    expect(destinations).not.toContain('"Conversations"');
+    expect(rail).toContain("NAV_DESTINATIONS");
+    expect(mobileNav).toContain("NAV_DESTINATIONS");
+    expect(mobileNav).toContain('aria-current={active ? "page" : undefined}');
     expect(rail).toMatch(/aria-hidden="true"[\s\S]{0,200}bg-\[var\(--color-sage\)\]/);
   });
 });

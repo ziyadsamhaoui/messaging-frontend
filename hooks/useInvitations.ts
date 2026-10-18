@@ -27,7 +27,12 @@ export function usePendingInvitations(enabled = true) {
   });
 }
 
-function useInvitationDecision(decide: (invitationId: string) => Promise<unknown>) {
+/*
+ * Generic in the service call's own return type rather than erased to `unknown`: the
+ * accept call answers with the invitation (and its room id), and the detail view needs
+ * that room id to open the room it just joined.
+ */
+function useInvitationDecision<T>(decide: (invitationId: string) => Promise<T>) {
   const queryClient = useQueryClient();
 
   return useMutation({

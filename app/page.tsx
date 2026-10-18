@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { buttonClasses } from "@/components/ui/Button";
 import { CursorGrid } from "@/components/ui/CursorGrid";
 import { SiteHeader } from "@/components/ui/SiteHeader";
@@ -11,78 +11,81 @@ import { cn } from "@/lib/utils";
 type BubbleSide = "left" | "right";
 type BubbleTone = "own" | "theirs";
 
-/* Chat bubble style: solid fill color with a small triangular tail (no gradient, no rounded-rect look) */
 const BUBBLE_SURFACE: Record<BubbleTone, string> = {
   own:
-    "[background-color:var(--color-parchment-elevated)] border border-[rgba(164,190,123,0.32)] text-[var(--color-forest)]",
+    "[background-color:var(--color-parchment-elevated)] [background-image:linear-gradient(150deg,rgba(255,255,255,0.72),rgba(255,255,255,0.12)_48%,rgba(68,88,54,0.08))] text-[var(--color-forest)] border border-white/70",
   theirs:
-    "[background-color:var(--color-forest-deep)] border border-[rgba(40,84,48,0.16)] text-[var(--color-parchment-elevated)]",
+    "[background-color:var(--color-forest-deep)] [background-image:linear-gradient(150deg,rgba(255,255,255,0.34),rgba(255,255,255,0.06)_42%,rgba(8,25,14,0.24))] text-[var(--color-parchment-elevated)] border border-white/20",
 };
 
-/*
- * The bubble body: an 8px rounded rectangle with 6px/10px padding, only as wide as
- * its text and never wider than 70% of the thread, so the longer lines wrap instead
- * of stretching the stack. The shadow is a `drop-shadow` filter rather than a
- * `box-shadow`, which is what lets it wrap the tail below as well.
- */
 const BUBBLE_SHAPE =
-  "relative w-fit max-w-[70%] rounded-[8px] px-2.5 py-1.5 font-body text-[13px] leading-snug " +
-  "sm:text-[15px] drop-shadow-[0_2px_4px_rgba(20,46,25,0.28)]";
+  "relative w-fit max-w-[70%] rounded-[13px] px-[13px] py-[10px] font-body text-[15px] leading-snug " +
+  "shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_8px_19px_rgba(20,46,25,0.2)]";
 
-/*
- * The "pinched" tail: an 8x13 triangle pinned to the top corner on the sender's
- * side. `bg-inherit` fills it with the bubble's own background, so bubble and tail
- * read as one continuous shape, and `::before` keeps it out of the markup.
- */
-const BUBBLE_TAIL: Record<BubbleSide, string> = {
-  left:
-    "before:absolute before:top-0 before:-left-2 before:h-[13px] before:w-2 before:bg-inherit before:content-[''] " +
-    "before:[clip-path:polygon(0_0,100%_0,100%_100%)]",
-  right:
-    "before:absolute before:top-0 before:-right-2 before:h-[13px] before:w-2 before:bg-inherit before:content-[''] " +
-    "before:[clip-path:polygon(0_0,100%_0,0_100%)]",
-};
-
-/*
- * The conversation, in the order it was sent. Sides alternate, and the top corner on
- * the sender's side stays square (border-radius 0) so the tail continues it: a
- * left/incoming bubble is square top-left with its tail out to the left, a
- * right/outgoing one is square top-right with its tail out to the right.
- */
-const MESSAGES: { side: BubbleSide; tone: BubbleTone; text: string }[] = [
-  { side: "left", tone: "own", text: "A: You still up?" },
-  { side: "right", tone: "theirs", text: "B: Yeah, can't sleep" },
+const MESSAGES: { side: BubbleSide; tone: BubbleTone; text: string; wide?: boolean }[] = [
+  { side: "left", tone: "own", text: "A: You still up?", wide: true },
+  { side: "right", tone: "theirs", text: "B: Yeah, can't sleep", wide: true },
   { side: "left", tone: "own", text: "A: Same... wanna talk for a bit?" },
   { side: "right", tone: "theirs", text: "B: Always, what's on your mind?" },
 ];
 
 /** Gap between one bubble's entrance and the next. */
-const STAGGER = 0.3;
+const STAGGER = 0.45;
 
 function Bubble({
   side,
   tone,
   delay,
+  placement,
+  wide,
   children,
 }: {
   side: BubbleSide;
   tone: BubbleTone;
   delay: number;
+  placement: string;
+  wide?: boolean;
   children: React.ReactNode;
 }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.45, delay, ease: "easeOut" }}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : { duration: 1.3, delay, ease: [0.16, 1, 0.3, 1] }
+      }
       className={cn(
-        BUBBLE_SHAPE,
-        BUBBLE_SURFACE[tone],
-        BUBBLE_TAIL[side],
-        side === "left" ? "self-start rounded-tl-none" : "self-end rounded-tr-none"
+        "flex w-fit",
+        side === "left" ? "self-start" : "self-end",
+        placement
       )}
     >
-      {children}
+      <motion.div
+        animate={reduceMotion ? { y: 0 } : { y: [0, -5, 0] }}
+        transition={
+          reduceMotion
+            ? { duration: 0 }
+            : {
+                duration: 5,
+                delay: delay + 1.3,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }
+        }
+        className={cn(
+          BUBBLE_SHAPE,
+          BUBBLE_SURFACE[tone],
+          side === "left" ? "rounded-tl-none mr-auto" : "rounded-tr-none ml-auto",
+          wide && "max-w-none whitespace-nowrap",
+          "will-change-transform"
+        )}
+      >
+        {children}
+      </motion.div>
     </motion.div>
   );
 }
@@ -95,22 +98,32 @@ function Bubble({
  * the width is grown by the same 3rem, because a negative margin on its own would
  * only shift the stack: `w-full` is measured against the padded parent, so the two
  * together are what make the stack span the viewport. `px-3` is then the whole 12px
- * gutter the bubbles see (an 8px tail still clears the edge).
+ * gutter the bubbles see.
  *
  * From `sm` up it stops bleeding, centres itself and caps at 520px, which keeps the
  * thread reading as a conversation rather than letting the two sides drift apart on a
- * tablet. From `xl` up it sits next to the artwork and overlaps its edge a little, so
- * the two read as one cluster.
+ * tablet. From `xl` up the column stays in flow so the artwork keeps its position,
+ * while the bubbles are placed around it: incoming on the artwork's left, outgoing on
+ * its right, staggered as in the reference.
  */
+const BUBBLE_PLACEMENT = [
+  "xl:absolute xl:left-[-426px] xl:top-0",
+  "xl:absolute xl:right-0 xl:top-[72px]",
+  "xl:absolute xl:left-[-426px] xl:top-[170px]",
+  "xl:absolute xl:right-0 xl:top-[262px]",
+];
+
 function BubbleThread() {
   return (
-    <div className="-mx-6 flex w-[calc(100%_+_3rem)] flex-col gap-2.5 px-3 sm:mx-auto sm:w-full sm:max-w-[520px] sm:px-6 xl:-ml-4 xl:mx-0 xl:w-[220px] xl:max-w-none xl:shrink-0 xl:px-0">
+    <div className="-mx-6 flex w-[calc(100%_+_3rem)] flex-col gap-4 px-3 sm:mx-auto sm:w-full sm:max-w-[520px] sm:px-6 xl:-ml-4 xl:mx-0 xl:h-[202px] xl:w-[220px] xl:max-w-none xl:shrink-0 xl:gap-0 xl:px-0 xl:relative">
       {MESSAGES.map((message, index) => (
         <Bubble
           key={message.text}
           side={message.side}
           tone={message.tone}
           delay={0.2 + index * STAGGER}
+          placement={BUBBLE_PLACEMENT[index]}
+          wide={message.wide}
         >
           {message.text}
         </Bubble>
@@ -196,9 +209,9 @@ export default function Home() {
           */}
           <div
             data-cursor-grid-soften
-            className="relative mx-auto flex w-full max-w-[820px] flex-col items-center gap-4 xl:flex-row xl:items-center xl:justify-center xl:gap-0"
+            className="relative mx-auto flex w-full max-w-[820px] flex-col items-center gap-4 lg:translate-x-20 xl:flex-row xl:items-center xl:justify-center xl:gap-0"
           >
-            <div className="relative w-full max-w-[min(620px,max(392px,calc(50vw-120px)))] px-0 sm:px-8 xl:max-w-[480px] xl:px-0">
+            <div className="relative w-full max-w-[min(620px,max(392px,calc(50vw-120px)))] px-0 sm:px-8 lg:translate-x-20 xl:max-w-[480px] xl:px-0">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

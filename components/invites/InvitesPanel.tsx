@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
-import { MailPlus } from "lucide-react";
+import { Check, MailPlus, X } from "lucide-react";
 import {
   SegmentedControl,
   segmentedPanelId,
@@ -13,6 +14,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ErrorBlock } from "@/components/ui/ErrorBlock";
 import { SectionPanel } from "@/components/layout/SectionPanel";
+import { IconButton } from "@/components/ui/IconButton";
 import { useToast } from "@/components/ui/Toast";
 import {
   pendingInvitationsQueryKey,
@@ -22,7 +24,9 @@ import {
 } from "@/hooks/useInvitations";
 import { useUser } from "@/hooks/useUser";
 import { errorMessage, isApiError } from "@/lib/errors";
-import { formatRelative } from "@/lib/time";
+import { formatRelative, isPast } from "@/lib/time";
+import { invitationHref } from "@/lib/appRoute";
+import { cn } from "@/lib/utils";
 import { PendingInvitationDto } from "@/lib/types";
 
 type Segment = "pending" | "sent";
@@ -30,8 +34,7 @@ type Segment = "pending" | "sent";
 const SEGMENTS_ID = "invites-segments";
 
 function isExpired(invitation: PendingInvitationDto): boolean {
-  const expiresAt = Date.parse(invitation.expiresAt);
-  return Number.isFinite(expiresAt) && expiresAt <= Date.now();
+  return isPast(invitation.expiresAt);
 }
 
 /**
@@ -43,20 +46,46 @@ function isExpired(invitation: PendingInvitationDto): boolean {
  * answering one flips its stored status for both. There is no endpoint that lists
  * accepted, declined or expired invitations, so there is no "Past" segment here —
  * that gap is reported rather than filled with client-side guesswork.
+ *
+ * A row is a link to `/app/invites/<id>`, which is the destination notification
+ * rows already pointed at, and its two answers are icon buttons beside the link
+ * rather than a second, whole-row click target.
  */
-export function InvitesPanel({ hideOnNarrow }: { hideOnNarrow?: boolean }) {
+export function InvitesPanel({
+  hideOnNarrow,
+  activeInvitationId,
+}: {
+  hideOnNarrow?: boolean;
+  activeInvitationId?: string | null;
+}) {
   const toast = useToast();
   const queryClient = useQueryClient();
   const invitationsQuery = usePendingInvitations(true);
   const acceptMutation = useAcceptInvitation();
   const rejectMutation = useRejectInvitation();
-  const [segment, setSegment] = useState<Segment>("pending");
+  /*
+   * The visible section is derived, not synchronised by an effect: opening an
+   * invitation from a notification or a link has to reveal the section that row lives
+   * in, or the highlight would sit in a tab that is not on screen. A manual tab choice
+   * is remembered as an override keyed by the open invitation, so it survives a
+   * refetch and is dropped when a different invitation is opened.
+   */
+  const [segmentOverride, setSegmentOverride] = useState<{ id: string | null; value: Segment } | null>(
+    null
+  );
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expiredIds, setExpiredIds] = useState<Record<string, boolean>>({});
 
   const invitations = useMemo(() => invitationsQuery.data ?? [], [invitationsQuery.data]);
   const incoming = invitations.filter((invitation) => invitation.direction === "INCOMING");
   const outgoing = invitations.filter((invitation) => invitation.direction === "OUTGOING");
+
+  const activeInvitation = invitations.find((invitation) => invitation.id === activeInvitationId);
+  const derivedSegment: Segment = activeInvitation?.direction === "OUTGOING" ? "sent" : "pending";
+  const segment: Segment =
+    segmentOverride && segmentOverride.id === (activeInvitationId ?? null)
+      ? segmentOverride.value
+      : derivedSegment;
 
   async function respond(invitation: PendingInvitationDto, action: "accept" | "reject") {
     if (busyId === invitation.id) return;
@@ -104,7 +133,7 @@ export function InvitesPanel({ hideOnNarrow }: { hideOnNarrow?: boolean }) {
           label="Invitation sections"
           options={segments}
           value={segment}
-          onChange={setSegment}
+          onChange={(value) => setSegmentOverride({ id: activeInvitationId ?? null, value })}
         />
       }
     >
@@ -136,6 +165,7 @@ export function InvitesPanel({ hideOnNarrow }: { hideOnNarrow?: boolean }) {
                   inbound={segment === "pending"}
                   expired={Boolean(expiredIds[invitation.id]) || isExpired(invitation)}
                   busy={busyId === invitation.id}
+                  active={invitation.id === activeInvitationId}
                   onRespond={(action) => void respond(invitation, action)}
                 />
               </li>
@@ -165,12 +195,14 @@ function InvitationRow({
   inbound,
   expired,
   busy,
+  active,
   onRespond,
 }: {
   invitation: PendingInvitationDto;
   inbound: boolean;
   expired: boolean;
   busy: boolean;
+  active: boolean;
   onRespond: (action: "accept" | "reject") => void;
 }) {
   const inviterQuery = useUser(invitation.inviterId);
@@ -179,42 +211,65 @@ function InvitationRow({
   const name = (inbound ? inviterQuery.data?.username : invitedQuery.data?.username) ?? "someone";
 
   return (
-    <div className="flex items-start gap-3 rounded-[var(--radius-control)] px-2 py-2">
-      <Avatar name={roomName} seed={invitation.roomId} size={48} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-ui text-[15px] font-medium text-[var(--app-panel-text)]">
-          {roomName}
-        </p>
-        <p className="truncate font-ui text-xs text-[var(--app-panel-text-soft)]">
-          {inbound ? `Invited by @${name}` : `Waiting on @${name}`} · {formatRelative(invitation.sentAt)}
-        </p>
-        {expired && inbound && (
-          <p className="mt-1 font-ui text-xs font-medium text-[var(--app-danger-on-dark)]">
-            This invitation has expired.
-          </p>
-        )}
-        {inbound && !expired && (
-          <span className="mt-2 flex items-center gap-1.5">
-            <button
-              type="button"
-              onClick={() => onRespond("accept")}
-              disabled={busy}
-              className="focus-ring h-8 rounded-[var(--radius-control)] bg-[var(--color-primary)] px-2.5 font-ui text-xs font-semibold text-[var(--color-parchment)] disabled:opacity-60"
-            >
-              {busy ? "Working…" : "Accept"}
-            </button>
-            <button
-              type="button"
-              onClick={() => onRespond("reject")}
-              disabled={busy}
-              className="focus-ring h-8 rounded-[var(--radius-control)] border border-[var(--app-panel-field-border)] px-2.5 font-ui text-xs text-[var(--app-panel-text)] disabled:opacity-60"
-            >
-              Decline
-            </button>
+    <div
+      className={cn(
+        "relative flex items-center gap-1 rounded-[var(--radius-control)] transition-colors duration-150 motion-reduce:transition-none",
+        active ? "bg-[var(--app-panel-active)]" : "hover:bg-[var(--app-panel-hover)]"
+      )}
+    >
+      {active && (
+        <span
+          aria-hidden="true"
+          className="absolute left-0 top-1/2 h-8 w-[3px] -translate-y-1/2 rounded-r-full bg-[var(--color-sage)]"
+        />
+      )}
+      <Link
+        href={invitationHref(invitation.id)}
+        aria-current={active ? "page" : undefined}
+        className="focus-ring flex min-w-0 flex-1 items-start gap-3 rounded-[var(--radius-control)] px-2 py-2"
+      >
+        <Avatar name={roomName} seed={invitation.roomId} size={48} />
+        <span className="min-w-0 flex-1">
+          <span className="block truncate font-ui text-[15px] font-medium text-[var(--app-panel-text)]">
+            {roomName}
           </span>
-        )}
-      </div>
+          <span className="block truncate font-ui text-xs text-[var(--app-panel-text-soft)]">
+            {inbound ? `Invited by @${name}` : `Waiting on @${name}`} ·{" "}
+            {formatRelative(invitation.sentAt)}
+          </span>
+          {expired && inbound && (
+            <span className="mt-1 block font-ui text-xs font-medium text-[var(--app-danger-on-dark)]">
+              This invitation has expired.
+            </span>
+          )}
+        </span>
+      </Link>
 
+      {inbound && !expired && (
+        <span className="flex shrink-0 items-center gap-0.5 pr-1.5">
+          <IconButton
+            surface="panel"
+            size="sm"
+            label={`Accept invitation to ${roomName}`}
+            tooltip="Accept"
+            disabled={busy}
+            onClick={() => onRespond("accept")}
+          >
+            <Check size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+          <IconButton
+            surface="panel"
+            size="sm"
+            tone="danger"
+            label={`Decline invitation to ${roomName}`}
+            tooltip="Decline"
+            disabled={busy}
+            onClick={() => onRespond("reject")}
+          >
+            <X size={16} strokeWidth={2} aria-hidden="true" />
+          </IconButton>
+        </span>
+      )}
     </div>
   );
 }

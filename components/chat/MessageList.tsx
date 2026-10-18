@@ -26,11 +26,10 @@ function toneForSender(senderId: string): number {
 const BOTTOM_THRESHOLD_PX = 80;
 const TOP_THRESHOLD_PX = 48;
 
-/** One rendered row: a message, a run of tombstones, or a day boundary. */
+/** One rendered row: a message or a day boundary. */
 type Row =
   | { kind: "separator"; id: string; label: string }
-  | { kind: "message"; id: string; message: ChatMessage; showSenderName: boolean; isFirstOfGroup: boolean; isLastOfGroup: boolean }
-  | { kind: "deleted"; id: string; count: number };
+  | { kind: "message"; id: string; message: ChatMessage; showSenderName: boolean; isFirstOfGroup: boolean; isLastOfGroup: boolean };
 
 interface MessageListProps {
   roomId: string;
@@ -72,7 +71,12 @@ function orderMessages(messages: ChatMessage[]): ChatMessage[] {
  * than from conditions spread through JSX:
  *  - consecutive messages from the same sender within five minutes form a group;
  *  - a new day starts a new group and inserts a separator;
- *  - consecutive deleted messages collapse into a single tombstone.
+ *  - a deleted message is its own group, so its bubble stands alone.
+ *
+ * Deleted messages are not a special row. They go through the bubble like any other
+ * message, which is what keeps the tombstone on the sender's side of the conversation,
+ * in the sender's bubble colour, with its own timestamp — the plain left-aligned
+ * paragraph this replaces read as a system notice rather than as the message it was.
  */
 function buildRows(messages: ChatMessage[]): Row[] {
   const rows: Row[] = [];
@@ -81,12 +85,22 @@ function buildRows(messages: ChatMessage[]): Row[] {
     const message = messages[index];
 
     if (message.isDeleted) {
-      const last = rows[rows.length - 1];
-      if (last?.kind === "deleted") {
-        last.count += 1;
-      } else {
-        rows.push({ kind: "deleted", id: message.id, count: 1 });
+      const previousDeleted = messages[index - 1];
+      if (!previousDeleted || !isSameDay(previousDeleted.createdAt, message.createdAt)) {
+        rows.push({
+          kind: "separator",
+          id: `sep-${message.id}`,
+          label: formatDayLabel(message.createdAt),
+        });
       }
+      rows.push({
+        kind: "message",
+        id: message.id,
+        message,
+        showSenderName: true,
+        isFirstOfGroup: true,
+        isLastOfGroup: true,
+      });
       continue;
     }
 
@@ -288,17 +302,6 @@ export function MessageList({
                         {row.label}
                       </span>
                     </div>
-                  );
-                }
-
-                if (row.kind === "deleted") {
-                  return (
-                    <p
-                      key={row.id}
-                      className="mt-2 px-1 font-ui text-[13px] italic text-[var(--app-pane-text-soft)]"
-                    >
-                      {row.count > 1 ? `${row.count} messages deleted` : "Message deleted"}
-                    </p>
                   );
                 }
 

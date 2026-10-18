@@ -45,7 +45,13 @@ export function EmptyState({
       >
         {icon}
       </span>
-      <p className={cn("font-ui text-[15px] font-semibold", styles.title)}>{title}</p>
+      {/*
+        A real heading, not a paragraph: an empty state is the content of the region it
+        sits in, so it belongs in the outline. `h2` is the level every caller needs —
+        the destination's `h1` is the section panel, and its pane and panel contents are
+        subordinate to it.
+      */}
+      <h2 className={cn("font-ui text-[15px] font-semibold", styles.title)}>{title}</h2>
       {description && (
         <p className={cn("max-w-[36ch] font-ui text-[13px] leading-relaxed", styles.body)}>
           {description}

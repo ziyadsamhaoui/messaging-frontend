@@ -36,12 +36,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
+      {/*
+        Above the mobile tab bar: 56 px of bar plus its safe-area inset, so a toast
+        never covers the navigation it sits over. On a desk the bar is gone and the
+        toast returns to the 16 px margin.
+      */}
       <div
         role="region"
         aria-label="Notifications"
         aria-live="polite"
         aria-atomic="false"
-        className="fixed right-4 bottom-4 z-50 flex w-[min(320px,90vw)] flex-col gap-3"
+        className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex w-[min(320px,90vw)] flex-col gap-3 md:bottom-4"
       >
         {items.map((item) => (
           <div

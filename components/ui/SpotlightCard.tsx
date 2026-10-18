@@ -12,9 +12,8 @@ interface SpotlightCardProps {
 }
 
 /**
- * A card whose surface responds to the pointer: a soft pool of light and a lit
- * one-pixel border edge follow the cursor across it, both painted by
- * `.spotlight-glow` / `.spotlight-ring` in `globals.css`.
+ * A card whose surface responds to the pointer: a lit one-pixel border edge follows
+ * the cursor, painted by `.spotlight-ring` in `globals.css`.
  *
  * Position and opacity are written straight to this element's inline style — the
  * node is held in a ref owned here and never handed out — so a pointermove costs one
@@ -22,7 +21,7 @@ interface SpotlightCardProps {
  * is no hover to follow, and chasing a dragging finger would fight scrolling), and
  * the fade is a CSS transition, not an animation loop.
  *
- * The card is unchanged while nothing is pointing at it: both layers start at zero
+ * The card is unchanged while nothing is pointing at it: the border starts at zero
  * opacity.
  */
 export function SpotlightCard({ children, className, as = "article" }: SpotlightCardProps) {
@@ -66,14 +65,9 @@ export function SpotlightCard({ children, className, as = "article" }: Spotlight
       className={cn("relative isolate overflow-hidden", className)}
     >
       {/*
-        Purely decorative, and beneath the content (which is `relative`): the glow is
-        a radial pool of light and the ring is the same gradient masked down to the
-        1px padding box, so only the border lights up.
+        Purely decorative, and beneath the content (which is `relative`): the ring is a
+        gradient masked down to the 1px padding box, so only the border lights up.
       */}
-      <span
-        aria-hidden="true"
-        className="spotlight-glow pointer-events-none absolute inset-0 rounded-[inherit]"
-      />
       <span
         aria-hidden="true"
         className="spotlight-ring pointer-events-none absolute inset-0 rounded-[inherit]"

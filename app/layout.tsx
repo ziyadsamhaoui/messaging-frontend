@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Newsreader, IBM_Plex_Mono, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -35,6 +35,17 @@ export const metadata: Metadata = {
   description: "Real-time messaging, rooted in calm.",
   manifest: "/manifest.json",
   icons: { icon: "/favicon.png" },
+};
+
+/**
+ * `viewportFit: "cover"` is what makes `env(safe-area-inset-bottom)` non-zero on a
+ * phone with a home indicator, which the bottom navigation uses to stay tappable.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#1A3A20",
 };
 
 /**

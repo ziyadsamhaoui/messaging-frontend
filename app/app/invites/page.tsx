@@ -13,8 +13,8 @@ export default function InvitesPage() {
           tone="pane"
           className="m-auto"
           icon={<MailPlus size={22} strokeWidth={1.75} />}
-          title="Your invitations"
-          description="Accepting an invitation opens the room and adds you to its members."
+          title="Select an invitation"
+          description="Accepting one opens the room and adds you to its members. Declining removes it from the inbox."
         />
       </MainPane>
     </>

@@ -412,14 +412,6 @@ function AddConnectionView({ onViewRequests }: { onViewRequests: () => void }) {
         </button>
       )}
 
-      <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-[var(--app-panel-divider)] p-3">
-        <span aria-hidden="true" className="mt-0.5 text-[var(--app-panel-text-soft)]">
-          <UserPlus size={16} strokeWidth={1.75} />
-        </span>
-        <p className="font-ui text-[13px] leading-relaxed text-[var(--app-panel-text-soft)]">
-          Blocked people are managed in Settings → Blocked users.
-        </p>
-      </div>
     </div>
   );
 }
@@ -469,7 +461,7 @@ function RequestsList({ query }: { query: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-3 px-1">
+    <div className="flex flex-col gap-3 px-3 pt-3">
       <section className="flex flex-col gap-1">
         <h2 className="px-1 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
           Received
