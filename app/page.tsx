@@ -133,6 +133,23 @@ function BubbleThread() {
   );
 }
 
+/**
+ * Progressive enhancement for the "Why BadrLink?" link. Without JavaScript the plain
+ * `href="#why"` still jumps to the section. With it, the page scrolls smoothly (or
+ * jumps under reduced motion), moves focus to the section heading without a second
+ * scroll, and records `#why` in the URL.
+ */
+function scrollToWhy(event: React.MouseEvent<HTMLAnchorElement>) {
+  const section = document.getElementById("why");
+  const heading = document.getElementById("why-heading");
+  if (!section || !heading) return;
+  event.preventDefault();
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  window.history.pushState(null, "", "#why");
+  heading.focus({ preventScroll: true });
+}
+
 export default function Home() {
   return (
     <div id="top" className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--color-parchment)] text-[var(--color-forest)]">
@@ -187,8 +204,9 @@ export default function Home() {
               >
                 Get Started →
               </Link>
-              <Link
-                href="/why"
+              <a
+                href="#why"
+                onClick={scrollToWhy}
                 className={buttonClasses({
                   variant: "secondary",
                   tone: "light",
@@ -197,7 +215,7 @@ export default function Home() {
                 })}
               >
                 Why BadrLink?
-              </Link>
+              </a>
             </motion.div>
           </div>
 

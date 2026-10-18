@@ -144,7 +144,8 @@ export function WhySection({
           <p className="font-ui text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-primary)]">
             Why BadrLink
           </p>
-          <Heading id={headingId} className="mt-4 font-display text-[clamp(2.4rem,5vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.01em] text-[var(--color-forest)]">
+          {/* Focusable only when it has an id, i.e. when the home page links to it. */}
+          <Heading id={headingId} tabIndex={headingId ? -1 : undefined} className="mt-4 font-display text-[clamp(2.4rem,5vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.01em] text-[var(--color-forest)]">
             A simple messaging app
           </Heading>
           <p className="mt-5 max-w-[38rem] font-body text-[18px] leading-[1.65] text-[var(--color-text-on-light-soft)]">
