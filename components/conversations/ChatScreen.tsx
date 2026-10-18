@@ -462,6 +462,7 @@ export function ChatScreen({ roomId }: { roomId: string }) {
 
         {isGroup && detailsOpen && room && (
           <GroupInfoPanel
+            key={room.id}
             room={room}
             currentUserId={currentUserId}
             onClose={closeDetails}

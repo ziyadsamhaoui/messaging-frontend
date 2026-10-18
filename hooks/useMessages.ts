@@ -295,7 +295,10 @@ export function useRoomParticipants(roomId: string | null) {
   return useQuery({
     queryKey: roomId ? participantsQueryKey(roomId) : (["participants", "none"] as const),
     enabled: Boolean(roomId),
-    queryFn: () => listParticipants(roomId as string, null, 50),
+    // The chat service caps a group at 100 participants and a page at 100 rows, so
+    // one request returns a whole group. A smaller page would silently truncate the
+    // member list and the "N members" heading.
+    queryFn: () => listParticipants(roomId as string, null, 100),
   });
 }
 

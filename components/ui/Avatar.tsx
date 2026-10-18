@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { OnlineStatus } from "@/lib/types";
 import { presenceDotClass, presenceLabel } from "@/lib/presence";
 
-export type AvatarSize = 28 | 40 | 48 | 96;
+export type AvatarSize = 28 | 40 | 48 | 96 | 120;
 
 /*
  * Tonal variants of the existing palette, one per person and stable across the
@@ -64,6 +64,7 @@ const SIZES: Record<AvatarSize, string> = {
   40: "h-10 w-10 text-xs",
   48: "h-12 w-12 text-sm",
   96: "h-24 w-24 text-2xl",
+  120: "h-[120px] w-[120px] text-4xl",
 };
 
 const DOT_SIZES: Record<AvatarSize, string> = {
@@ -71,6 +72,7 @@ const DOT_SIZES: Record<AvatarSize, string> = {
   40: "h-3 w-3 border-2",
   48: "h-3.5 w-3.5 border-2",
   96: "h-5 w-5 border-[3px]",
+  120: "h-6 w-6 border-[3px]",
 };
 
 /**
