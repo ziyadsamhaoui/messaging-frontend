@@ -387,34 +387,35 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 aria-label="Group info sections"
                 className="sticky top-14 z-20 border-b border-[var(--app-pane-divider)] bg-[var(--app-pane)]"
               >
-                <ul className="relative flex h-11">
+                {/* A plain box, not a list: the sliding indicator is a sibling of the
+                    buttons rather than a child of a list that only allows list items. */}
+                <div className="relative flex h-11">
                   {tabs.map((tab) => {
                     const active = activeId === tab.id;
                     return (
-                      <li key={tab.id} className="min-w-0 flex-1">
-                        <button
-                          ref={(element) => {
-                            tabRefs.current[tab.id] = element;
-                          }}
-                          type="button"
-                          aria-current={active ? "true" : undefined}
-                          onClick={(event) => {
-                            scrollToTab(tab.id);
-                            // A keyboard activation reports detail 0; move the reader
-                            // to the section heading so the next Tab continues there.
-                            if (event.detail === 0) focusSectionHeading(tab.id);
-                          }}
-                          onKeyDown={(event) => handleTabKeyDown(event, tab.id)}
-                          className={cn(
-                            "focus-ring-light flex h-full w-full items-center justify-center px-1 font-ui text-[14px] font-medium transition-colors duration-150 motion-reduce:transition-none",
-                            active
-                              ? "text-[var(--app-pane-text)]"
-                              : "text-[var(--app-pane-text-soft)] hover:text-[var(--app-pane-text)]"
-                          )}
-                        >
-                          <span className="truncate">{tab.label}</span>
-                        </button>
-                      </li>
+                      <button
+                        key={tab.id}
+                        ref={(element) => {
+                          tabRefs.current[tab.id] = element;
+                        }}
+                        type="button"
+                        aria-current={active ? "true" : undefined}
+                        onClick={(event) => {
+                          scrollToTab(tab.id);
+                          // A keyboard activation reports detail 0; move the reader
+                          // to the section heading so the next Tab continues there.
+                          if (event.detail === 0) focusSectionHeading(tab.id);
+                        }}
+                        onKeyDown={(event) => handleTabKeyDown(event, tab.id)}
+                        className={cn(
+                          "focus-ring-light flex h-full min-w-0 flex-1 items-center justify-center px-1 font-ui text-[14px] font-medium transition-colors duration-150 motion-reduce:transition-none",
+                          active
+                            ? "text-[var(--app-pane-text)]"
+                            : "text-[var(--app-pane-text-soft)] hover:text-[var(--app-pane-text)]"
+                        )}
+                      >
+                        <span className="truncate">{tab.label}</span>
+                      </button>
                     );
                   })}
                   <span
@@ -425,7 +426,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                       transform: `translateX(${activeIndex * 100}%)`,
                     }}
                   />
-                </ul>
+                </div>
               </nav>
 
               <MemberSection
