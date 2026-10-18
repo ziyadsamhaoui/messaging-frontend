@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { buttonClasses } from "@/components/ui/Button";
 import { CursorGrid } from "@/components/ui/CursorGrid";
 import { SiteHeader } from "@/components/ui/SiteHeader";
+import { Reveal, WhySection } from "@/components/why/WhySection";
 import { cn } from "@/lib/utils";
 
 type BubbleSide = "left" | "right";
@@ -134,7 +135,7 @@ function BubbleThread() {
 
 export default function Home() {
   return (
-    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--color-parchment)] text-[var(--color-forest)]">
+    <div id="top" className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--color-parchment)] text-[var(--color-forest)]">
       {/* A light wash instead of the old dark ramp: two soft pools of sage and deep parchment keep the parchment from reading as a flat fill. */}
       <div
         aria-hidden="true"
@@ -232,6 +233,39 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      <section id="why" aria-labelledby="why-heading" className="relative z-10 px-6 py-14 lg:py-20">
+        <div className="mx-auto w-full max-w-5xl">
+          <WhySection headingLevel="h2" headingId="why-heading" />
+
+          <Reveal>
+            <div className="mt-14 flex flex-wrap items-center gap-3">
+              <Link
+                href="/login"
+                className={buttonClasses({
+                  variant: "primary",
+                  tone: "light",
+                  size: "lg",
+                  className: "max-[479px]:w-full",
+                })}
+              >
+                Get Started →
+              </Link>
+              <a
+                href="#top"
+                className={buttonClasses({
+                  variant: "secondary",
+                  tone: "light",
+                  size: "lg",
+                  className: "max-[479px]:w-full",
+                })}
+              >
+                Back to top
+              </a>
+            </div>
+          </Reveal>
+        </div>
+      </section>
     </div>
   );
 }

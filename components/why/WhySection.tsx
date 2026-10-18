@@ -123,7 +123,13 @@ function ReasonCard({ reason, index }: { reason: (typeof REASONS)[number]; index
  * Rendered by the /why page (where its heading is the h1) and by the home page (where
  * the hero keeps the h1 and this heading is an h2).
  */
-export function WhySection({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2" }) {
+export function WhySection({
+  headingLevel = "h2",
+  headingId,
+}: {
+  headingLevel?: "h1" | "h2";
+  headingId?: string;
+}) {
   const Heading = headingLevel;
 
   return (
@@ -138,7 +144,7 @@ export function WhySection({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2"
           <p className="font-ui text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-primary)]">
             Why BadrLink
           </p>
-          <Heading className="mt-4 font-display text-[clamp(2.4rem,5vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.01em] text-[var(--color-forest)]">
+          <Heading id={headingId} className="mt-4 font-display text-[clamp(2.4rem,5vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.01em] text-[var(--color-forest)]">
             A simple messaging app
           </Heading>
           <p className="mt-5 max-w-[38rem] font-body text-[18px] leading-[1.65] text-[var(--color-text-on-light-soft)]">
