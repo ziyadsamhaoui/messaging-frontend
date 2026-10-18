@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -12,6 +12,12 @@ import { useGroupInfoScroll } from "./useGroupInfoScroll";
 
 const TABS: GroupInfoTab[] = [
   { id: "members", label: "Members" },
+  { id: "settings", label: "Settings" },
+];
+
+const TABS_WITH_INVITATIONS: GroupInfoTab[] = [
+  { id: "members", label: "Members" },
+  { id: "invitations", label: "Invitations" },
   { id: "settings", label: "Settings" },
 ];
 
@@ -29,6 +35,34 @@ function Harness() {
       <span data-testid="collapsed">{String(heroCollapsed)}</span>
       <button type="button" onClick={() => scrollToTab("settings")}>
         go settings
+      </button>
+    </div>
+  );
+}
+
+function RemovalHarness() {
+  const [hasInvitations, setHasInvitations] = useState(true);
+  const tabs = useMemo(
+    () => (hasInvitations ? TABS_WITH_INVITATIONS : TABS),
+    [hasInvitations]
+  );
+  const { scrollRef, activeId } = useGroupInfoScroll(tabs);
+  return (
+    <div>
+      <div ref={scrollRef} data-testid="scroll-removal">
+        <div id={GROUP_INFO_HERO_ID} data-testid="hero-removal" />
+        <section id={groupInfoSectionId("members")} data-testid="members-removal" />
+        {hasInvitations && (
+          <section
+            id={groupInfoSectionId("invitations")}
+            data-testid="invitations-removal"
+          />
+        )}
+        <section id={groupInfoSectionId("settings")} data-testid="settings-removal" />
+      </div>
+      <span data-testid="active-removal">{activeId}</span>
+      <button type="button" onClick={() => setHasInvitations(false)}>
+        accept last invitation
       </button>
     </div>
   );
@@ -116,6 +150,42 @@ describe("useGroupInfoScroll", () => {
 
     fireEvent.scroll(container);
     await waitFor(() => expect(active()).toBe("members"));
+  });
+
+  it("keeps the nearest section current when a tab disappears", async () => {
+    render(<RemovalHarness />);
+    const container = screen.getByTestId("scroll-removal");
+    const members = screen.getByTestId("members-removal");
+    const invitations = screen.getByTestId("invitations-removal");
+    const settings = screen.getByTestId("settings-removal");
+
+    Object.defineProperty(container, "scrollHeight", { value: 2000, configurable: true });
+    Object.defineProperty(container, "clientHeight", { value: 600, configurable: true });
+    const geometry = { invitationsTop: 400, settingsTop: 800 };
+
+    vi.spyOn(container, "getBoundingClientRect").mockImplementation(() => rect(0, 600));
+    vi.spyOn(members, "getBoundingClientRect").mockImplementation(() => rect(0, 100));
+    vi.spyOn(invitations, "getBoundingClientRect").mockImplementation(() => {
+      const top = geometry.invitationsTop - container.scrollTop;
+      return rect(top, top + 100);
+    });
+    vi.spyOn(settings, "getBoundingClientRect").mockImplementation(() => {
+      const top = geometry.settingsTop - container.scrollTop;
+      return rect(top, top + 100);
+    });
+
+    const active = () => screen.getByTestId("active-removal").textContent;
+    container.scrollTop = 400;
+    fireEvent.scroll(container);
+    await waitFor(() => expect(active()).toBe("invitations"));
+
+    // Accepting the last invitation removes the section and everything below moves
+    // up. The reader is now at Settings, not back at the top of the page.
+    geometry.settingsTop = 400;
+    const user = userEvent.setup();
+    await user.click(screen.getByRole("button", { name: "accept last invitation" }));
+
+    await waitFor(() => expect(active()).toBe("settings"));
   });
 
   it("cross-fades once the hero has passed under the header", async () => {

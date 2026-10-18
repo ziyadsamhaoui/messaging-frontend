@@ -172,16 +172,18 @@ export function useGroupInfoScroll(
   }, [enabled, scheduleUpdate, tabs]);
 
   // A section that disappears (the last invitation is accepted) must not leave its
-  // tab current: fall back to the first tab that still exists.
+  // tab current. Re-measure instead of defaulting to the first tab: the reader may
+  // be further down the page, and the resolver picks whatever is now under the line.
   useEffect(() => {
     if (tabs.length === 0) {
       setActiveId(null);
       return;
     }
     if (!tabs.some((tab) => tab.id === activeRef.current)) {
-      setActiveId(tabs[0].id);
+      if (pausedRef.current) scheduleUpdate();
+      else update();
     }
-  }, [setActiveId, tabs]);
+  }, [scheduleUpdate, setActiveId, tabs, update]);
 
   // Scrolling by hand during a programmatic scroll resumes the spy at once.
   useEffect(() => {
