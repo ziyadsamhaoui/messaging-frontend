@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { Clock, Lock, BellOff, MonitorSmartphone } from "lucide-react";
+import { MessageCircle, UserCheck, Inbox, MonitorSmartphone } from "lucide-react";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 
 /* Scroll-reveal wrapper: an element that fades/slides up as it enters the viewport. */
@@ -43,35 +43,44 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
 
 const REASONS = [
   {
-    icon: Clock,
-    kicker: "Real time",
-    title: "Messages that just arrive",
-    body: "Send it and it lands. No refresh, no spinner, no wondering whether it went through.",
+    icon: MessageCircle,
+    kicker: "Live",
+    title: "Messages show up as they're sent",
+    body: "New messages appear in the chat without reloading the page, and you can see when the other person is typing.",
   },
   {
-    icon: Lock,
-    kicker: "Private",
-    title: "Nobody else is reading",
-    body: "Your conversations belong to you and the people in them. Nothing is mined, nothing is sold on.",
+    icon: UserCheck,
+    kicker: "People",
+    title: "You decide who can reach you",
+    body: "Someone has to send you a connection request, and you accept or decline it. You can block people, and you choose which notifications you get.",
   },
   {
-    icon: BellOff,
-    kicker: "No clutter",
-    title: "Quiet by design",
-    body: "No endless feed and no algorithm deciding what you should care about. Just your rooms and your people.",
+    icon: Inbox,
+    kicker: "Focus",
+    title: "No feed, no timeline",
+    body: "BadrLink has no feed of posts or updates from other people. Its lists are your chats, your connections and your notifications.",
   },
   {
     icon: MonitorSmartphone,
-    kicker: "Every screen",
-    title: "Pick up where you left off",
-    body: "Start a thought on your phone and finish it on your laptop. The thread waits for you either way.",
+    kicker: "Devices",
+    title: "Use it on your phone or laptop",
+    body: "It runs in the browser, so you sign in the same way everywhere and your chats are already there.",
   },
 ];
 
 const STEPS = [
-  { label: "Make an account", detail: "A username, an email, a password. That is the whole signup." },
-  { label: "Find your people", detail: "Search for someone, send a request, and start a room when they accept." },
-  { label: "Talk, and stop worrying", detail: "Everything is live, everything is saved, and nothing nags at you for attention." },
+  {
+    label: "Create an account.",
+    detail: "You need an email address, a username and a password.",
+  },
+  {
+    label: "Add people.",
+    detail: "Search for a username and send a connection request. Once they accept, you can message them.",
+  },
+  {
+    label: "Start chatting.",
+    detail: "Open a direct chat, or make a group and add the people in it.",
+  },
 ];
 
 const CARD_SHADOW = "[box-shadow:0_20px_44px_-32px_rgba(20,46,25,0.5)]";
@@ -130,11 +139,11 @@ export function WhySection({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2"
             Why BadrLink
           </p>
           <Heading className="mt-4 font-display text-[clamp(2.4rem,5vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.01em] text-[var(--color-forest)]">
-            A calmer place to talk.
+            A simple messaging app
           </Heading>
           <p className="mt-5 max-w-[38rem] font-body text-[18px] leading-[1.65] text-[var(--color-text-on-light-soft)]">
-            Most messaging apps are built to hold your attention. This one is built to hand it back. It keeps the
-            people you care about close and leaves the noise behind.
+            BadrLink is for talking with people you already know, one on one or in groups. You send a connection
+            request, and when it is accepted you have a chat with that person.
           </p>
         </motion.div>
       </Reveal>
@@ -160,7 +169,7 @@ export function WhySection({ headingLevel = "h2" }: { headingLevel?: "h1" | "h2"
             className={`rounded-[var(--radius-surface)] border border-[rgba(40,84,48,0.18)] bg-[rgba(212,200,158,0.6)] p-7 sm:p-9 ${CARD_SHADOW}`}
           >
             <h2 className="font-display text-3xl font-semibold text-[var(--color-forest)]">
-              Getting started takes a minute
+              How it works
             </h2>
             <ol className="mt-7 grid gap-6 sm:grid-cols-3">
               {STEPS.map((step, index) => (
