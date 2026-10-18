@@ -34,6 +34,11 @@ interface SegmentedControlProps<T extends string> {
   /** Accessible name for the tab list. */
   label: string;
   className?: string;
+  /**
+   * Gives the sliding fill the same sheen as the dark primary button (specular top
+   * edge, bottom shade and contact shadow). On by default; pass `false` for a flat fill.
+   */
+  glossy?: boolean;
 }
 
 /** Id of the tab for `value`, so its panel can point back at it. */
@@ -73,6 +78,7 @@ export function SegmentedControl<T extends string>({
   idBase,
   label,
   className,
+  glossy = true,
 }: SegmentedControlProps<T>) {
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const [focusIndex, setFocusIndex] = useState<number | null>(null);
@@ -147,6 +153,9 @@ export function SegmentedControl<T extends string>({
         aria-hidden="true"
         className={cn(
           "pointer-events-none absolute top-1 bottom-1 left-1 rounded-[10px] bg-[var(--color-parchment)]",
+          // Same box-shadow recipe as the dark primary Button in components/ui/Button.tsx.
+          glossy &&
+            "shadow-[inset_0_1px_0_rgba(255,255,255,0.95),inset_0_-5px_9px_-7px_rgba(4,16,8,0.45),0_2px_3px_-1px_rgba(4,16,8,0.4),0_12px_26px_-14px_rgba(4,16,8,0.85)]",
           "transition-[transform,width] duration-200 ease-out motion-reduce:transition-none"
         )}
         style={{ width: pillWidth, transform: `translateX(${pillOffset})` }}

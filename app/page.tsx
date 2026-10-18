@@ -160,6 +160,8 @@ export default function Home() {
       />
       <CursorGrid tone="light" />
 
+      {/* The hero is one full screen: the header and the hero content share it. */}
+      <div className="relative z-10 flex min-h-dvh flex-col">
       <SiteHeader />
 
       <main className="relative z-10 flex flex-1 items-center px-6 py-12 lg:py-16">
@@ -251,9 +253,11 @@ export default function Home() {
           </div>
         </div>
       </main>
+      </div>
 
-      <section id="why" aria-labelledby="why-heading" className="relative z-10 px-6 py-14 lg:py-20">
-        <div className="mx-auto w-full max-w-5xl">
+      <section id="why" aria-labelledby="why-heading" className="relative z-10 flex min-h-dvh flex-col justify-center px-6 py-14 lg:py-20">
+        {/* max-w-7xl matches the hero container above, so the Why text starts at the same x as the hero. */}
+        <div className="mx-auto w-full max-w-7xl">
           <WhySection headingLevel="h2" headingId="why-heading" />
 
           <Reveal>

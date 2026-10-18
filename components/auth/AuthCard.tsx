@@ -188,6 +188,7 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
         options={TABS}
         value={mode}
         onChange={switchMode}
+        glossy
       />
 
       {/*
@@ -255,7 +256,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             value={email}
             onChange={(event) => handleFieldChange("email", event.target.value)}
             onBlur={() => handleFieldBlur("email")}
-            placeholder="you@example.com"
             error={fieldErrors.email}
             disabled={loading}
             autoComplete="email"
@@ -268,7 +268,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
               value={username}
               onChange={(event) => handleFieldChange("username", event.target.value)}
               onBlur={() => handleFieldBlur("username")}
-              placeholder="fernwalker"
               error={usernameError}
               disabled={loading}
               autoComplete="username"

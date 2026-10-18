@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import Link from "next/link";
-import { MessageSquareText, SquarePen } from "lucide-react";
+import { MessageSquareText, Plus, SquarePen } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useRooms } from "@/hooks/useRooms";
@@ -80,13 +80,19 @@ export function ConversationsPanel({
   }, [rooms, query, filter]);
 
   return (
+    <>
     <SectionPanel
       title="Chats"
       hideOnNarrow={hideOnNarrow}
         actions={
-          <IconButton label="New chat" tooltip="New chat" tooltipSide="bottom" onClick={onNewChat}>
-            <SquarePen size={20} strokeWidth={1.75} aria-hidden="true" />
-          </IconButton>
+          <>
+            {/* Desktop keeps this icon button. On phones the floating + below takes its place. */}
+            <div className="hidden md:block">
+              <IconButton label="New chat" tooltip="New chat" tooltipSide="bottom" onClick={onNewChat}>
+                <SquarePen size={20} strokeWidth={1.75} aria-hidden="true" />
+              </IconButton>
+            </div>
+          </>
         }
         toolbar={
           <div className="flex flex-col gap-2">
@@ -172,6 +178,22 @@ export function ConversationsPanel({
           </ul>
         )}
     </SectionPanel>
+    {/*
+      Phone-only floating action: a 1.2x light-green square pinned to the bottom right,
+      lifted clear of the bottom tab bar. The hover lift and press squeeze are CSS
+      transitions only, and motion-reduce turns them off.
+    */}
+    {!activeRoomId && (
+      <button
+        type="button"
+        onClick={onNewChat}
+        aria-label="New chat"
+        className="focus-ring fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-[4.05rem] w-[4.05rem] animate-fab-float items-center justify-center rounded-[var(--radius-control)] bg-[var(--color-sage)] text-[var(--color-forest-deep)] shadow-[0_8px_18px_-8px_rgba(4,16,8,0.7)] transition-transform duration-200 ease-out active:scale-95 md:hidden"
+      >
+        <Plus size={36} strokeWidth={2} aria-hidden="true" />
+      </button>
+    )}
+    </>
   );
 }
 

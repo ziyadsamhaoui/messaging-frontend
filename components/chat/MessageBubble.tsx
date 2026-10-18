@@ -153,6 +153,14 @@ export function MessageBubble({
   const [pickerTrigger, setPickerTrigger] = useState<HTMLButtonElement | null>(null);
   const editRef = useRef<HTMLTextAreaElement | null>(null);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Bumped whenever a reaction is added, so the reaction row re-mounts and plays its pop.
+  const reactionTotal = message.reactions?.length ?? 0;
+  const prevReactionTotal = useRef(reactionTotal);
+  const [popKey, setPopKey] = useState(0);
+  useEffect(() => {
+    if (reactionTotal > prevReactionTotal.current) setPopKey((key) => key + 1);
+    prevReactionTotal.current = reactionTotal;
+  }, [reactionTotal]);
 
   const canDelete = Boolean(onDelete && (isOwn || canDeleteAsOwner));
   const canEdit = Boolean(onEdit && isOwn && message.type === "TEXT" && !message.isDeleted);
@@ -461,6 +469,7 @@ export function MessageBubble({
             edge by a third of its height, inset 8 px from the bubble's outer corner. */}
         {reactions.length > 0 && (
           <div
+            key={popKey}
             data-reaction-pill
             /*
              * The pill overlaps the bubble's bottom edge by a third of its own 22 px
@@ -469,6 +478,7 @@ export function MessageBubble({
              */
             className={cn(
               "absolute -bottom-[15px] z-10 flex items-center gap-1",
+              popKey > 0 && "animate-reaction-pop",
               isOwn ? "right-2" : "left-2"
             )}
           >

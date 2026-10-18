@@ -11,7 +11,7 @@ import { usePendingConnections } from "@/hooks/useConnections";
 import { RailBadge } from "@/components/ui/Badge";
 import { NAV_DESTINATIONS } from "./navDestinations";
 
-const ICON_SIZE = 22;
+const ICON_SIZE = 24;
 
 /**
  * Zone one on a phone: the bottom tab bar.
@@ -47,7 +47,7 @@ export function MobileNav({ route }: { route: AppRoute }) {
   return (
     <nav
       aria-label="Primary"
-      className="shrink-0 border-t border-[rgba(164,190,123,0.16)] bg-[var(--app-rail)] pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="shrink-0 border-t border-[rgba(164,190,123,0.16)] bg-[color-mix(in_srgb,var(--app-rail)_45%,black)] pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="grid grid-cols-5">
         {NAV_DESTINATIONS.map(({ value, label, Icon, countKey }) => (
@@ -102,7 +102,7 @@ function MobileTab({
       aria-label={accessibleName}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] px-1 pb-1.5 pt-2 font-ui text-[12px] font-medium transition-colors duration-150 motion-reduce:transition-none",
+        "focus-ring flex min-h-14 flex-col items-center justify-center gap-1 rounded-[10px] px-1 pb-1.5 pt-2 font-ui text-[15px] font-medium transition-colors duration-150 motion-reduce:transition-none",
         active ? "text-[var(--app-rail-text-strong)]" : "text-[var(--app-rail-text)]"
       )}
     >
@@ -113,7 +113,7 @@ function MobileTab({
       */}
       <span
         className={cn(
-          "relative flex h-7 w-10 items-center justify-center rounded-full",
+          "relative flex h-8 w-12 items-center justify-center rounded-full",
           active && "bg-[var(--app-rail-icon-active)]"
         )}
       >

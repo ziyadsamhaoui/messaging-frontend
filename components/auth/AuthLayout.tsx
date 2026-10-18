@@ -18,7 +18,7 @@ import { Wordmark } from "@/components/ui/Wordmark";
  * From `sm` up the raised surface is restored, unchanged from before.
  */
 export const AUTH_CARD_SURFACE =
-  "h-fit w-full p-5 " +
+  "h-fit w-full px-8 py-5 " +
   "sm:rounded-[var(--radius-surface)] sm:border sm:border-[var(--color-border)] " +
   "sm:bg-[var(--color-surface-raised)] sm:p-8 sm:shadow-[var(--shadow-card)]";
 
@@ -59,9 +59,22 @@ export const AUTH_FIELD_CLASS = "font-ui! text-[16px]";
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-[var(--color-forest-deep)] text-[var(--color-parchment)]">
+      {/*
+        Static backdrop: a gentle edge vignette and a fine film grain. Neither has a
+        pattern of its own, so the cursor grid stays the only visible texture.
+      */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(110%_80%_at_12%_-10%,rgba(95,141,78,0.32),transparent_58%),radial-gradient(90%_80%_at_100%_115%,rgba(40,84,48,0.6),transparent_60%)]"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(120%_90%_at_50%_50%,transparent_55%,rgba(0,0,0,0.28))]"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 opacity-[0.07] mix-blend-soft-light"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>\")",
+          backgroundSize: "180px 180px",
+        }}
       />
 
       {/* Sits under the header and the card (both `z-10`+), over the wash. */}
