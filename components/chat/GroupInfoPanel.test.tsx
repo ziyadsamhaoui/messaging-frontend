@@ -214,6 +214,26 @@ describe("GroupInfoPanel", () => {
     expect(within(nav).getByRole("button", { name: "Members" })).not.toHaveAttribute("aria-current");
   });
 
+  it("moves between tabs with Left and Right, then activates with Enter", async () => {
+    renderPanel();
+
+    const nav = screen.getByRole("navigation", { name: "Group info sections" });
+    const members = within(nav).getByRole("button", { name: "Members" });
+    const settings = within(nav).getByRole("button", { name: "Settings" });
+    const user = userEvent.setup();
+
+    members.focus();
+    await user.keyboard("{ArrowRight}");
+    expect(settings).toHaveFocus();
+    await user.keyboard("{ArrowLeft}");
+    expect(members).toHaveFocus();
+
+    await user.keyboard("{ArrowRight}{Enter}");
+    await waitFor(() => expect(settings).toHaveAttribute("aria-current", "true"));
+    // After a keyboard activation the reader lands on the section heading.
+    expect(screen.getByRole("heading", { name: "Settings" })).toHaveFocus();
+  });
+
   it("adds an Invitations tab and section only when outgoing invitations exist", () => {
     state.invitations = [OUTGOING_INVITATION];
     renderPanel();
@@ -283,7 +303,8 @@ describe("GroupInfoPanel", () => {
     await user.click(await screen.findByRole("button", { name: "Member options for bob" }));
 
     const menu = await screen.findByRole("menu", { name: "Member options for bob" });
-    const items = within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim());
+    const menuItems = within(menu).getAllByRole("menuitem");
+    const items = menuItems.map((item) => item.textContent?.trim());
     expect(items).toEqual([
       "Make admin",
       "Unmute",
@@ -296,6 +317,14 @@ describe("GroupInfoPanel", () => {
     // No ownership transfer: the API cannot express it.
     expect(items).not.toContain("Transfer ownership");
     expect(items).not.toContain("Remove admin");
+
+    // Arrow keys walk the menu and Escape dismisses it, returning focus.
+    menuItems[0].focus();
+    await user.keyboard("{ArrowDown}");
+    expect(menuItems[1]).toHaveFocus();
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
+    expect(screen.getByRole("button", { name: "Member options for bob" })).toHaveFocus();
   });
 
   it("will not let the owner change their own role, and hides the danger items", async () => {
