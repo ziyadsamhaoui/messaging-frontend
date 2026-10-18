@@ -9,7 +9,7 @@ import React, {
   useState,
 } from "react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, LogOut, Search, UserPlus, X } from "lucide-react";
+import { ArrowLeft, Images, LogOut, Search, UserPlus, X } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
@@ -18,6 +18,8 @@ import { useToast } from "@/components/ui/Toast";
 import { AddMembersView } from "@/components/chat/groupInfo/AddMembersView";
 import { InvitationsSection } from "@/components/chat/groupInfo/InvitationsSection";
 import { MemberSection } from "@/components/chat/groupInfo/MemberSection";
+import { MediaGalleryDialog } from "@/components/chat/media/MediaGalleryDialog";
+import { MediaSection } from "@/components/chat/media/MediaSection";
 import { useGroupInfoScroll } from "@/hooks/useGroupInfoScroll";
 import { pendingInvitationsQueryKey, usePendingInvitations } from "@/hooks/useInvitations";
 import { participantsQueryKey, useRoomParticipants } from "@/hooks/useMessages";
@@ -85,6 +87,8 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
   const [memberQuery, setMemberQuery] = useState("");
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryManage, setGalleryManage] = useState(false);
   const [panelWidth, setPanelWidth] = useState(GROUP_INFO_DEFAULT_WIDTH);
   const dragRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
@@ -363,6 +367,14 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 </div>
               )}
 
+              <MediaSection
+                roomId={room.id}
+                onOpen={() => {
+                  setGalleryManage(false);
+                  setGalleryOpen(true);
+                }}
+              />
+
               <nav
                 data-group-info-tabs
                 aria-label="Group info sections"
@@ -436,7 +448,13 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
               )}
 
               <SectionBand />
-              <SettingsSection onLeave={() => setConfirmingLeave(true)} />
+              <SettingsSection
+                onManageMedia={() => {
+                  setGalleryManage(true);
+                  setGalleryOpen(true);
+                }}
+                onLeave={() => setConfirmingLeave(true)}
+              />
 
               {/* Room for the last section's heading to reach the line under the tab
                   bar on a tall viewport, not just on a short one. Sized from the
@@ -485,6 +503,17 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
               onDone={backToInfo}
             />
           </>
+        )}
+
+        {galleryOpen && (
+          <MediaGalleryDialog
+            roomId={room.id}
+            initialManage={galleryManage}
+            onClose={() => {
+              setGalleryOpen(false);
+              setGalleryManage(false);
+            }}
+          />
         )}
 
         <ConfirmDialog
@@ -589,7 +618,13 @@ function Hero({
  * per-conversation notification mute, no rename endpoint and no clear-history
  * endpoint, so the only row is the one that always works: leaving.
  */
-function SettingsSection({ onLeave }: { onLeave: () => void }) {
+function SettingsSection({
+  onManageMedia,
+  onLeave,
+}: {
+  onManageMedia: () => void;
+  onLeave: () => void;
+}) {
   return (
     <section
       id={groupInfoSectionId("settings")}
@@ -606,6 +641,14 @@ function SettingsSection({ onLeave }: { onLeave: () => void }) {
         </h3>
       </div>
       <div className="px-2">
+        <button
+          type="button"
+          onClick={onManageMedia}
+          className="focus-ring-light flex min-h-14 w-full items-center gap-3 rounded-[var(--radius-control)] px-2 text-left font-ui text-[15px] font-medium text-[var(--app-pane-text)] transition-colors duration-150 motion-reduce:transition-none hover:bg-[var(--app-pane-hover)]"
+        >
+          <Images size={20} strokeWidth={1.75} aria-hidden="true" className="text-[var(--app-pane-text-soft)]" />
+          <span className="min-w-0 flex-1">Manage media</span>
+        </button>
         <button
           type="button"
           onClick={onLeave}
