@@ -22,6 +22,7 @@ import { getUser } from "@/lib/services/users";
 import { socketManager } from "@/lib/socketManager";
 import { STOMP_DESTINATIONS } from "@/lib/stompClient";
 import {
+  AttachmentsUpdatedFrame,
   ChatMessage,
   CursorPage,
   MessageReactionSummary,
@@ -122,6 +123,48 @@ export function useMessages(roomId: string | null) {
     [roomId, queryClient]
   );
 
+  const appendMessage = useCallback(
+    (message: MessageResponse) => {
+      if (!roomId) return;
+      queryClient.setQueryData<InfiniteData<CursorPage<ChatMessage>>>(
+        messagesQueryKey(roomId),
+        (current) => {
+          if (!current) return current;
+          const [first, ...rest] = current.pages;
+          if (!first) return current;
+          if (first.items.some((item) => item.id === message.id)) return current;
+          return { ...current, pages: [{ ...first, items: [message, ...first.items] }, ...rest] };
+        }
+      );
+    },
+    [roomId, queryClient]
+  );
+
+  const applyAttachmentsUpdated = useCallback(
+    (frame: AttachmentsUpdatedFrame) => {
+      if (!roomId || !frame.messageId) return;
+      queryClient.setQueryData<InfiniteData<CursorPage<ChatMessage>>>(
+        messagesQueryKey(roomId),
+        (current) => {
+          if (!current) return current;
+          const pages = current.pages.map((page) => {
+            if (!page.items.some((item) => item.id === frame.messageId)) return page;
+            return {
+              ...page,
+              items: page.items.map((item) => {
+                if (item.id !== frame.messageId) return item;
+                const merged = Array.from(new Set([...item.attachmentIds, ...frame.attachmentIds]));
+                return { ...item, attachmentIds: merged };
+              }),
+            };
+          });
+          return { ...current, pages };
+        }
+      );
+    },
+    [roomId, queryClient]
+  );
+
   const applyMessageDeleted = useCallback(
     (messageId: string) => {
       if (!roomId || !messageId) return;
@@ -133,7 +176,14 @@ export function useMessages(roomId: string | null) {
     [roomId, queryClient]
   );
 
-  return { ...query, applyRoomMessageFrame, applyReactionFrame, applyMessageDeleted };
+  return {
+    ...query,
+    applyRoomMessageFrame,
+    applyReactionFrame,
+    applyMessageDeleted,
+    applyAttachmentsUpdated,
+    appendMessage,
+  };
 }
 
 interface SendMessageVariables {

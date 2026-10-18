@@ -1,4 +1,5 @@
 import {
+  AttachmentsUpdatedFrame,
   ConnectionAcceptedFrame,
   InvitationAcceptedFrame,
   InvitationSentFrame,
@@ -10,6 +11,7 @@ import {
 
 export type RoomFrame =
   | { kind: "message"; frame: RoomMessageFrame }
+  | { kind: "attachments"; frame: AttachmentsUpdatedFrame }
   | { kind: "reaction"; frame: ReactionFrame }
   | { kind: "deleted"; frame: MessageDeletedFrame }
   | { kind: "participant"; frame: ParticipantFrame };
@@ -111,6 +113,22 @@ export function classifyRoomFrame(raw: unknown): RoomFrame | null {
         role: typeof value.role === "string" ? (value.role as ParticipantFrame["role"]) : undefined,
         muted: typeof value.muted === "boolean" ? value.muted : undefined,
         mutedUntil: typeof value.mutedUntil === "string" ? value.mutedUntil : null,
+      },
+    };
+  }
+
+  if (value.eventType === "MESSAGE_ATTACHMENTS_UPDATED") {
+    if (typeof value.messageId !== "string" || typeof value.roomId !== "string") return null;
+    const ids = Array.isArray(value.attachmentIds)
+      ? value.attachmentIds.filter((entry): entry is string => typeof entry === "string")
+      : [];
+    return {
+      kind: "attachments",
+      frame: {
+        eventType: "MESSAGE_ATTACHMENTS_UPDATED",
+        messageId: value.messageId,
+        roomId: value.roomId,
+        attachmentIds: ids,
       },
     };
   }

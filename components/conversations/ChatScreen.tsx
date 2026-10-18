@@ -18,6 +18,7 @@ import {
   useRoomParticipants,
   useSendMessage,
 } from "@/hooks/useMessages";
+import { useAttachmentLookup } from "@/hooks/useAttachments";
 import { useUser } from "@/hooks/useUser";
 import { useBlockedUserIds, useBlockUser, useUnblockUser } from "@/hooks/useBlocks";
 import { useSocket } from "@/hooks/useSocket";
@@ -27,10 +28,19 @@ import { errorMessage, isApiError } from "@/lib/errors";
 import { STOMP_DESTINATIONS } from "@/lib/stompClient";
 import { classifyRoomFrame } from "@/lib/realtimeFrames";
 import { derivePresence, formatLastSeen, presenceLabel } from "@/lib/presence";
-import { removeParticipant } from "@/lib/services/rooms";
+import { removeParticipant, sendMessage as sendRoomMessage } from "@/lib/services/rooms";
+import { getAttachment } from "@/lib/services/attachments";
+import { kindOf, messageTypeOf, prepareUpload } from "@/lib/attachments/compress";
+import { uploadAttachment } from "@/lib/attachments/upload";
 import { getUser } from "@/lib/services/users";
 import { CHATS_HREF, connectionHref } from "@/lib/appRoute";
-import { ChatMessage, RoomResponse, TypingEvent } from "@/lib/types";
+import {
+  AttachmentResponse,
+  ChatMessage,
+  PendingAttachmentUpload,
+  RoomResponse,
+  TypingEvent,
+} from "@/lib/types";
 import { useToast } from "@/components/ui/Toast";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
@@ -69,6 +79,11 @@ export function ChatScreen({ roomId }: { roomId: string }) {
   const markBlockedRoom = useUiStore((state) => state.markBlockedRoom);
 
   const [typing, setTyping] = useState<ActiveTyping | null>(null);
+  const [pendingUploads, setPendingUploads] = useState<Record<string, PendingAttachmentUpload>>(
+    {}
+  );
+  const uploadFilesRef = useRef(new Map<string, File>());
+  const statusChecksRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [detailsOpen, setDetailsOpen] = useState(false);
   // Held as state rather than a ref because focus returns here when the details pane
   // closes, and reading a ref during render is not allowed.
@@ -86,7 +101,25 @@ export function ChatScreen({ roomId }: { roomId: string }) {
     () => flattenPages(messagesQuery.data?.pages) as ChatMessage[],
     [messagesQuery.data]
   );
-  const { applyRoomMessageFrame, applyReactionFrame, applyMessageDeleted } = messagesQuery;
+  const {
+    applyRoomMessageFrame,
+    applyReactionFrame,
+    applyMessageDeleted,
+    applyAttachmentsUpdated,
+    appendMessage,
+  } = messagesQuery;
+
+  const attachmentIds = useMemo(
+    () => messages.flatMap((message) => message.attachmentIds),
+    [messages]
+  );
+  const attachmentLookup = useAttachmentLookup(roomId, attachmentIds);
+  const attachmentMap = useMemo(() => {
+    const entries = (attachmentLookup.data ?? []).map(
+      (attachment) => [attachment.id, attachment] as const
+    );
+    return Object.fromEntries(entries) as Record<string, AttachmentResponse>;
+  }, [attachmentLookup.data]);
 
   const participantsQuery = useRoomParticipants(roomId);
   const participants = useMemo(() => participantsQuery.data?.items ?? [], [participantsQuery.data]);
@@ -152,6 +185,21 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         applyReactionFrame(classified.frame);
       } else if (classified.kind === "deleted") {
         applyMessageDeleted(classified.frame.messageId);
+      } else if (classified.kind === "attachments") {
+        applyAttachmentsUpdated(classified.frame);
+        void queryClient.invalidateQueries({ queryKey: ["attachments"] });
+        setPendingUploads((current) => {
+          if (!current[classified.frame.messageId]) return current;
+          const next = { ...current };
+          delete next[classified.frame.messageId];
+          return next;
+        });
+        uploadFilesRef.current.delete(classified.frame.messageId);
+        const timer = statusChecksRef.current.get(classified.frame.messageId);
+        if (timer) {
+          clearTimeout(timer);
+          statusChecksRef.current.delete(classified.frame.messageId);
+        }
       } else if (classified.kind === "participant") {
         void queryClient.invalidateQueries({ queryKey: participantsQueryKey(roomId) });
         void queryClient.invalidateQueries({ queryKey: ["rooms"] });
@@ -186,6 +234,7 @@ export function ChatScreen({ roomId }: { roomId: string }) {
     applyRoomMessageFrame,
     applyReactionFrame,
     applyMessageDeleted,
+    applyAttachmentsUpdated,
     noteRoomActivity,
     currentUserId,
     queryClient,
@@ -220,6 +269,119 @@ export function ChatScreen({ roomId }: { roomId: string }) {
     lastTypingRef.current = now;
     publish(STOMP_DESTINATIONS.typing, { roomId });
   }, [publish, roomId]);
+
+  const patchPending = useCallback(
+    (messageId: string, patch: Partial<PendingAttachmentUpload>) => {
+      setPendingUploads((current) =>
+        current[messageId]
+          ? { ...current, [messageId]: { ...current[messageId], ...patch } }
+          : current
+      );
+    },
+    []
+  );
+
+  const uploadToMessage = useCallback(
+    async (messageId: string, file: File) => {
+      try {
+        const prepared = await prepareUpload(file);
+        patchPending(messageId, {
+          fileName: prepared.fileName,
+          kind: prepared.kind,
+          status: "uploading",
+          error: undefined,
+        });
+        const confirmed = await uploadAttachment(roomId, messageId, prepared);
+        patchPending(messageId, {
+          attachmentId: confirmed.id,
+          status: "scanning",
+          error: undefined,
+        });
+
+        const existing = statusChecksRef.current.get(messageId);
+        if (existing) clearTimeout(existing);
+        const timer = setTimeout(async () => {
+          statusChecksRef.current.delete(messageId);
+          try {
+            const metadata = await getAttachment(confirmed.id);
+            if (metadata.status === "READY") {
+              applyAttachmentsUpdated({
+                eventType: "MESSAGE_ATTACHMENTS_UPDATED",
+                messageId,
+                roomId,
+                attachmentIds: [confirmed.id],
+              });
+              void queryClient.invalidateQueries({ queryKey: ["attachments"] });
+              setPendingUploads((current) => {
+                if (!current[messageId]) return current;
+                const next = { ...current };
+                delete next[messageId];
+                return next;
+              });
+              uploadFilesRef.current.delete(messageId);
+            } else if (metadata.status === "REJECTED") {
+              patchPending(messageId, {
+                status: "failed",
+                error: "This file was rejected and was not attached.",
+              });
+            }
+          } catch {
+            patchPending(messageId, { status: "scanning" });
+          }
+        }, 45_000);
+        statusChecksRef.current.set(messageId, timer);
+      } catch (error) {
+        patchPending(messageId, { status: "failed", error: errorMessage(error) });
+        toast.push(errorMessage(error), "error");
+      }
+    },
+    [applyAttachmentsUpdated, patchPending, queryClient, roomId, toast]
+  );
+
+  const handleSendAttachment = useCallback(
+    async (file: File) => {
+      try {
+        const kind = kindOf(file.type);
+        const created = await sendRoomMessage(roomId, {
+          type: messageTypeOf(kind),
+          content: "",
+        });
+        appendMessage(created);
+        uploadFilesRef.current.set(created.id, file);
+        setPendingUploads((current) => ({
+          ...current,
+          [created.id]: {
+            messageId: created.id,
+            attachmentId: null,
+            fileName: file.name,
+            kind,
+            status: "preparing",
+          },
+        }));
+        await uploadToMessage(created.id, file);
+      } catch (error) {
+        toast.push(errorMessage(error), "error");
+      }
+    },
+    [appendMessage, roomId, toast, uploadToMessage]
+  );
+
+  const handleRetryUpload = useCallback(
+    (messageId: string) => {
+      const file = uploadFilesRef.current.get(messageId);
+      if (!file) return;
+      void uploadToMessage(messageId, file);
+    },
+    [uploadToMessage]
+  );
+
+  useEffect(
+    () => () => {
+      statusChecksRef.current.forEach((timer) => clearTimeout(timer));
+      statusChecksRef.current.clear();
+    },
+    []
+  );
 
   const handleLeave = useCallback(async () => {
     if (!currentUserId) return;
@@ -413,6 +575,9 @@ export function ChatScreen({ roomId }: { roomId: string }) {
             toast.push(errorMessage(error), "error");
           }
         }}
+        attachments={attachmentMap}
+        pendingUploads={pendingUploads}
+        onRetryUpload={handleRetryUpload}
         onReact={async (messageId, emoji) => {
           try {
             await addReactionMutation.mutateAsync({ messageId, emoji });
@@ -433,6 +598,7 @@ export function ChatScreen({ roomId }: { roomId: string }) {
         value={draft}
         onChange={(value) => setDraft(roomId, value)}
         onSend={handleSend}
+        onSendAttachment={handleSendAttachment}
         onTyping={handleTyping}
         blocked={isBlocked}
         muted={isMuted}

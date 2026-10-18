@@ -11,11 +11,17 @@ import {
   Trash2,
   ChevronDown,
 } from "lucide-react";
-import { ChatMessage, MessageReactionSummary } from "@/lib/types";
+import {
+  AttachmentResponse,
+  ChatMessage,
+  MessageReactionSummary,
+  PendingAttachmentUpload,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatClock } from "@/lib/time";
 import { Popover, popoverItemClasses } from "@/components/ui/Popover";
 import { useToast } from "@/components/ui/Toast";
+import { AttachmentPreview } from "./AttachmentPreview";
 
 /*
  * Emoji are user content, not UI icons, so the reaction set is a plain array rather
@@ -100,6 +106,9 @@ export interface MessageBubbleProps {
   onRemoveReaction?: (messageId: string) => void;
   /** Failed sends can only be retried by the sender; the list owns the retry. */
   onRetry?: (messageId: string) => void;
+  attachments?: AttachmentResponse[];
+  pendingUpload?: PendingAttachmentUpload;
+  onRetryUpload?: (messageId: string) => void;
 }
 
 /*
@@ -128,6 +137,9 @@ export function MessageBubble({
   onReact,
   onRemoveReaction,
   onRetry,
+  attachments = [],
+  pendingUpload,
+  onRetryUpload,
 }: MessageBubbleProps) {
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -357,8 +369,18 @@ export function MessageBubble({
                 <span className={metaClasses}>{formatClock(message.createdAt)}</span>
               </p>
             ) : (
-              <p className="flow-root whitespace-pre-wrap [overflow-wrap:anywhere]">
-                <MessageText content={message.content} />
+              <div className="flow-root">
+                {(attachments.length > 0 || pendingUpload) && (
+                  <div className="mb-1.5 max-w-full">
+                    <AttachmentPreview
+                      attachments={attachments}
+                      pendingUpload={pendingUpload}
+                      onRetry={() => onRetryUpload?.(message.id)}
+                    />
+                  </div>
+                )}
+                <p className="flow-root whitespace-pre-wrap [overflow-wrap:anywhere]">
+                {message.content.trim().length > 0 && <MessageText content={message.content} />}
                 <span className={metaClasses}>
                   {message.isEdited && <span>edited</span>}
                   <span>{formatClock(message.createdAt)}</span>
@@ -367,7 +389,8 @@ export function MessageBubble({
                     chevron can replace the status mark on hover without the bubble
                     changing size.
                   */}
-                  <span className="flex h-4 w-4 shrink-0 items-center justify-end">
+                  {/* The status mark and the options chevron share this slot; on phones the chevron is always visible, so they sit side by side instead of overlapping. */}
+                  <span className="flex h-4 min-w-4 shrink-0 items-center justify-end gap-1">
                     {isOwn && !message.failed && (
                       <span
                         className={cn(
@@ -409,7 +432,8 @@ export function MessageBubble({
                     )}
                   </span>
                 </span>
-              </p>
+                </p>
+              </div>
             )}
           </div>
         </div>

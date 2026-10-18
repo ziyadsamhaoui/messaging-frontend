@@ -2,7 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown } from "lucide-react";
-import { ChatMessage } from "@/lib/types";
+import {
+  AttachmentResponse,
+  ChatMessage,
+  PendingAttachmentUpload,
+} from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { formatDayLabel, isSameDay } from "@/lib/time";
 import { Avatar } from "@/components/ui/Avatar";
@@ -45,6 +49,9 @@ interface MessageListProps {
   onDelete?: (messageId: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
   onRemoveReaction?: (messageId: string) => void;
+  attachments?: Record<string, AttachmentResponse>;
+  pendingUploads?: Record<string, PendingAttachmentUpload>;
+  onRetryUpload?: (messageId: string) => void;
 }
 
 function orderMessages(messages: ChatMessage[]): ChatMessage[] {
@@ -163,6 +170,9 @@ export function MessageList({
   onDelete,
   onReact,
   onRemoveReaction,
+  attachments,
+  pendingUploads,
+  onRetryUpload,
 }: MessageListProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previousRoomRef = useRef<string | null>(null);
@@ -342,6 +352,13 @@ export function MessageList({
                         onDelete={onDelete}
                         onReact={onReact}
                         onRemoveReaction={onRemoveReaction}
+                        attachments={message.attachmentIds
+                          .map((attachmentId) => attachments?.[attachmentId])
+                          .filter((attachment): attachment is AttachmentResponse =>
+                            Boolean(attachment)
+                          )}
+                        pendingUpload={pendingUploads?.[message.id]}
+                        onRetryUpload={onRetryUpload}
                       />
                     </div>
                   </div>

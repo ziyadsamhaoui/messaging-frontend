@@ -229,6 +229,66 @@ export interface SendMessageRequest {
   content: string;
 }
 
+export type AttachmentKind = "IMAGE" | "VIDEO" | "AUDIO" | "FILE";
+
+export type AttachmentStatus = "PENDING_UPLOAD" | "PENDING_SCAN" | "READY" | "REJECTED";
+
+export interface AttachmentResponse {
+  id: string;
+  roomId: string;
+  messageId: string | null;
+  fileName: string;
+  fileType: string;
+  kind: AttachmentKind;
+  fileSizeBytes: number;
+  status: AttachmentStatus;
+  malwareStatus: "SAFE" | "UNSAFE" | null;
+  moderationStatus: "SFW" | "NSFW" | null;
+  uploadedAt: string | null;
+  scannedAt: string | null;
+  url?: string | null;
+  urlExpiresAt?: string | null;
+}
+
+export interface AttachmentPage extends CursorPage<AttachmentResponse> {
+  totalCount?: number;
+}
+
+export interface CreateUploadIntentRequest {
+  roomId: string;
+  messageId: string;
+  fileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+}
+
+export interface UploadIntentResponse {
+  attachmentId: string;
+  uploadUrl: string;
+  expiresAt: string;
+  status: AttachmentStatus;
+  fileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+}
+
+export interface DownloadUrlResponse {
+  fileName: string;
+  fileType: string;
+  fileSizeBytes: number;
+  url: string;
+  expiresAt: string;
+}
+
+export interface PendingAttachmentUpload {
+  messageId: string;
+  attachmentId: string | null;
+  fileName: string;
+  kind: AttachmentKind;
+  status: "preparing" | "uploading" | "scanning" | "failed";
+  error?: string;
+}
+
 export interface ErrorFrame {
   timestamp?: string;
   status: number;
@@ -247,6 +307,13 @@ export interface MessageReactionSummary {
   userId: string;
   emoji: string;
   username?: string;
+}
+
+export interface AttachmentsUpdatedFrame {
+  eventType: "MESSAGE_ATTACHMENTS_UPDATED";
+  messageId: string;
+  roomId: string;
+  attachmentIds: string[];
 }
 
 export interface RoomMessageFrame {
