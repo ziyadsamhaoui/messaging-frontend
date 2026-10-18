@@ -276,7 +276,7 @@ describe("GroupInfoPanel", () => {
     expect(screen.queryByRole("button", { name: "Unmute" })).toBeNull();
   });
 
-  it.each([3, 9, 100])(
+  it.each([1, 3, 9, 100])(
     "previews and expands a %i-member group in place",
     async (size) => {
       state.participants = groupWith(size);
@@ -440,6 +440,37 @@ describe("GroupInfoPanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Back to group info" }));
     expect(screen.getByRole("heading", { name: "Group info" })).toBeInTheDocument();
+  });
+
+  it("restores the scroll position and active tab after Add members", async () => {
+    renderPanel();
+    const user = userEvent.setup();
+
+    const nav = screen.getByRole("navigation", { name: "Group info sections" });
+    await user.click(within(nav).getByRole("button", { name: "Settings" }));
+    await waitFor(() =>
+      expect(within(nav).getByRole("button", { name: "Settings" })).toHaveAttribute(
+        "aria-current",
+        "true"
+      )
+    );
+
+    const before = document.querySelector<HTMLElement>("#group-info-panel .app-scroll-light");
+    expect(before).not.toBeNull();
+    before!.scrollTop = 240;
+
+    await user.click(screen.getByRole("button", { name: "Add" }));
+    expect(screen.getByRole("heading", { name: "Add members" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to group info" }));
+
+    const after = document.querySelector<HTMLElement>("#group-info-panel .app-scroll-light");
+    expect(after).not.toBeNull();
+    expect(after!.scrollTop).toBe(240);
+    const navAfter = screen.getByRole("navigation", { name: "Group info sections" });
+    expect(within(navAfter).getByRole("button", { name: "Settings" })).toHaveAttribute(
+      "aria-current",
+      "true"
+    );
   });
 
   it("disables a connection who is already a member", async () => {
