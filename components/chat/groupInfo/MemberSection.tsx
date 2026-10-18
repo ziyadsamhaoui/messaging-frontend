@@ -123,6 +123,7 @@ export function MemberSection({
           touch
           label="Search members"
           tooltip="Search members"
+          tooltipSide="bottom-end"
           aria-expanded={searchOpen}
           onClick={onToggleSearch}
         >
@@ -405,6 +406,7 @@ function MemberMenu({
         touch
         label={`Member options for ${name}`}
         tooltip="Member options"
+        tooltipSide="bottom-end"
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}

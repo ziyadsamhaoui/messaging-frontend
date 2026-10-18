@@ -303,7 +303,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
         {view === "info" ? (
           <div
             ref={scrollRef}
-            className="app-scroll-light relative min-h-0 flex-1 overflow-y-auto overscroll-contain"
+            className="app-scroll-light relative min-h-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain"
           >
             <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--app-pane-divider)] bg-[var(--app-pane)] px-3">
               <IconButton
@@ -311,6 +311,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 size="sm"
                 touch
                 label="Back to conversation"
+                tooltipSide="bottom-start"
                 onClick={onClose}
                 className="-ml-1 md:hidden"
               >
@@ -352,6 +353,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 size="sm"
                 touch
                 label="Close group info"
+                tooltipSide="bottom-end"
                 onClick={onClose}
                 className="hidden md:inline-flex"
               >
@@ -454,9 +456,10 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
               <SectionBand />
               <SettingsSection onLeave={() => setConfirmingLeave(true)} />
 
-              {/* Room for the last section to scroll its heading under the tab bar,
-                  so Settings can be current even while it is short. */}
-              <div aria-hidden="true" className="h-[45vh]" />
+              {/* Room for the last section's heading to reach the line under the tab
+                  bar on a tall viewport, not just on a short one. Sized from the
+                  viewport so it always covers the container minus the sticky bars. */}
+              <div aria-hidden="true" className="h-[calc(100dvh-116px)]" />
             </div>
           </div>
         ) : (
@@ -467,6 +470,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 size="sm"
                 touch
                 label="Back to group info"
+                tooltipSide="bottom-start"
                 onClick={backToInfo}
                 className="-ml-1"
               >
@@ -485,6 +489,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 size="sm"
                 touch
                 label="Close group info"
+                tooltipSide="bottom-end"
                 onClick={onClose}
               >
                 <X size={20} strokeWidth={1.75} aria-hidden="true" />

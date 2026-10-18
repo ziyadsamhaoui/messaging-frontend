@@ -1,12 +1,16 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export type TooltipSide = "right" | "bottom" | "top";
+export type TooltipSide = "right" | "bottom" | "top" | "bottom-start" | "bottom-end";
 
 const SIDES: Record<TooltipSide, string> = {
   right: "left-full top-1/2 ml-2 -translate-y-1/2",
   bottom: "top-full left-1/2 mt-2 -translate-x-1/2",
   top: "bottom-full left-1/2 mb-2 -translate-x-1/2",
+  // Edge-aligned variants for controls at the sides of a narrow panel: a centred
+  // tooltip would hang past the panel and make the page scroll sideways.
+  "bottom-start": "top-full left-0 mt-2",
+  "bottom-end": "top-full right-0 mt-2",
 };
 
 /**
