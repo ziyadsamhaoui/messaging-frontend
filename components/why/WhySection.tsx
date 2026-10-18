@@ -1,31 +1,37 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { MessageCircle, UserCheck, Inbox, MonitorSmartphone } from "lucide-react";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 
-/* Scroll-reveal wrapper: an element that fades/slides up as it enters the viewport. */
+/**
+ * Scroll reveal: fades the element up 12px over about 400ms once it is about 15% into
+ * the viewport, then never again.
+ *
+ * The content is server-rendered visible, so it shows without JavaScript. It is only
+ * hidden after mount, and only when it starts below the fold, so content already on
+ * screen on load is never hidden. Reduced motion never hides anything.
+ */
 export function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [waiting, setWaiting] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (el.getBoundingClientRect().top < window.innerHeight * 0.85) return;
 
+    setWaiting(true);
     const observer = new IntersectionObserver(
       (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setVisible(true);
-            observer.unobserve(entry.target);
-          }
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setWaiting(false);
+          observer.disconnect();
         }
       },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
+      { rootMargin: "0px 0px -15% 0px", threshold: 0 }
     );
-
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
@@ -34,7 +40,7 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
     <div
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-700 ease-out ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"} ${className}`}
+      className={`transition-[opacity,transform] duration-[400ms] ease-out motion-reduce:transition-none ${waiting ? "opacity-0 translate-y-3" : "opacity-100 translate-y-0"} ${className}`}
     >
       {children}
     </div>
@@ -89,15 +95,11 @@ const CARD_SHADOW = "[box-shadow:0_20px_44px_-32px_rgba(20,46,25,0.5)]";
  * One reason. The surface is a `SpotlightCard`, so the lit border follows the
  * pointer across the card, and nothing at all happens while the pointer is elsewhere.
  */
-function ReasonCard({ reason, index }: { reason: (typeof REASONS)[number]; index: number }) {
+function ReasonCard({ reason }: { reason: (typeof REASONS)[number] }) {
   const Icon = reason.icon;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.1 + index * 0.08 }}
-    >
+    <div>
       <SpotlightCard
         className={`rounded-[var(--radius-surface)] border border-[rgba(40,84,48,0.14)] bg-[var(--color-parchment-elevated)] p-6 ${CARD_SHADOW}`}
       >
@@ -114,7 +116,7 @@ function ReasonCard({ reason, index }: { reason: (typeof REASONS)[number]; index
           {reason.body}
         </p>
       </SpotlightCard>
-    </motion.div>
+    </div>
   );
 }
 
@@ -135,12 +137,7 @@ export function WhySection({
   return (
     <>
       <Reveal>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7 }}
-          className="max-w-2xl"
-        >
+        <div className="max-w-2xl">
           <p className="font-ui text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-primary)]">
             Why BadrLink
           </p>
@@ -152,24 +149,19 @@ export function WhySection({
             BadrLink is for talking with people you already know, one on one or in groups. You send a connection
             request, and when it is accepted you have a chat with that person.
           </p>
-        </motion.div>
+        </div>
       </Reveal>
 
       <div className="mt-14 grid gap-5 sm:grid-cols-2">
         {REASONS.map((reason, index) => (
-          <Reveal key={reason.title} delay={index * 100}>
-            <ReasonCard reason={reason} index={index} />
+          <Reveal key={reason.title} delay={100 + index * 60}>
+            <ReasonCard reason={reason} />
           </Reveal>
         ))}
       </div>
 
-      <Reveal>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.42 }}
-          className="mt-14"
-        >
+      <Reveal delay={340}>
+        <div className="mt-14">
           {/* The steps panel is a card too, so it gets the same pointer response. */}
           <SpotlightCard
             as="section"
@@ -192,7 +184,7 @@ export function WhySection({
               ))}
             </ol>
           </SpotlightCard>
-        </motion.div>
+        </div>
       </Reveal>
     </>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "motion/react";
 import { buttonClasses } from "@/components/ui/Button";
 import { CursorGrid } from "@/components/ui/CursorGrid";
 import { SiteHeader } from "@/components/ui/SiteHeader";
@@ -23,12 +22,7 @@ export default function WhyBadrLink() {
           <WhySection headingLevel="h1" />
 
           <Reveal>
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-14 flex flex-wrap items-center gap-3"
-          >
+          <div className="mt-14 flex flex-wrap items-center gap-3">
             <Link
               href="/login"
               className={buttonClasses({
@@ -51,7 +45,7 @@ export default function WhyBadrLink() {
             >
               Back to home
             </Link>
-          </motion.div>
+          </div>
           </Reveal>
         </div>
       </main>
