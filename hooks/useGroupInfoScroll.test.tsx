@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
-  GROUP_INFO_HERO_ID,
   GROUP_INFO_SCROLL_OFFSET_PX,
   groupInfoSectionId,
   type GroupInfoTab,
@@ -23,16 +22,14 @@ const TABS_WITH_INVITATIONS: GroupInfoTab[] = [
 
 function Harness() {
   const tabs = useMemo(() => TABS, []);
-  const { scrollRef, activeId, heroCollapsed, scrollToTab } = useGroupInfoScroll(tabs);
+  const { scrollRef, activeId, scrollToTab } = useGroupInfoScroll(tabs);
   return (
     <div>
       <div ref={scrollRef} data-testid="scroll">
-        <div id={GROUP_INFO_HERO_ID} data-testid="hero" />
         <section id={groupInfoSectionId("members")} data-testid="members" />
         <section id={groupInfoSectionId("settings")} data-testid="settings" />
       </div>
       <span data-testid="active">{activeId}</span>
-      <span data-testid="collapsed">{String(heroCollapsed)}</span>
       <button type="button" onClick={() => scrollToTab("settings")}>
         go settings
       </button>
@@ -50,7 +47,6 @@ function RemovalHarness() {
   return (
     <div>
       <div ref={scrollRef} data-testid="scroll-removal">
-        <div id={GROUP_INFO_HERO_ID} data-testid="hero-removal" />
         <section id={groupInfoSectionId("members")} data-testid="members-removal" />
         {hasInvitations && (
           <section
@@ -92,12 +88,11 @@ describe("useGroupInfoScroll", () => {
     const container = screen.getByTestId("scroll");
     const members = screen.getByTestId("members");
     const settings = screen.getByTestId("settings");
-    const hero = screen.getByTestId("hero");
 
     Object.defineProperty(container, "scrollHeight", { value: 2000, configurable: true });
     Object.defineProperty(container, "clientHeight", { value: 600, configurable: true });
 
-    const geometry = { settingsTop: 500, heroBottom: 500 };
+    const geometry = { settingsTop: 500 };
     // Rects are viewport-relative, so they move with the container's scroll offset.
     vi.spyOn(container, "getBoundingClientRect").mockImplementation(() => rect(0, 600));
     vi.spyOn(members, "getBoundingClientRect").mockImplementation(() => {
@@ -107,10 +102,6 @@ describe("useGroupInfoScroll", () => {
     vi.spyOn(settings, "getBoundingClientRect").mockImplementation(() => {
       const top = geometry.settingsTop - container.scrollTop;
       return rect(top, top + 100);
-    });
-    vi.spyOn(hero, "getBoundingClientRect").mockImplementation(() => {
-      const bottom = geometry.heroBottom - container.scrollTop;
-      return rect(bottom - 100, bottom);
     });
 
     const active = () => screen.getByTestId("active").textContent;
@@ -188,17 +179,7 @@ describe("useGroupInfoScroll", () => {
     await waitFor(() => expect(active()).toBe("settings"));
   });
 
-  it("cross-fades once the hero has passed under the header", async () => {
-    const { container, geometry } = setup();
-    await waitFor(() => expect(screen.getByTestId("collapsed")).toHaveTextContent("false"));
-
-    geometry.heroBottom = 0;
-    fireEvent.scroll(container);
-
-    await waitFor(() => expect(screen.getByTestId("collapsed")).toHaveTextContent("true"));
-  });
-
-  it("lands a tab-triggered scroll just under the sticky bars", async () => {
+  it("lands a tab-triggered scroll just under the sticky tab bar", async () => {
     const { container, active } = setup();
     const scrollTo = vi.fn();
     container.scrollTo = scrollTo as unknown as typeof container.scrollTo;

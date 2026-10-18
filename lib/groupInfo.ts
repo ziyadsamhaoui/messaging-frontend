@@ -3,20 +3,15 @@ import type { ParticipantRole } from "@/lib/types";
 /**
  * Geometry and pure logic for the group info page.
  *
- * The page is one scroll container, so the numbers that decide "which section is
- * under the sticky bars" are shared by the DOM code and the tests rather than
- * repeated as literals. The sticky header is 56 px, the tab bar 44 px, and the
- * reference line sits 16 px below both — a section counts as current once its top
- * has crossed that line.
+ * The page is one scroll container with no title bar: the back control sits on the
+ * hero itself, and the tab bar is the only sticky strip. The numbers that decide
+ * "which section is under the sticky bar" are shared by the DOM code and the tests
+ * rather than repeated as literals. The tab bar is 44 px and the reference line
+ * sits 16 px below it — a section counts as current once its top has crossed it.
  */
-export const GROUP_INFO_HEADER_PX = 56;
 export const GROUP_INFO_TABS_PX = 44;
 export const GROUP_INFO_STICKY_GAP_PX = 16;
-export const GROUP_INFO_SCROLL_OFFSET_PX =
-  GROUP_INFO_HEADER_PX + GROUP_INFO_TABS_PX + GROUP_INFO_STICKY_GAP_PX;
-
-/** Id of the hero block, used to cross-fade the header title as it scrolls away. */
-export const GROUP_INFO_HERO_ID = "group-info-hero";
+export const GROUP_INFO_SCROLL_OFFSET_PX = GROUP_INFO_TABS_PX + GROUP_INFO_STICKY_GAP_PX;
 
 /** The page shows this many member rows before "See all". */
 export const GROUP_INFO_MEMBER_PREVIEW = 8;

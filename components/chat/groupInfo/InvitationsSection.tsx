@@ -19,7 +19,7 @@ export function InvitationsSection({ invitations }: { invitations: PendingInvita
     <section
       id={groupInfoSectionId("invitations")}
       aria-labelledby={groupInfoHeadingId("invitations")}
-      className="scroll-mt-[116px]"
+      className="scroll-mt-[60px]"
     >
       <div className="px-4 pb-1 pt-4">
         <h3

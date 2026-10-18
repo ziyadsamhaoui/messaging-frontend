@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import {
-  GROUP_INFO_HEADER_PX,
-  GROUP_INFO_HERO_ID,
   GROUP_INFO_SCROLL_OFFSET_PX,
   groupInfoSectionId,
   isAtScrollBottom,
@@ -34,9 +32,7 @@ export interface GroupInfoScroll {
   scrollRef: RefObject<HTMLDivElement | null>;
   /** The section whose tab is current. */
   activeId: GroupInfoTabId | null;
-  /** True once the hero has scrolled out from under the sticky header. */
-  heroCollapsed: boolean;
-  /** Scroll a section under the sticky bars and move the indicator at once. */
+  /** Scroll a section under the sticky bar and move the indicator at once. */
   scrollToTab: (id: GroupInfoTabId) => void;
 }
 
@@ -44,7 +40,7 @@ export interface GroupInfoScroll {
  * Drives the sticky tabs from a single scroll container.
  *
  * The active section is the last one whose top has crossed the line just below the
- * sticky header and tab bar. Positions are measured from the container's own scroll
+ * sticky tab bar. Positions are measured from the container's own scroll
  * offset, so they survive a resize, a member list that grows, a section that appears
  * or disappears, and the panel being resized — a ResizeObserver re-measures the
  * container and each section whenever their height changes.
@@ -59,7 +55,6 @@ export function useGroupInfoScroll(
 ): GroupInfoScroll {
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [activeId, setActiveIdState] = useState<GroupInfoTabId | null>(tabs[0]?.id ?? null);
-  const [heroCollapsed, setHeroCollapsed] = useState(false);
   const activeRef = useRef<GroupInfoTabId | null>(activeId);
   const pausedRef = useRef(false);
   const resumeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,13 +99,6 @@ export function useGroupInfoScroll(
     const referenceLine = container.scrollTop + GROUP_INFO_SCROLL_OFFSET_PX;
     const next = resolveActiveSectionId(positions, referenceLine, atBottom);
     setActiveId(next as GroupInfoTabId | null);
-
-    const hero = document.getElementById(GROUP_INFO_HERO_ID);
-    const collapsed = hero
-      ? hero.getBoundingClientRect().bottom <=
-        container.getBoundingClientRect().top + GROUP_INFO_HEADER_PX
-      : false;
-    setHeroCollapsed((previous) => (previous === collapsed ? previous : collapsed));
   }, [measure, setActiveId]);
 
   const scheduleUpdate = useCallback(() => {
@@ -268,5 +256,5 @@ export function useGroupInfoScroll(
     [clearResumeTimer, scheduleUpdate, setActiveId]
   );
 
-  return { scrollRef, activeId, heroCollapsed, scrollToTab };
+  return { scrollRef, activeId, scrollToTab };
 }

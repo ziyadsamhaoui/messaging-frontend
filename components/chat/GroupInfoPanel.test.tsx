@@ -174,17 +174,14 @@ describe("GroupInfoPanel", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("takes focus to its heading and names the group in the hero", () => {
+  it("takes focus to the hero heading and names the group there once", () => {
     renderPanel();
 
-    const heading = screen.getByRole("heading", { name: "Group info" });
+    // There is no title bar, so the group name in the hero is the page heading.
+    const heading = screen.getByRole("heading", { name: "Tea Circle" });
     expect(heading).toHaveFocus();
     expect(document.getElementById(GROUP_INFO_HEADING_ID)).toBe(heading);
-    // The hero names the group; the header's cross-fade clone repeats it visually
-    // and is aria-hidden, so assistive tech hears it once.
-    const names = screen.getAllByText("Tea Circle");
-    expect(names).toHaveLength(2);
-    expect(names.filter((node) => node.closest("[aria-hidden='true']"))).toHaveLength(1);
+    expect(screen.getAllByText("Tea Circle")).toHaveLength(1);
   });
 
   it("shows the member count and the creation line with its creator", async () => {
@@ -439,7 +436,7 @@ describe("GroupInfoPanel", () => {
     expect(screen.getByRole("button", { name: /send invitation/i })).toBeDisabled();
 
     await user.click(screen.getByRole("button", { name: "Back to group info" }));
-    expect(screen.getByRole("heading", { name: "Group info" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Tea Circle" })).toBeInTheDocument();
   });
 
   it("restores the scroll position and active tab after Add members", async () => {

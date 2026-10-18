@@ -3,7 +3,6 @@ import {
   GROUP_INFO_MEMBER_PREVIEW,
   GROUP_INFO_SCROLL_OFFSET_PX,
   GROUP_INFO_TABS_PX,
-  GROUP_INFO_HEADER_PX,
   clampGroupInfoWidth,
   groupInfoHeadingId,
   groupInfoSectionId,
@@ -124,8 +123,8 @@ describe("memberManagementPermissions", () => {
 });
 
 describe("geometry", () => {
-  it("places the reference line below the sticky header and tab bar", () => {
-    expect(GROUP_INFO_SCROLL_OFFSET_PX).toBe(GROUP_INFO_HEADER_PX + GROUP_INFO_TABS_PX + 16);
+  it("places the reference line below the sticky tab bar", () => {
+    expect(GROUP_INFO_SCROLL_OFFSET_PX).toBe(GROUP_INFO_TABS_PX + 16);
     expect(GROUP_INFO_MEMBER_PREVIEW).toBe(8);
   });
 

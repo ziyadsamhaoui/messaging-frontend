@@ -107,7 +107,7 @@ export function MemberSection({
     <section
       id={groupInfoSectionId("members")}
       aria-labelledby={groupInfoHeadingId("members")}
-      className="scroll-mt-[116px]"
+      className="scroll-mt-[60px]"
     >
       <div className="flex items-center justify-between gap-2 px-4 pb-1 pt-4">
         <h3

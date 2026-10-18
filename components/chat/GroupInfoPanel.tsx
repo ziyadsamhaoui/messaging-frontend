@@ -25,7 +25,6 @@ import { useUser } from "@/hooks/useUser";
 import { errorMessage } from "@/lib/errors";
 import {
   GROUP_INFO_DEFAULT_WIDTH,
-  GROUP_INFO_HERO_ID,
   GROUP_INFO_MAX_WIDTH,
   GROUP_INFO_MIN_WIDTH,
   clampGroupInfoWidth,
@@ -70,6 +69,7 @@ interface GroupInfoPanelProps {
 export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupInfoPanelProps) {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const panelRef = useRef<HTMLElement | null>(null);
   const headingRef = useRef<HTMLHeadingElement | null>(null);
   const scrollPositionRef = useRef(0);
   const restoreScrollRef = useRef<number | null>(null);
@@ -131,7 +131,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
     return list;
   }, [canInvite, roomInvitations.length]);
 
-  const { scrollRef, activeId, heroCollapsed, scrollToTab } = useGroupInfoScroll(
+  const { scrollRef, activeId, scrollToTab } = useGroupInfoScroll(
     tabs,
     view === "info"
   );
@@ -139,7 +139,12 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
   const tabRefs = useRef<Partial<Record<GroupInfoTabId, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
-    headingRef.current?.focus({ preventScroll: true });
+    // The info view has no title bar: its heading is the group name in the hero, so
+    // focus lands there. While it is still loading, the panel itself takes focus
+    // rather than leaving it where the previous view put it.
+    const heading =
+      view === "add" ? headingRef.current : document.getElementById(GROUP_INFO_HEADING_ID);
+    (heading ?? panelRef.current)?.focus({ preventScroll: true });
   }, [view]);
 
   // Returning from Add members puts the reader back on the section and offset they
@@ -265,9 +270,11 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
       />
 
       <aside
+        ref={panelRef}
         id={GROUP_INFO_PANEL_ID}
         role="complementary"
         aria-label={`Group info for ${room.name ?? "this group"}`}
+        tabIndex={-1}
         style={{ "--group-info-width": `${panelWidth}px` } as React.CSSProperties}
         className={cn(
           "group-info-panel fixed inset-0 z-50 flex h-[100dvh] w-full flex-col bg-[var(--app-pane)]",
@@ -305,69 +312,43 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
             ref={scrollRef}
             className="app-scroll-light relative min-h-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain"
           >
-            <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b border-[var(--app-pane-divider)] bg-[var(--app-pane)] px-3">
-              <IconButton
-                surface="pane"
-                size="sm"
-                touch
-                label="Back to conversation"
-                tooltipSide="bottom-start"
-                onClick={onClose}
-                className="-ml-1 md:hidden"
-              >
-                <ArrowLeft size={20} strokeWidth={1.75} aria-hidden="true" />
-              </IconButton>
-
-              <h2
-                ref={headingRef}
-                id={GROUP_INFO_HEADING_ID}
-                tabIndex={-1}
-                aria-label="Group info"
-                className="relative min-w-0 flex-1 truncate font-ui text-[20px] font-semibold text-[var(--app-pane-text)] focus:outline-none"
-              >
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "block truncate transition-opacity duration-150 motion-reduce:transition-none",
-                    heroCollapsed && "opacity-0"
-                  )}
-                >
-                  Group info
-                </span>
-                <span
-                  aria-hidden="true"
-                  className={cn(
-                    "pointer-events-none absolute inset-0 flex items-center gap-2 opacity-0 transition-opacity duration-150 motion-reduce:transition-none",
-                    heroCollapsed && "opacity-100"
-                  )}
-                >
-                  <Avatar name={room.name ?? "Group"} seed={room.id} size={28} />
-                  <span className="min-w-0 truncate font-ui text-[15px] font-semibold">
-                    {room.name ?? "Untitled group"}
-                  </span>
-                </span>
-              </h2>
-
-              <IconButton
-                surface="pane"
-                size="sm"
-                touch
-                label="Close group info"
-                tooltipSide="bottom-end"
-                onClick={onClose}
-                className="hidden md:inline-flex"
-              >
-                <X size={20} strokeWidth={1.75} aria-hidden="true" />
-              </IconButton>
-            </header>
-
             <div>
-              <Hero
-                room={room}
-                memberCount={participants.length}
-                loading={participantsQuery.isLoading && participants.length === 0}
-                error={participantsQuery.isError && participants.length === 0}
-              />
+              {/* No title bar: back and close float on the hero's own first line, level
+                  with the group picture. Below them the sticky tab bar is the only
+                  strip that stays in place, so the picture keeps the full width. */}
+              <div className="relative">
+                <div className="absolute left-2 top-3 z-10 md:hidden">
+                  <IconButton
+                    surface="pane"
+                    size="sm"
+                    touch
+                    label="Back to conversation"
+                    tooltipSide="bottom-start"
+                    onClick={onClose}
+                  >
+                    <ArrowLeft size={20} strokeWidth={1.75} aria-hidden="true" />
+                  </IconButton>
+                </div>
+                <div className="absolute right-2 top-3 z-10 hidden md:block">
+                  <IconButton
+                    surface="pane"
+                    size="sm"
+                    touch
+                    label="Close group info"
+                    tooltipSide="bottom-end"
+                    onClick={onClose}
+                  >
+                    <X size={20} strokeWidth={1.75} aria-hidden="true" />
+                  </IconButton>
+                </div>
+
+                <Hero
+                  room={room}
+                  memberCount={participants.length}
+                  loading={participantsQuery.isLoading && participants.length === 0}
+                  error={participantsQuery.isError && participants.length === 0}
+                />
+              </div>
 
               {/* The row only exists when at least two actions work; a lone Search
                   is reached from the members heading instead. */}
@@ -385,7 +366,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
               <nav
                 data-group-info-tabs
                 aria-label="Group info sections"
-                className="sticky top-14 z-20 border-b border-[var(--app-pane-divider)] bg-[var(--app-pane)]"
+                className="sticky top-0 z-20 border-b border-[var(--app-pane-divider)] bg-[var(--app-pane)]"
               >
                 {/* A plain box, not a list: the sliding indicator is a sibling of the
                     buttons rather than a child of a list that only allows list items. */}
@@ -460,7 +441,7 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
               {/* Room for the last section's heading to reach the line under the tab
                   bar on a tall viewport, not just on a short one. Sized from the
                   viewport so it always covers the container minus the sticky bars. */}
-              <div aria-hidden="true" className="h-[calc(100dvh-116px)]" />
+              <div aria-hidden="true" className="h-[calc(100dvh-60px)]" />
             </div>
           </div>
         ) : (
@@ -573,10 +554,7 @@ function Hero({
   }
 
   return (
-    <div
-      id={GROUP_INFO_HERO_ID}
-      className="flex flex-col items-center gap-2 px-4 pb-5 pt-6 text-center"
-    >
+    <div className="flex flex-col items-center gap-2 px-4 pb-5 pt-6 text-center">
       <Avatar
         name={room.name ?? "Group"}
         seed={room.id}
@@ -584,9 +562,13 @@ function Hero({
         presenceRing="var(--app-pane)"
       />
       <div className="min-w-0 max-w-full">
-        <p className="truncate font-ui text-[22px] font-semibold text-[var(--app-pane-text)]">
+        <h2
+          id={GROUP_INFO_HEADING_ID}
+          tabIndex={-1}
+          className="truncate font-ui text-[22px] font-semibold text-[var(--app-pane-text)] focus:outline-none"
+        >
           {room.name ?? "Untitled group"}
-        </p>
+        </h2>
         <p className="font-ui text-[14px] text-[var(--app-pane-text-soft)]">
           Group
           {error ? "" : ` · ${memberCount} member${memberCount === 1 ? "" : "s"}`}
@@ -612,7 +594,7 @@ function SettingsSection({ onLeave }: { onLeave: () => void }) {
     <section
       id={groupInfoSectionId("settings")}
       aria-labelledby={groupInfoHeadingId("settings")}
-      className="scroll-mt-[116px] pb-2"
+      className="scroll-mt-[60px] pb-2"
     >
       <div className="px-4 pb-1 pt-4">
         <h3
