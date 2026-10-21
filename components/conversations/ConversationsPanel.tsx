@@ -32,15 +32,6 @@ const FILTERS: Array<{ value: ChatFilter; label: string }> = [
   { value: "groups", label: "Groups" },
 ];
 
-/**
- * Zone two for the conversations destination.
- *
- * Direct rooms have no name of their own — the API returns `name: null` for them —
- * so the row resolves the other participant and their profile to show a person's
- * name instead of the old literal "Direct message". Both lookups go through React
- * Query, so the participants of a room and a user's profile are fetched once and
- * shared with the open conversation.
- */
 export function ConversationsPanel({
   activeRoomId,
   onNewChat,
@@ -59,9 +50,6 @@ export function ConversationsPanel({
 
   const rooms = useMemo(() => {
     const items = flattenPages(roomsQuery.data?.pages) as RoomResponse[];
-    // Most recent activity first. The server orders rooms by creation date and does
-    // not expose a last-message timestamp, so the order is refined locally from what
-    // this client has seen.
     return [...items].sort((left, right) => {
       const a = roomActivity[left.id] ?? left.createdAt;
       const b = roomActivity[right.id] ?? right.createdAt;
@@ -86,7 +74,6 @@ export function ConversationsPanel({
       hideOnNarrow={hideOnNarrow}
         actions={
           <>
-            {/* Desktop keeps this icon button. On phones the floating + below takes its place. */}
             <div className="hidden md:block">
               <IconButton label="New chat" tooltip="New chat" tooltipSide="bottom" onClick={onNewChat}>
                 <SquarePen size={20} strokeWidth={1.75} aria-hidden="true" />
@@ -96,9 +83,6 @@ export function ConversationsPanel({
         }
         toolbar={
           <div className="flex flex-col gap-2">
-            {/* One shared search field for the whole app: the magnifier sits 12 px in
-                and the text starts clear of it, with a clear button once there is a
-                value. */}
             <SearchInput
               value={query}
               onValueChange={setQuery}
@@ -178,11 +162,6 @@ export function ConversationsPanel({
           </ul>
         )}
     </SectionPanel>
-    {/*
-      Phone-only floating action: a 1.2x light-green square pinned to the bottom right,
-      lifted clear of the bottom tab bar. The hover lift and press squeeze are CSS
-      transitions only, and motion-reduce turns them off.
-    */}
     {!activeRoomId && (
       <button
         type="button"
@@ -207,7 +186,6 @@ function ConversationRow({
   currentUserId: string | null;
 }) {
   const queryClient = useQueryClient();
-  // Only direct rooms need the peer lookup; the hooks are disabled for groups.
   const participantsQuery = useRoomParticipants(room.type === "DIRECT" ? room.id : null);
   const peerId =
     room.type === "DIRECT"
@@ -218,7 +196,6 @@ function ConversationRow({
   const title =
     room.type === "GROUP" ? room.name ?? "Group chat" : peerQuery.data?.username ?? "Conversation";
   const preview = readCachedPreview(queryClient, room.id, currentUserId, room.type === "GROUP");
-  // Only claim a presence state when there is a `lastSeen` to derive it from.
   const presence =
     room.type === "DIRECT" && peerQuery.data?.lastSeen
       ? derivePresence(peerQuery.data.lastSeen)

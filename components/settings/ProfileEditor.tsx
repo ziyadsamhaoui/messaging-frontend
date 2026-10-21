@@ -11,7 +11,6 @@ import { errorMessage } from "@/lib/errors";
 import { updateUser } from "@/lib/services/users";
 import { SettingsCard, SettingsEditorShell, SettingsRow, SettingsSaveBar } from "./parts";
 
-/** The server's rules for `UpdateUserRequest`, restated so the field can explain them. */
 const USERNAME_PATTERN = /^[a-zA-Z0-9._-]+$/;
 const USERNAME_MIN = 3;
 const USERNAME_MAX = 50;
@@ -30,11 +29,6 @@ function validateUsername(value: string): string | null {
   return null;
 }
 
-/**
- * Only an absolute http(s) URL renders as a picture — the Avatar drops anything else
- * rather than putting it in a CSS `url()` — so the field rejects it here instead of
- * silently saving a value that will never appear.
- */
 function validateAvatarUrl(value: string): string | null {
   const url = value.trim();
   if (!url) return null;
@@ -50,15 +44,6 @@ function validateAvatarUrl(value: string): string | null {
   }
 }
 
-/**
- * The profile editor.
- *
- * It is one form with a live preview on top: the avatar, the handle and the about
- * line update as they are typed, so the choice between a picture and initials can be
- * seen before saving. Nothing is written until Save, and the Save bar only exists
- * while there is a difference from the stored profile — an always-enabled Save button
- * invites a click that changes nothing and reports "updated".
- */
 export function ProfileEditor({ onBack }: { onBack: () => void }) {
   const auth = useAuth();
   return <ProfileForm key={auth.user?.id ?? "anonymous"} onBack={onBack} />;
@@ -89,8 +74,6 @@ function ProfileForm({ onBack }: { onBack: () => void }) {
     avatarUrl.trim() !== initialAvatarUrl ||
     description.trim() !== initialDescription;
 
-  // A field that has been edited reports its problem immediately; one that has never
-  // been touched stays quiet, so opening the editor is not a wall of red.
   const showUsernameError = touched.username || username !== initialUsername;
   const showAvatarError = touched.avatarUrl || avatarUrl !== initialAvatarUrl;
 

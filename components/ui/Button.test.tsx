@@ -2,16 +2,6 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Button, buttonClasses } from "./Button";
 
-/*
- * Two rules are pinned here, and the second one is a constraint on this task rather
- * than a preference:
- *
- *   1. The app screen's buttons are flat — one opaque fill, no contact shadow, no hover
- *      lift — at 14 px medium.
- *   2. The marketing and authentication surfaces keep the sculpted treatment they were
- *      designed with, because the palette, the landing page and the auth pages are out
- *      of scope. If someone "tidies" `dark` and `light` later, this fails.
- */
 describe("app screen tones are flat", () => {
   const appTones = ["panel", "pane"] as const;
 

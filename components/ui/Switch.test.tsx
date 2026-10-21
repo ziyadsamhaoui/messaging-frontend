@@ -3,11 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Switch } from "./Switch";
 
-/*
- * A settings toggle has to behave like a switch for a screen reader, not like a
- * checkbox: the accessible role and the on/off state are the whole contract, and a
- * bare `<input type="checkbox">` got both wrong.
- */
 describe("Switch", () => {
   it("exposes the switch role and its state", () => {
     render(<Switch label="Mute messages" checked onChange={() => {}} />);

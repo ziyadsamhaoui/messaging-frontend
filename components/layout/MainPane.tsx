@@ -1,12 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Zone three: the open conversation or a detail view, on the parchment surface.
- *
- * It is the document's `main` landmark and the target of the shell's skip link, so
- * there is exactly one of these per app route.
- */
 export function MainPane({
   children,
   className,
@@ -14,7 +8,6 @@ export function MainPane({
 }: {
   children: React.ReactNode;
   className?: string;
-  /** Hides the pane below md while the list is the visible pane on a small screen. */
   hideOnNarrow?: boolean;
 }) {
   return (

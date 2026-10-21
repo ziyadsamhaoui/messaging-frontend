@@ -14,14 +14,6 @@ import { ConversationsPanel } from "./ConversationsPanel";
 import { ChatScreen } from "./ChatScreen";
 import { NewChatView } from "./NewChatView";
 
-/**
- * The conversations destination: the list panel plus either the open conversation
- * or the empty state.
- *
- * Starting a chat is a view of the panel rather than a dialog, so the shell and the
- * URL stay intact while it is open. The panel's action button and the empty state's
- * button both open it, and both land on the same room creation.
- */
 export function ChatsDestination({ roomId }: { roomId: string | null }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -29,8 +21,6 @@ export function ChatsDestination({ roomId }: { roomId: string | null }) {
 
   async function handleCreate(body: CreateRoomRequest) {
     const room = await createRoom(body);
-    // Seed the list before navigating so the destination we land on already
-    // shows the new room instead of waiting for a refetch.
     queryClient.setQueryData<InfiniteData<CursorPage<RoomResponse>>>(roomsQueryKey, (current) => {
       if (!current || current.pages.length === 0) {
         return {

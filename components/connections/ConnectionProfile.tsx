@@ -25,14 +25,6 @@ import { roomHref, CHATS_HREF } from "@/lib/appRoute";
 import { errorMessage } from "@/lib/errors";
 import { derivePresence, formatLastSeen } from "@/lib/presence";
 
-/**
- * The open connection, addressed by `/app/connections/<userId>`.
- *
- * The actions here are the three things this screen can actually do with the API:
- * open (or start) the direct room, send a request, and remove or block. Nothing is
- * offered for a relationship the server would refuse — the button set is derived
- * from the connection list and the blocklist, not assumed.
- */
 export function ConnectionProfile({ userId }: { userId: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -146,11 +138,6 @@ export function ConnectionProfile({ userId }: { userId: string }) {
   return (
     <MainPane>
       <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[var(--app-pane-divider)] px-6">
-        {/*
-         * Below `md` the list panel is hidden and this pane is the whole screen, so the
-         * profile needs its own way back to the list — the same rule the open
-         * conversation follows.
-         */}
         <Link
           href="/app/connections"
           aria-label="Back to connections"

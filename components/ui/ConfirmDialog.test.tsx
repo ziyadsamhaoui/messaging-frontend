@@ -22,10 +22,6 @@ function setup(props: Partial<React.ComponentProps<typeof ConfirmDialog>> = {}) 
   return { onConfirm, onCancel };
 }
 
-/**
- * Harness with a real trigger, because "focus goes back where it came from" is only
- * meaningful when there is somewhere to go back to.
- */
 function Harness() {
   const [open, setOpen] = React.useState(false);
   return (
@@ -44,10 +40,6 @@ function Harness() {
   );
 }
 
-/*
- * The contract that matters for a destructive confirmation: it is a question with two
- * named answers, focus cannot wander behind it, and Escape is always a way out.
- */
 describe("ConfirmDialog", () => {
   it("states what is about to happen", () => {
     setup();

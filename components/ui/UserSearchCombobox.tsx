@@ -16,13 +16,7 @@ interface UserSearchComboboxProps {
   inputClassName?: string;
   renderOption?: (user: PublicUserDto, active: boolean) => React.ReactNode;
   closeOnSelect?: boolean;
-  /**
-   * `search` renders the shared SearchInput (magnifier, clear button, 40 px); `field`
-   * keeps the labelled form field used inside dialogs. Both are the same field style,
-   * so a person search never looks different from a list search.
-   */
   variant?: "field" | "search";
-  /** Surface the field and its results sit on. Defaults to the dark panel. */
   tone?: "dark" | "light";
 }
 

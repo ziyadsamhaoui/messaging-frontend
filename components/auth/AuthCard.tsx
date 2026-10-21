@@ -31,12 +31,6 @@ import {
 
 const TABS_ID = "auth-mode";
 
-/*
- * A stable id for the first field, so the one-time autofocus can target it without
- * threading a ref through the shared `Input`. The full field order is
- * email → username → password → confirm, so the first field is the email in both
- * modes, which is what the initial focus belongs on.
- */
 const EMAIL_FIELD_ID = "auth-email";
 
 const TABS = [
@@ -45,17 +39,10 @@ const TABS = [
 ];
 
 interface AuthCardProps {
-  /** The mode the current URL represents — the route owns this, not the card. */
   mode: AuthMode;
-  /** Mirrors a newly selected mode into the URL. */
   onModeChange: (mode: AuthMode) => void;
 }
 
-/**
- * One card for `/login` and `/register`. The segmented control and the card shell
- * never change between modes — only the panel below them does — so switching
- * cannot move the card's top edge or its control.
- */
 export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -64,12 +51,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<AuthFieldErrors>({});
   const [loading, setLoading] = useState(false);
-  /*
-   * A ref, not the `loading` state, is what actually prevents a duplicate submit:
-   * a burst of clicks (or Enter presses) in the same tick all run their handler
-   * before React re-renders with `disabled`, so they would all read `loading` as
-   * false and fire a second, third and fourth request.
-   */
   const submitLockRef = useRef(false);
   const auth = useAuth();
   const router = useRouter();
@@ -87,12 +68,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   const confirmError = mode === "register" ? fieldErrors.confirmPassword : undefined;
   const values: AuthValues = { email, username, password, confirmPassword };
 
-  /*
-   * Focus the first field once, on the card's own mount — never on a mode switch.
-   * The panel below the control is keyed on the mode, so an `autoFocus` attribute
-   * there would fire again on every switch and pull focus off the segmented
-   * control; this effect lives on the card, which stays mounted.
-   */
   useEffect(() => {
     document.getElementById(EMAIL_FIELD_ID)?.focus();
   }, []);
@@ -108,13 +83,10 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
       setConfirmPassword(value);
     }
 
-    // A stale message about the field being edited is worse than none, and any
-    // form-level message is about the previous attempt.
     setError(null);
     setFieldErrors((prev) => {
       const next = { ...prev };
       delete next[field];
-      // Editing the password can invalidate a confirmation that already passed.
       if (field === "password" && mode === "register" && confirmPassword) {
         if (value !== confirmPassword) next.confirmPassword = "Passwords do not match.";
         else delete next.confirmPassword;
@@ -124,8 +96,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
   }
 
   function handleFieldBlur(field: keyof AuthValues) {
-    // Only report a problem once something has actually been typed; submit is what
-    // surfaces every missing required field.
     if (!values[field]) return;
     setFieldErrors((prev) => ({ ...prev, [field]: validateField(field, values, mode) }));
   }
@@ -134,9 +104,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
     if (next === mode) return;
     setError(null);
     setFieldErrors({});
-    // Credentials never survive a switch, and the username only exists in the
-    // registration form, so it must not linger when returning to sign in. The
-    // email is deliberately kept so the visitor does not retype it.
     setPassword("");
     setConfirmPassword("");
     if (next === "login") setUsername("");
@@ -191,24 +158,11 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
         glossy
       />
 
-      {/*
-        One panel whose contents swap, so every tab's aria-controls resolves.
-        Keyed on the mode so the content below the control crossfades instead of
-        snapping; `initial={false}` makes the switch instant under reduced motion.
-      */}
       <motion.div
         key={mode}
         role="tabpanel"
         id={segmentedPanelId(TABS_ID)}
         aria-labelledby={segmentedTabId(TABS_ID, mode)}
-        /*
-          Under reduced motion the panel is handed the FINISHED state on mount
-          (`opacity: 1`, zero-duration transition) rather than a suppressed
-          animation. `initial={false}` alone was not enough: a keyed remount
-          still ran the tween — measured with `prefers-reduced-motion: reduce`
-          the new panel mounted at opacity 0 and faded up over ~180ms, exactly
-          like the default case.
-        */
         initial={{ opacity: reduceMotion ? 1 : 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: reduceMotion ? 0 : 0.18 }}
@@ -235,12 +189,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
           </div>
         )}
 
-        {/*
-          `noValidate` hands validation to this form rather than the browser. The
-          email field is `type="email"`, so without it Chrome blocked the submit
-          and showed its own unstyleable bubble, and the messages below — with their
-          `aria-describedby` wiring and the backend's own rules — never appeared.
-        */}
         <form
           noValidate
           className="mt-6 flex flex-col gap-4"
@@ -275,11 +223,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             />
           )}
 
-          {/*
-            The field and its recover link are one unit, on the same 6px rhythm the
-            Input uses between its own label and field, so the link reads as sitting
-            under the password field rather than floating between two fields.
-          */}
           <div className="flex flex-col gap-1.5">
             <PasswordField
               label="Password"
@@ -291,8 +234,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               className={AUTH_FIELD_CLASS}
             />
-            {/* Only sign-in offers recovery: the screen it leads to resets an
-                existing password, which has no meaning while creating an account. */}
             {mode === "login" && (
               <div className="flex justify-end">
                 <AuthQuietLink href="/forgot-password">Forgot password?</AuthQuietLink>
@@ -300,7 +241,6 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             )}
           </div>
 
-          {/* Directly below the Password field, and hidden while it is empty. */}
           {mode === "register" && <PasswordStrengthMeter password={password} />}
 
           {mode === "register" && (
@@ -322,23 +262,10 @@ export function AuthCard({ mode, onModeChange }: AuthCardProps) {
             type="submit"
             size="lg"
             tone="dark"
-            /*
-              `font-ui!` matches the fields, labels and tabs of this form. The
-              unlayered `button { font-family: inherit }` rule in globals.css
-              outranks the plain `font-ui` utility inside Button, so without it the
-              submit label rendered in the body serif (Newsreader) while every other
-              piece of chrome in the same form used Source Sans 3. Scoped to this
-              call site: no other Button consumer changes.
-            */
             className="w-full font-ui!"
             disabled={loading}
             aria-busy={loading}
           >
-            {/*
-              A spinner beside the busy label. It is sized inside the existing
-              button box and coloured with `currentColor`, so neither the button's
-              width nor its height changes while a request is in flight.
-            */}
             {loading && (
               <span
                 aria-hidden="true"

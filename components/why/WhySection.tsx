@@ -4,14 +4,6 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { MessageCircle, UserCheck, Inbox, MonitorSmartphone } from "lucide-react";
 import { SpotlightCard } from "@/components/ui/SpotlightCard";
 
-/**
- * Scroll reveal: fades the element up 12px over about 400ms once it is about 15% into
- * the viewport, then never again.
- *
- * The content is server-rendered visible, so it shows without JavaScript. It is only
- * hidden after mount, and only when it starts below the fold, so content already on
- * screen on load is never hidden. Reduced motion never hides anything.
- */
 export function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [waiting, setWaiting] = useState(false);
@@ -91,10 +83,6 @@ const STEPS = [
 
 const CARD_SHADOW = "[box-shadow:0_20px_44px_-32px_rgba(20,46,25,0.5)]";
 
-/**
- * One reason. The surface is a `SpotlightCard`, so the lit border follows the
- * pointer across the card, and nothing at all happens while the pointer is elsewhere.
- */
 function ReasonCard({ reason }: { reason: (typeof REASONS)[number] }) {
   const Icon = reason.icon;
 
@@ -120,11 +108,6 @@ function ReasonCard({ reason }: { reason: (typeof REASONS)[number] }) {
   );
 }
 
-/**
- * The Why content: eyebrow, heading and intro, the four reasons, and the steps panel.
- * Rendered by the /why page (where its heading is the h1) and by the home page (where
- * the hero keeps the h1 and this heading is an h2).
- */
 export function WhySection({
   headingLevel = "h2",
   headingId,
@@ -141,7 +124,6 @@ export function WhySection({
           <p className="font-ui text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-primary)]">
             Why BadrLink
           </p>
-          {/* Focusable only when it has an id, i.e. when the home page links to it. */}
           <Heading id={headingId} tabIndex={headingId ? -1 : undefined} className="mt-4 font-display text-[clamp(2.4rem,5vw,3.5rem)] font-semibold leading-[1.06] tracking-[-0.01em] text-[var(--color-forest)]">
             A simple messaging app
           </Heading>
@@ -162,7 +144,6 @@ export function WhySection({
 
       <Reveal delay={340}>
         <div className="mt-14">
-          {/* The steps panel is a card too, so it gets the same pointer response. */}
           <SpotlightCard
             as="section"
             className={`rounded-[var(--radius-surface)] border border-[rgba(40,84,48,0.18)] bg-[rgba(212,200,158,0.6)] p-7 sm:p-9 ${CARD_SHADOW}`}

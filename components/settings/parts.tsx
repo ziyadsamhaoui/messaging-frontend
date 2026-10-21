@@ -7,14 +7,6 @@ import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
 import { buttonClasses } from "@/components/ui/Button";
 
-/**
- * The shared parts of every settings editor: the hero header, the grouped card and
- * the row inside it.
- *
- * They exist so the eight editors cannot drift apart: a card is always the same
- * radius, border and surface, a row is always the same height, and a control always
- * sits on the right of its label. Every editor is built from these three pieces.
- */
 
 export function EditorHero({
   icon,
@@ -41,14 +33,6 @@ export function EditorHero({
   );
 }
 
-/**
- * The frame every editor opens in: the scroll container, the narrow-screen back
- * control and the hero.
- *
- * The back control only appears below `md`, where the section panel is hidden and the
- * editor is the whole screen. On a desk the panel beside it is the way back, and a
- * second one inside the pane would be a control with nothing to do.
- */
 export function SettingsEditorShell({
   icon,
   title,
@@ -64,7 +48,6 @@ export function SettingsEditorShell({
   children: React.ReactNode;
   onBack?: () => void;
   backLabel?: string;
-  /** A small line under the title, e.g. "Saved on this device". */
   badge?: React.ReactNode;
 }) {
   return (
@@ -103,14 +86,6 @@ export function SettingsEditorShell({
   );
 }
 
-/**
- * The bar an editor shows instead of a Save button that is always enabled.
- *
- * It appears only while there is something to save, says so in words, and keeps the
- * two actions in the same place at every width — the previous pane had a lone primary
- * button at the bottom of a long form, which on a phone was below the fold and had no
- * visible relationship to the fields it saved.
- */
 export function SettingsSaveBar({
   dirty,
   saving,
@@ -156,7 +131,6 @@ export function SettingsSaveBar({
   );
 }
 
-/** A momentary "Saved" note for an editor that saves on change, with no Save bar. */
 export function SavedNote({ visible, label = "Saved on this device" }: { visible: boolean; label?: string }) {
   return (
     <p
@@ -172,7 +146,6 @@ export function SavedNote({ visible, label = "Saved on this device" }: { visible
   );
 }
 
-/** A grouped card: 16–20 px radius, 1 px border, raised parchment surface. */
 export function SettingsCard({
   title,
   children,
@@ -196,7 +169,6 @@ export function SettingsCard({
   );
 }
 
-/** A 56–64 px row: label, description and the control on the right. */
 export function SettingsRow({
   icon,
   title,
@@ -235,7 +207,6 @@ export function SettingsRow({
   );
 }
 
-/** The panel's index row: 40 px tinted icon tile, live subtitle, chevron. */
 export function SettingsIndexRow({
   href,
   icon,

@@ -15,11 +15,6 @@ import { Skeleton } from "@/components/ui/Skeleton";
 
 const GROUP_WINDOW_MS = 5 * 60_000;
 
-/**
- * A stable tone index for a sender's name in a group chat: the same person keeps the
- * same colour across reloads and sessions, because it is derived from the id rather
- * than from the order people happen to appear in.
- */
 function toneForSender(senderId: string): number {
   let hash = 0;
   for (let index = 0; index < senderId.length; index += 1) {
@@ -30,7 +25,6 @@ function toneForSender(senderId: string): number {
 const BOTTOM_THRESHOLD_PX = 80;
 const TOP_THRESHOLD_PX = 48;
 
-/** One rendered row: a message or a day boundary. */
 type Row =
   | { kind: "separator"; id: string; label: string }
   | { kind: "message"; id: string; message: ChatMessage; showSenderName: boolean; isFirstOfGroup: boolean; isLastOfGroup: boolean };
@@ -70,21 +64,6 @@ function orderMessages(messages: ChatMessage[]): ChatMessage[] {
   });
 }
 
-/**
- * Turns the flat history into rows: day separators, sender groups and collapsed
- * tombstones.
- *
- * Grouping rules, applied in one pass so the list renders from a stable model rather
- * than from conditions spread through JSX:
- *  - consecutive messages from the same sender within five minutes form a group;
- *  - a new day starts a new group and inserts a separator;
- *  - a deleted message is its own group, so its bubble stands alone.
- *
- * Deleted messages are not a special row. They go through the bubble like any other
- * message, which is what keeps the tombstone on the sender's side of the conversation,
- * in the sender's bubble colour, with its own timestamp — the plain left-aligned
- * paragraph this replaces read as a system notice rather than as the message it was.
- */
 function buildRows(messages: ChatMessage[]): Row[] {
   const rows: Row[] = [];
 
@@ -147,15 +126,6 @@ function buildRows(messages: ChatMessage[]): Row[] {
   return rows;
 }
 
-/**
- * Zone three's message column.
- *
- * A single centred column (max 820 px) so messages never hug the edges of a wide
- * pane, day separators that stick to the top while their day is on screen, and the
- * three scroll behaviours that matter: open at the newest message, stay pinned when
- * the reader is already at the bottom, and show a "new messages" control when they
- * are not. Prepending older history keeps its position (the existing anchor logic).
- */
 export function MessageList({
   roomId,
   messages,
@@ -259,7 +229,6 @@ export function MessageList({
     previousCountRef.current = ordered.length;
   }, [ordered.length, roomId, loading]);
 
-  // The typing bubble is part of "the bottom", so it keeps the column pinned too.
   useEffect(() => {
     if (!typingLabel) return;
     if (!atBottomRef.current) return;
@@ -274,20 +243,8 @@ export function MessageList({
         role="log"
         aria-live="polite"
         aria-label="Messages"
-        /*
-         * Equal side padding, and the same value at every width: the list spans the
-         * pane and both sides start 16 px in. The asymmetry this replaces came from
-         * the message action column, which reserved 40 px on the outgoing side only.
-         */
         className="app-scroll-light h-full overflow-y-auto px-4 py-4"
       >
-        {/*
-          The column uses the whole pane. It used to be a centred 820 px strip, which
-          on a wide screen left the conversation floating in the middle of two empty
-          margins and made the bubbles harder to associate with the pane they belong
-          to. Line length is still bounded — by the bubble's own measure — so this is
-          width without unreadable paragraphs.
-        */}
         <div className="flex w-full flex-col">
           {loading && ordered.length === 0 ? (
             <div className="flex flex-col gap-3">
@@ -320,11 +277,6 @@ export function MessageList({
 
                 return (
                   <div key={row.id} className="flex items-end gap-1.5">
-                    {/*
-                      A group chat shows the sender's avatar once per group, aligned to
-                      the group's last bubble. It reserves its 28 px in every row of the
-                      group so the bubbles above and below stay in one column.
-                    */}
                     {isGroupRoom && !isOwn && (
                       <span
                         className={cn("w-7 shrink-0", !row.isLastOfGroup && "invisible")}

@@ -42,7 +42,6 @@ describe("MobileNav", () => {
     expect(screen.getByRole("link", { name: "Notifications, 4 unread" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Invites, 1" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Connections, 1" })).toBeInTheDocument();
-    // Chats has no API-provided count, so it is named without one rather than with 0.
     expect(screen.getByRole("link", { name: "Chats" })).toBeInTheDocument();
   });
 

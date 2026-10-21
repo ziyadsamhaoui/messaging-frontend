@@ -16,11 +16,6 @@ const TONES: Record<Tone, { title: string; body: string; icon: string }> = {
   },
 };
 
-/**
- * The empty state for a panel or a pane: an icon, a statement of what is missing
- * and one action when there is something useful to do. Shared so the four panels
- * cannot drift into four different shapes, and used instead of a bare line of text.
- */
 export function EmptyState({
   icon,
   title,
@@ -45,12 +40,6 @@ export function EmptyState({
       >
         {icon}
       </span>
-      {/*
-        A real heading, not a paragraph: an empty state is the content of the region it
-        sits in, so it belongs in the outline. `h2` is the level every caller needs —
-        the destination's `h1` is the section panel, and its pane and panel contents are
-        subordinate to it.
-      */}
       <h2 className={cn("font-ui text-[15px] font-semibold", styles.title)}>{title}</h2>
       {description && (
         <p className={cn("max-w-[36ch] font-ui text-[13px] leading-relaxed", styles.body)}>

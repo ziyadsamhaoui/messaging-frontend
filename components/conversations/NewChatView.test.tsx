@@ -4,11 +4,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NewChatView } from "./NewChatView";
 
-/*
- * The search hook is the only network call this view makes; it is stubbed so the test
- * can exercise the two-step flow itself — selecting people, naming the group and
- * sending the exact request body.
- */
 vi.mock("@/hooks/useUserSearch", () => ({
   useUserSearch: (query: string) =>
     query.trim().length >= 2
@@ -57,8 +52,6 @@ describe("NewChatView", () => {
     await user.click(screen.getByRole("tab", { name: "Group" }));
     await selectAlice();
 
-    // Step one only collects members: naming is its own step, so nothing is created
-    // and the panel title says what is still missing.
     await user.click(screen.getByRole("button", { name: "Next" }));
     expect(onCreate).not.toHaveBeenCalled();
     expect(screen.getByRole("heading", { name: "Name the group" })).toBeInTheDocument();

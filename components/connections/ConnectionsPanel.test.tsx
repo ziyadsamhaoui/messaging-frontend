@@ -75,7 +75,6 @@ describe("ConnectionsPanel", () => {
 
     expect(screen.getByRole("heading", { name: "Add connection" })).toBeInTheDocument();
     expect(screen.getByLabelText("Find people by username")).toBeInTheDocument();
-    // The list is replaced, not stacked behind a dialog.
     expect(screen.queryByRole("tab", { name: /connected/i })).toBeNull();
 
     await userEvent.setup().click(screen.getByRole("button", { name: "Back to connections" }));

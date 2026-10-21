@@ -12,11 +12,6 @@ interface PasswordFieldProps
   size?: FieldSize;
 }
 
-/**
- * A password input with a visibility toggle held inside the field, so the
- * control's layout never shifts when it is toggled. The button is a real
- * `aria-pressed` toggle with a 36px target and an accessible name.
- */
 export function PasswordField({ label, error, hint, size, ...props }: PasswordFieldProps) {
   const [visible, setVisible] = useState(false);
   const Icon = visible ? EyeOff : Eye;

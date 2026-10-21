@@ -42,7 +42,6 @@ import { formatCalendarDate, parseTimestamp } from "@/lib/time";
 import { ParticipantResponse, PublicUserDto, RoomResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-/** Id of the panel heading, so the shell and the header's trigger can point at it. */
 export const GROUP_INFO_PANEL_ID = "group-info-panel";
 export const GROUP_INFO_HEADING_ID = "group-info-heading";
 
@@ -55,19 +54,6 @@ interface GroupInfoPanelProps {
   onLeft: () => void;
 }
 
-/**
- * Group info as one continuous page.
- *
- * Everything above the sections — the identity hero, the quick actions, the sticky
- * tab bar — scrolls with the content, and the whole panel is the only scroll
- * container. The tab indicator follows the reader through a scroll spy rather than
- * a separate tab panel, which is what lets Members, Invitations and Settings read
- * as one page instead of three views stacked behind a tab strip.
- *
- * Only facts the backend can support are shown. Rooms have no image, no description,
- * no rename, no favourite toggle, no per-conversation notification mute and no clear
- * history, so those controls are absent rather than present and inert.
- */
 export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupInfoPanelProps) {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -105,7 +91,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
     [profileOf]
   );
 
-  // Owner, then admins, then everyone else by name.
   const sorted = useMemo(() => {
     const rank = (participant: ParticipantResponse) =>
       participant.role === "OWNER" ? 0 : participant.role === "ADMIN" ? 1 : 2;
@@ -116,7 +101,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
     });
   }, [participants, nameOf]);
 
-  // Pending invitations this caller sent for this room, from the shared inbox.
   const invitations = usePendingInvitations(true);
   const roomInvitations = useMemo(
     () =>
@@ -143,16 +127,11 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
   const tabRefs = useRef<Partial<Record<GroupInfoTabId, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
-    // The info view has no title bar: its heading is the group name in the hero, so
-    // focus lands there. While it is still loading, the panel itself takes focus
-    // rather than leaving it where the previous view put it.
     const heading =
       view === "add" ? headingRef.current : document.getElementById(GROUP_INFO_HEADING_ID);
     (heading ?? panelRef.current)?.focus({ preventScroll: true });
   }, [view]);
 
-  // Returning from Add members puts the reader back on the section and offset they
-  // left from; the indicator was never reset, so the tab bar is already in place.
   useLayoutEffect(() => {
     if (view !== "info") return;
     const target = restoreScrollRef.current;
@@ -164,7 +143,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
 
   const focusMemberSearch = useCallback(() => {
     if (typeof document === "undefined") return;
-    // Wait for the inline field to exist before moving focus into it.
     requestAnimationFrame(() => {
       document.getElementById(MEMBER_SEARCH_INPUT_ID)?.focus({ preventScroll: true });
     });
@@ -241,8 +219,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
   );
   const tabWidth = 100 / Math.max(tabs.length, 1);
 
-  // Drag the left edge to resize the docked panel. The drawer and the full-screen
-  // view keep the widths they were designed at.
   useEffect(() => {
     function onMove(event: PointerEvent) {
       const drag = dragRef.current;
@@ -265,8 +241,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
 
   return (
     <>
-      {/* Drawer scrim: solid, no blur. It covers the chat and closes the drawer when
-          clicked, the way an overlay is expected to behave. */}
       <div
         aria-hidden="true"
         onClick={onClose}
@@ -317,9 +291,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
             className="app-scroll-light relative min-h-0 flex-1 overflow-x-clip overflow-y-auto overscroll-contain"
           >
             <div>
-              {/* No title bar: back and close float on the hero's own first line, level
-                  with the group picture. Below them the sticky tab bar is the only
-                  strip that stays in place, so the picture keeps the full width. */}
               <div className="relative">
                 <div className="absolute left-2 top-3 z-10 md:hidden">
                   <IconButton
@@ -354,8 +325,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 />
               </div>
 
-              {/* The row only exists when at least two actions work; a lone Search
-                  is reached from the members heading instead. */}
               {canInvite && (
                 <div className="grid grid-cols-2 gap-2 px-4 pb-4">
                   <QuickAction label="Add" onClick={openAddMembers}>
@@ -380,8 +349,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 aria-label="Group info sections"
                 className="sticky top-0 z-20 border-b border-[var(--app-pane-divider)] bg-[var(--app-pane)]"
               >
-                {/* A plain box, not a list: the sliding indicator is a sibling of the
-                    buttons rather than a child of a list that only allows list items. */}
                 <div className="relative flex h-11">
                   {tabs.map((tab) => {
                     const active = activeId === tab.id;
@@ -395,8 +362,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                         aria-current={active ? "true" : undefined}
                         onClick={(event) => {
                           scrollToTab(tab.id);
-                          // A keyboard activation reports detail 0; move the reader
-                          // to the section heading so the next Tab continues there.
                           if (event.detail === 0) focusSectionHeading(tab.id);
                         }}
                         onKeyDown={(event) => handleTabKeyDown(event, tab.id)}
@@ -456,9 +421,6 @@ export function GroupInfoPanel({ room, currentUserId, onClose, onLeft }: GroupIn
                 onLeave={() => setConfirmingLeave(true)}
               />
 
-              {/* Room for the last section's heading to reach the line under the tab
-                  bar on a tall viewport, not just on a short one. Sized from the
-                  viewport so it always covers the container minus the sticky bars. */}
               <div aria-hidden="true" className="h-[calc(100dvh-60px)]" />
             </div>
           </div>
@@ -552,7 +514,6 @@ function QuickAction({
   );
 }
 
-/** A full-width band in a darker parchment tone, separating sections. */
 function SectionBand() {
   return <div aria-hidden="true" className="h-2 w-full bg-[var(--color-parchment-dim)]" />;
 }
@@ -613,11 +574,6 @@ function Hero({
   );
 }
 
-/**
- * Settings holds only rows the backend can back. A room has no favourite toggle, no
- * per-conversation notification mute, no rename endpoint and no clear-history
- * endpoint, so the only row is the one that always works: leaving.
- */
 function SettingsSection({
   onManageMedia,
   onLeave,
@@ -662,14 +618,6 @@ function SettingsSection({
   );
 }
 
-/**
- * One `useQueries` call for every participant's profile.
- *
- * The participant record stores ids; the user service owns names and pictures. The
- * list's order is computed above the rows, so the profiles are subscribed together
- * here rather than fetched one row at a time. Query keys match `useUser`, so the
- * cache is shared. There is no batch profile endpoint; see the report.
- */
 function useMemberProfiles(participants: ParticipantResponse[]) {
   const results = useQueries({
     queries: participants.map((participant) => ({

@@ -7,15 +7,6 @@ import { buttonClasses } from "./Button";
 
 type Tone = "panel" | "pane";
 
-/*
- * A failed load deserves the same weight as a successful one: an icon, what could
- * not be loaded, one line saying why, and a way to try again. The previous surfaces
- * showed either nothing, a bare "Could not load…" string with an underlined link, or
- * a red 12 px line, which reads as a detail rather than as the state of the screen.
- *
- * The reason line is passed through `errorMessage()` by the caller, so it states
- * something true about the failure instead of a generic apology.
- */
 const TONES: Record<Tone, { title: string; body: string; icon: string }> = {
   panel: {
     title: "text-[var(--app-panel-text)]",

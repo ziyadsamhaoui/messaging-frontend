@@ -29,14 +29,6 @@ type Segment = "all" | "unread";
 
 const SEGMENTS_ID = "notifications-segments";
 
-/*
- * Per-type icon and tint. The type is never printed as an uppercase label: an
- * icon carries it, and the text of the row says what happened.
- *
- * A message is a message, not a bell. The bell belongs to the section itself (the
- * rail destination and the empty state); reusing it for MESSAGE made a new message
- * look like a notification about a notification.
- */
 const TYPE_ICONS: Record<NotificationType, typeof Bell> = {
   MESSAGE: MessageSquareText,
   REACTION: Smile,
@@ -44,20 +36,8 @@ const TYPE_ICONS: Record<NotificationType, typeof Bell> = {
   SYSTEM: Info,
 };
 
-/**
- * Zone two for the Notifications destination.
- *
- * Rows are grouped under day headings and the feed is cursor-paginated with a
- * loading row at the end. A row navigates only where the payload allows it: an
- * INVITATION notification carries the invitation id, so it opens that invitation;
- * a MESSAGE or REACTION notification carries the message id and *no room id*, and
- * there is no message-to-room lookup, so those rows state what happened and are not
- * clickable. Inventing a destination for them would be worse than saying nothing.
- */
 export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean }) {
   const toast = useToast();
-  // Unread is the default: the feed is a queue of things that happened, and a tab
-  // that opens on the read history makes the reader hunt for what is new.
   const [segment, setSegment] = useState<Segment>("unread");
   const feed = useNotificationFeed(true);
   const markRead = useMarkNotificationRead();
@@ -86,10 +66,6 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
       title="Notifications"
       hideOnNarrow={hideOnNarrow}
       actions={
-        // No preferences gear in the panel header: preferences are an account
-        // setting, and this button sat there as an icon-only duplicate of a page
-        // already reachable from Settings. The one action the feed itself owns is
-        // clearing the queue.
         <button
           type="button"
           onClick={async () => {
@@ -147,14 +123,6 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
           <div className="flex flex-col gap-2">
             {groups.map(([label, group]) => (
               <section key={label} className="flex flex-col gap-0.5">
-                {/*
-                  Sentence case at 13 px. This was an uppercase micro-label with
-                  letter-spacing ("MONDAY"), which is both harder to read at that
-                  size and a different case convention from every other heading in
-                  the app; the negative inline margin that used to bleed it past the
-                  panel's padding is also gone, because it was what put a horizontal
-                  scrollbar under the list.
-                */}
                 <h2 className="sticky top-0 z-10 bg-[var(--app-panel)] px-2 py-1.5 font-ui text-[13px] font-semibold text-[var(--app-panel-text-soft)]">
                   {label}
                 </h2>
@@ -188,7 +156,6 @@ export function NotificationsPanel({ hideOnNarrow }: { hideOnNarrow?: boolean })
 
 function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead: () => void }) {
   const Icon = TYPE_ICONS[item.type] ?? Bell;
-  // Only an invitation notification carries an id this app can resolve to a screen.
   const href = item.type === "INVITATION" && item.sourceId ? invitationHref(item.sourceId) : null;
 
   const body = (
@@ -225,11 +192,6 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
   const className =
     "focus-ring relative flex w-full items-start gap-3 rounded-[var(--radius-control)] px-2 py-2 text-left hover:bg-[var(--app-panel-hover)]";
 
-  /*
-   * Unread is marked with the same left line the rail and the conversation list
-   * use, plus a heavier line of text. It replaces the tinted row background: the
-   * row should not become a differently coloured block just because it is new.
-   */
   const marker = !item.read ? (
     <span
       aria-hidden="true"
@@ -247,8 +209,6 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
   }
 
   if (!item.read) {
-    // A row that cannot open anything is still a real control while it is unread:
-    // activating it marks it read.
     return (
       <button type="button" className={className} onClick={onRead}>
         {marker}
@@ -257,8 +217,6 @@ function NotificationRow({ item, onRead }: { item: NotificationResponse; onRead:
     );
   }
 
-  // Read and not navigable: nothing to activate, so it is plain content rather than
-  // a div pretending to be a button.
   return (
     <div className={className}>
       {marker}

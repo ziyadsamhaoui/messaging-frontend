@@ -23,11 +23,6 @@ afterEach(() => {
   setViewport(1440);
 });
 
-/*
- * The handle is the only way to resize the section panel, so it has to be a real control
- * for both a pointer and a keyboard, and its ARIA values have to describe the limits it
- * actually enforces.
- */
 describe("PanelResizeHandle", () => {
   it("is a focusable vertical separator carrying its limits", () => {
     render(<PanelResizeHandle />);
@@ -101,7 +96,6 @@ describe("PanelResizeHandle", () => {
     render(<PanelResizeHandle />);
     const el = handle();
 
-    // 40% of 900 is 360, which is above the 280 px floor but below the 480 px ceiling.
     expect(el).toHaveAttribute("aria-valuemax", "360");
     expect(el.className).toContain("pointer-events-none");
 
@@ -115,9 +109,7 @@ describe("PanelResizeHandle", () => {
     setViewport(1024);
     render(<PanelResizeHandle />);
 
-    // Applied width is clamped for this viewport...
     expect(handle()).toHaveAttribute("aria-valuenow", "410");
-    // ...while the stored preference is untouched, so a wider window restores it.
     setViewport(1920);
     expect(handle()).toHaveAttribute("aria-valuenow", "480");
   });

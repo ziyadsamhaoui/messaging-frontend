@@ -4,18 +4,12 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface WordmarkProps {
-  /** The surface the mark sits on, so the wordmark color stays legible. */
   tone?: "onLight" | "onDark";
   href?: string;
   className?: string;
-  /** Hide the word on very narrow viewports where only the logo should show. */
   hideNameOnMobile?: boolean;
 }
 
-/**
- * One canonical rendering of the BadrLink logo + wordmark. Previously each page
- * painted its own gradient wordmark; this keeps a single solid color treatment.
- */
 export function Wordmark({
   tone = "onLight",
   href = "/",

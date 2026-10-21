@@ -12,28 +12,10 @@ export interface SearchInputProps
   > {
   value: string;
   onValueChange: (value: string) => void;
-  /** The surface the field sits on. Panel search rows are on the dark panel. */
   tone?: "dark" | "light";
   className?: string;
 }
 
-/**
- * The one search field style.
- *
- * Search rows used to be `Input` with a magnifier passed as a `leading` adornment,
- * which should have been enough — except `Input` merged the size tokens (and their
- * `px-*`) *after* the `pl-10` that makes room for the icon, so tailwind-merge kept
- * the horizontal padding from the size and dropped the room for the icon. The
- * placeholder therefore started under the magnifier. That merge order is fixed in
- * `Input`, and this component states the geometry the design calls for in one place:
- *
- *   40 px tall, an 18 px magnifier at 12 px from the left edge (aria-hidden),
- *   40 px of left padding so text starts 10 px clear of it, 40 px of right padding
- *   so a typed value never runs under the 32 px clear button at 8 px from the edge.
- *
- * Escape clears the field. The clear button is a real button, not a pseudo-element,
- * so it is reachable by keyboard and exposes a name.
- */
 export function SearchInput({
   value,
   onValueChange,

@@ -13,20 +13,6 @@ import { NAV_DESTINATIONS } from "./navDestinations";
 
 const ICON_SIZE = 24;
 
-/**
- * Zone one on a phone: the bottom tab bar.
- *
- * Below 768 px the vertical rail would take a sixth of the width to show five icons
- * with no room for their labels, so navigation moves to the thumb instead. It is the
- * primary landmark on a small screen (`aria-label="Primary"`), built from real links
- * so each destination keeps its URL, and its counts come from the same queries as the
- * rail and the lists — a badge can never disagree with the panel it points at.
- *
- * The bar is a flex child of the shell rather than `position: fixed`: the shell is
- * already a fixed-height frame, so the bar takes real space and the composer above it
- * is never hidden behind an overlay. `env(safe-area-inset-bottom)` keeps it above a
- * phone's home indicator.
- */
 export function MobileNav({ route }: { route: AppRoute }) {
   const unread = useUnreadCount(true);
   const invitations = usePendingInvitations(true);
@@ -91,8 +77,6 @@ function MobileTab({
   active: boolean;
   icon: React.ReactNode;
 }) {
-  // The count is part of the accessible name, exactly as in the rail: "Invites, 2",
-  // not a badge a screen reader may skip or announce as stray text.
   const accessibleName =
     count > 0 ? `${label}, ${count}${countSuffix ? ` ${countSuffix}` : ""}` : label;
 
@@ -106,11 +90,6 @@ function MobileTab({
         active ? "text-[var(--app-rail-text-strong)]" : "text-[var(--app-rail-text)]"
       )}
     >
-      {/*
-        The active tab is marked twice over: a tinted 40 x 28 pill behind the icon (the
-        same fill the rail's icon square uses) and the stronger cream label. Colour is
-        never the only signal — `aria-current="page"` carries it for assistive tech.
-      */}
       <span
         className={cn(
           "relative flex h-8 w-12 items-center justify-center rounded-full",

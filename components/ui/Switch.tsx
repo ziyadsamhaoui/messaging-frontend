@@ -8,37 +8,14 @@ export type SwitchSurface = "panel" | "pane";
 interface SwitchProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
-  /**
-   * Accessible name. Required: a switch with no visible label names itself through
-   * this string, exactly like {@link import("./IconButton").IconButton}.
-   */
   label: string;
   surface?: SwitchSurface;
   disabled?: boolean;
-  /** Set while the value is being saved so a second toggle cannot race the first. */
   busy?: boolean;
-  /** Id of the element that explains the switch, wired to `aria-describedby`. */
   describedBy?: string;
   className?: string;
 }
 
-/*
- * A real `role="switch"`, not a checkbox wearing a track.
- *
- * What this replaces: native `<input type="checkbox">` on the parchment pages, which
- * rendered as the browser's own unstyled box (a light 20 px square with a blue focus
- * ring from the platform accent) in the middle of a forest-and-parchment surface, and
- * which a screen reader announced as a checkbox rather than as an on/off setting.
- *
- * The track is two flat fills and the knob is one: no gradient, no shadow, and the
- * only movement is the knob's translate. Both states were measured against their own
- * surface — the "on" track is `--color-primary` (parchment label 4.96:1) and the
- * "off" knob is `--app-panel-text-soft` on a 20% cream track.
- *
- * Height is 24 px with a 44 px hit area below the 768 px breakpoint, the same
- * touch-promotion rule the icon buttons use, so a settings row stays reachable on a
- * phone without shipping a second component.
- */
 export function Switch({
   checked,
   onChange,

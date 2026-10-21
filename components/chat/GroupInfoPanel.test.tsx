@@ -177,7 +177,6 @@ describe("GroupInfoPanel", () => {
   it("takes focus to the hero heading and names the group there once", () => {
     renderPanel();
 
-    // There is no title bar, so the group name in the hero is the page heading.
     const heading = screen.getByRole("heading", { name: "Tea Circle" });
     expect(heading).toHaveFocus();
     expect(document.getElementById(GROUP_INFO_HEADING_ID)).toBe(heading);
@@ -196,7 +195,6 @@ describe("GroupInfoPanel", () => {
 
     expect(screen.getByRole("button", { name: "Add" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
-    // No calls, no sharing and no per-chat notification mute exist.
     expect(screen.queryByRole("button", { name: /voice|video|share|mute/i })).toBeNull();
   });
 
@@ -239,7 +237,6 @@ describe("GroupInfoPanel", () => {
 
     await user.keyboard("{ArrowRight}{Enter}");
     await waitFor(() => expect(settings).toHaveAttribute("aria-current", "true"));
-    // After a keyboard activation the reader lands on the section heading.
     expect(screen.getByRole("heading", { name: "Settings" })).toHaveFocus();
   });
 
@@ -255,7 +252,6 @@ describe("GroupInfoPanel", () => {
     ]);
     expect(screen.getByRole("heading", { name: "Invitations (1)" })).toBeInTheDocument();
     expect(screen.getByText("Invited")).toBeInTheDocument();
-    // There is no cancel endpoint, so no cancel control is offered.
     expect(screen.queryByRole("button", { name: /cancel/i })).toBeNull();
   });
 
@@ -327,11 +323,9 @@ describe("GroupInfoPanel", () => {
       "Remove from group",
       "Block",
     ]);
-    // No ownership transfer: the API cannot express it.
     expect(items).not.toContain("Transfer ownership");
     expect(items).not.toContain("Remove admin");
 
-    // Arrow keys walk the menu and Escape dismisses it, returning focus.
     menuItems[0].focus();
     await user.keyboard("{ArrowDown}");
     expect(menuItems[1]).toHaveFocus();
@@ -375,7 +369,6 @@ describe("GroupInfoPanel", () => {
     const menu = await screen.findByRole("menu", { name: "Member options for bob" });
     const items = within(menu).getAllByRole("menuitem").map((item) => item.textContent?.trim());
     expect(items).toEqual(["Message", "View profile", "Copy username", "Block"]);
-    // A guest cannot invite, so the action row falls below two actions and is hidden.
     expect(screen.queryByRole("button", { name: "Add" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
   });

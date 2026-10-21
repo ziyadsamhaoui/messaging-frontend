@@ -7,11 +7,6 @@ import { buttonClasses } from "./Button";
 
 const noopSubscribe = () => () => {};
 
-/**
- * True only after hydration. A portal cannot exist during the prerender (there is no
- * `document`), and reading that from the store snapshot avoids flipping state from an
- * effect, which would cost an extra render on open. Same helper the popover uses.
- */
 function useIsClient() {
   return useSyncExternalStore(
     noopSubscribe,
@@ -32,13 +27,10 @@ const FOCUSABLE_SELECTOR = [
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  /** One line saying what will happen. Omit only when the title says it fully. */
   description?: string;
   confirmLabel: string;
   cancelLabel?: string;
-  /** Styles the confirm button as destructive and names it for assistive tech. */
   danger?: boolean;
-  /** Set while the request is in flight: both buttons disable so a double click cannot repeat it. */
   busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -47,26 +39,6 @@ interface ConfirmDialogProps {
 let openDialogs = 0;
 let lockedOverflow: string | null = null;
 
-/*
- * The one confirmation surface in the app.
- *
- * What this replaces: two different things. Some destructive actions confirmed
- * themselves with a second click on the same control (delete message, leave chat),
- * which gives no way to back out and no statement of what is about to happen; others
- * had their own bespoke inline "Confirm / Cancel" pair inside the row, which does not
- * move focus and cannot be reached predictably from the keyboard. Every destructive
- * action now asks the same question the same way.
- *
- * Deliberate differences from {@link import("./Modal").Modal}: the scrim is a solid
- * dark wash with no blur (blur turned the whole app mid-green and made the surface
- * behind the dialog unreadable), the dialog is small and centred with no title bar or
- * close button, and there is no free-form body — a confirmation is a question with two
- * answers, and anything more belongs in a panel.
- *
- * Focus starts on Cancel, not on the destructive action, so a stray Enter confirms
- * nothing; Tab is trapped inside the dialog; Escape cancels; and closing returns focus
- * to whatever opened it.
- */
 export function ConfirmDialog({
   open,
   title,
@@ -85,8 +57,6 @@ export function ConfirmDialog({
   const onCancelRef = useRef(onCancel);
   const titleId = useId();
   const descriptionId = useId();
-  // `busy` in a ref for the same reason the modal keeps `onClose` in one: the key
-  // handler must not be re-registered every time the request state changes.
   const busyRef = useRef(busy);
 
   useEffect(() => {
@@ -154,8 +124,6 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
-      // The scrim itself is not a dismiss target: a destructive confirmation should
-      // never be answered by a mis-aimed click. Escape and Cancel are the ways out.
       className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(12,28,16,0.82)] px-4"
     >
       <div

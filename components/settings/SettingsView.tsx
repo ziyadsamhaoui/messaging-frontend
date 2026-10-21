@@ -17,18 +17,6 @@ import {
   ShortcutsEditor,
 } from "./editors";
 
-/**
- * Settings, as a list beside one editor.
- *
- * The panel on the left is the index and the pane on the right is the open editor —
- * the same two-zone layout every other destination uses, rather than one long page
- * that stacked seven unrelated forms under one "Save". The open editor is part of the
- * URL (`/app/settings/<section>`), so it can be linked to, reloaded and reached with
- * the back button, and the panel derives its selected row from the same route.
- *
- * Below `md` only one zone is visible at a time: the list when no editor is open, the
- * editor (with a back control) when one is.
- */
 export function SettingsView({ section }: { section: SettingsSection | null }) {
   const router = useRouter();
   const back = () => router.push(SETTINGS_HREF);
@@ -37,12 +25,6 @@ export function SettingsView({ section }: { section: SettingsSection | null }) {
     <>
       <SettingsPanel selected={section} hideOnNarrow={section !== null} />
       <MainPane hideOnNarrow={section === null}>
-        {/*
-          The panel's `h1` is removed from the accessibility tree below `md` along with
-          the panel itself, so the open editor needs a top-level heading of its own.
-          It is visually hidden on a phone and absent on a desk, where the panel's
-          heading already plays that role — either way there is exactly one `h1`.
-        */}
         {section !== null && <h1 className="sr-only md:hidden">Settings</h1>}
         {section === null ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">

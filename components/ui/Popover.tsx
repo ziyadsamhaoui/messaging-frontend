@@ -6,12 +6,6 @@ import { cn } from "@/lib/utils";
 
 const noopSubscribe = () => () => {};
 
-/**
- * True only after hydration. The portal must not be created while the shell is
- * being prerendered (there is no `document`), and this reads that fact from the
- * store snapshot instead of flipping state from an effect, which would cost an
- * extra render pass on open.
- */
 function useIsClient() {
   return useSyncExternalStore(
     noopSubscribe,
@@ -35,31 +29,15 @@ const MARGIN = 8;
 interface PopoverProps {
   open: boolean;
   onClose: () => void;
-  /** The trigger the popover is positioned against and returns focus to. */
   anchor: HTMLElement | null;
-  /** Accessible name for the popover. */
   label: string;
   align?: "start" | "end" | "center";
   side?: "top" | "bottom";
   className?: string;
-  /**
-   * `menu` is for a popover that holds menu items — the message options, a member's
-   * gear menu — so the items are announced as `menuitem`s of a real menu instead of
-   * as buttons inside a dialog.
-   */
   role?: "dialog" | "menu";
   children: React.ReactNode;
 }
 
-/**
- * A small anchored surface for message actions, quick reactions and confirmations.
- *
- * It replaces `window.confirm` and the inline "are you sure" pairs that used to sit
- * inside rows. Two things matter for behaviour: it is rendered into the document
- * body, so a panel with `overflow: hidden` cannot clip it, and while it is open it
- * traps Tab, closes on Escape and returns focus to the trigger — the same contract
- * the modal already provides, at popover scale.
- */
 export function Popover({
   open,
   onClose,
@@ -87,8 +65,6 @@ export function Popover({
       align === "end" ? rect.right - width : align === "center" ? rect.left + rect.width / 2 - width / 2 : rect.left;
 
     let top = side === "top" ? rect.top - height - GAP : rect.bottom + GAP;
-    // Flip when the preferred side has no room, then clamp so the panel is always
-    // fully on screen even at 390 px wide.
     if (side === "bottom" && top + height > window.innerHeight - MARGIN) {
       top = Math.max(MARGIN, rect.top - height - GAP);
     } else if (side === "top" && top < MARGIN) {
@@ -104,12 +80,6 @@ export function Popover({
     place();
   }, [open, place]);
 
-  /*
-   * Focus is moved into the panel only once it has been positioned, because until
-   * then the panel is `visibility: hidden` — and a hidden element cannot take focus,
-   * so the call would silently do nothing and the popover would open with focus still
-   * on the trigger. That is what made the message menu unreachable by arrow keys.
-   */
   useEffect(() => {
     if (!open || !position) return;
     const panel = panelRef.current;
@@ -119,8 +89,6 @@ export function Popover({
 
   useEffect(() => {
     if (!open) return;
-    // Captured so a scroll inside any ancestor scroller (the message list, the
-    // panel) re-places the popover instead of letting it drift away from its trigger.
     const reposition = () => place();
     window.addEventListener("scroll", reposition, true);
     window.addEventListener("resize", reposition);
@@ -176,13 +144,6 @@ export function Popover({
     };
   }, [open, onClose, anchor]);
 
-  /*
-   * Focus goes back to the control that opened it — but only when the popover was
-   * actually open first. Without that guard the effect also ran on mount, at the
-   * moment the trigger's ref was attached, so a page with several popovers moved
-   * focus to whichever one mounted last: opening a group's member list stole focus
-   * from the panel's own heading.
-   */
   const wasOpenRef = useRef(false);
   useEffect(() => {
     if (open) {
@@ -221,11 +182,6 @@ export function Popover({
   );
 }
 
-/**
- * A row inside a {@link Popover}: 32 px tall, full width, left aligned. Exported
- * separately so a menu entry that has to be a *link* can share the exact styling
- * without nesting an anchor inside a button.
- */
 export function popoverItemClasses({
   danger,
   className,

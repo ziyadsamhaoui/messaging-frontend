@@ -23,15 +23,6 @@ interface AddMembersViewProps {
   onDone: () => void;
 }
 
-/**
- * Adding members replaces the page's contents rather than opening a dialog: it is
- * the same errand as the member list, one level in. The explanation sentence lives
- * here, above the field it belongs to.
- *
- * The action is sticky because the list can be long, and failures stay on the row
- * they belong to instead of collapsing into one toast: with twenty invitations, "one
- * failed" is not actionable until you know which one.
- */
 export function AddMembersView({ roomId, memberIds, invitedIds, onDone }: AddMembersViewProps) {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -100,7 +91,6 @@ export function AddMembersView({ roomId, memberIds, invitedIds, onDone }: AddMem
       setSelected(new Set(Object.keys(failures)));
       return;
     }
-    // Every invitation landed, so there is nothing left to act on in this view.
     onDone();
   }
 

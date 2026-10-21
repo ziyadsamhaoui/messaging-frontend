@@ -23,11 +23,6 @@ import { Popover, popoverItemClasses } from "@/components/ui/Popover";
 import { useToast } from "@/components/ui/Toast";
 import { AttachmentPreview } from "./AttachmentPreview";
 
-/*
- * Emoji are user content, not UI icons, so the reaction set is a plain array rather
- * than an icon library import. The quick six cover almost every reaction; the built-in
- * set behind the "+" is deliberately small and local — no emoji picker dependency.
- */
 export const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 export const MORE_REACTIONS = [
   "🎉", "🔥", "👏", "😍", "🤔", "😅", "😊", "😎", "🥳", "😴",
@@ -37,13 +32,6 @@ export const MORE_REACTIONS = [
 
 const URL_PATTERN = /(https?:\/\/[^\s<>()"']+)/gi;
 
-/**
- * Message text with plain URLs turned into links.
- *
- * Only `http(s)` is linked, the anchor is opened with `noopener noreferrer nofollow`
- * and nothing is fetched to build a preview — the link is the link. Long words and
- * URLs are wrapped by the bubble, never allowed to widen it.
- */
 function MessageText({ content }: { content: string }) {
   const parts = content.split(URL_PATTERN);
   return (
@@ -91,12 +79,9 @@ function groupReactions(
 export interface MessageBubbleProps {
   message: ChatMessage;
   isOwn: boolean;
-  /** Sender name is only shown in group chats, inside the first bubble of a group. */
   showSenderName: boolean;
-  /** First bubble of the sender's group: carries the 6 x 8 px tail. */
   isFirstOfGroup: boolean;
   senderName?: string;
-  /** A stable per-sender hue index for the name colour, so a name never changes colour. */
   senderTone?: number;
   canDeleteAsOwner?: boolean;
   currentUserId: string | null;
@@ -104,18 +89,12 @@ export interface MessageBubbleProps {
   onDelete?: (messageId: string) => void;
   onReact?: (messageId: string, emoji: string) => void;
   onRemoveReaction?: (messageId: string) => void;
-  /** Failed sends can only be retried by the sender; the list owns the retry. */
   onRetry?: (messageId: string) => void;
   attachments?: AttachmentResponse[];
   pendingUpload?: PendingAttachmentUpload;
   onRetryUpload?: (messageId: string) => void;
 }
 
-/*
- * Names in a group chat take one of four tones, picked from the sender id so the same
- * person keeps the same colour in every session. All four are measured on the
- * received bubble (#F1E9D2): 7.4:1, 6.9:1, 7.1:1 and 6.3:1.
- */
 const NAME_TONES = [
   "text-[#2F6B3A]",
   "text-[#8A5A12]",
@@ -153,7 +132,6 @@ export function MessageBubble({
   const [pickerTrigger, setPickerTrigger] = useState<HTMLButtonElement | null>(null);
   const editRef = useRef<HTMLTextAreaElement | null>(null);
   const longPressRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Bumped whenever a reaction is added, so the reaction row re-mounts and plays its pop.
   const reactionTotal = message.reactions?.length ?? 0;
   const prevReactionTotal = useRef(reactionTotal);
   const [popKey, setPopKey] = useState(0);
@@ -185,10 +163,6 @@ export function MessageBubble({
     }
   }, []);
 
-  /*
-   * Touch has no hover, so the affordances are revealed by a long press — the same
-   * actions, opened as the options menu. `onPointerDown` on the bubble body only.
-   */
   function startLongPress(event: React.PointerEvent) {
     if (event.pointerType !== "touch" || !canInteract) return;
     const target = event.currentTarget as HTMLElement;
@@ -199,11 +173,6 @@ export function MessageBubble({
     }, 450);
   }
 
-  /*
-   * The tail belongs to the first bubble of the group, on the sender's side. It is a
-   * 6 x 8 px notch in the bubble's own colour, so the bubble's own corner is squared
-   * where it meets the notch.
-   */
   const tail = isFirstOfGroup && canInteract ? (
     <span
       aria-hidden="true"
@@ -229,18 +198,12 @@ export function MessageBubble({
     isOwn
       ? "bg-[var(--app-bubble-out)] text-[var(--app-bubble-out-text)]"
       : "border border-[var(--app-bubble-in-border)] bg-[var(--app-bubble-in)] text-[var(--app-bubble-in-text)]",
-    // Every corner is the same 10 px radius except the one the tail grows from, which
-    // is squared so the notch reads as part of the bubble rather than beside it.
     "rounded-[var(--app-bubble-radius)]",
     isFirstOfGroup && isOwn && "rounded-tr-none",
     isFirstOfGroup && !isOwn && "rounded-tl-none"
   );
 
-  /* The time and its mark sit on the last line of the text, at its end. */
   const metaClasses = cn(
-    // `float-right` after the text: the stamp is placed on the line the text ends on
-    // when there is room for it there, and drops to its own right-aligned line when
-    // there is not — so a one-word message stays one line tall.
     "float-right ml-3 mt-[3px] inline-flex translate-y-[2px] items-center gap-1",
     "font-ui text-[11px] leading-none whitespace-nowrap",
     isOwn ? "text-[rgba(229,217,182,0.7)]" : "text-[var(--app-pane-text-soft)]"
@@ -262,18 +225,11 @@ export function MessageBubble({
         className={cn(
           "relative flex min-w-0 flex-col",
           isOwn ? "items-end" : "items-start",
-          // The measure: never wider than three quarters of the pane, and never wider
-          // than a comfortable line length on a very wide screen.
           "max-w-[min(75%,760px)]",
           reactions.length > 0 && "mb-3"
         )}
       >
         <div className="relative">
-          {/*
-            The react affordance lives in the gutter on the centre-facing side: to the
-            left of an outgoing bubble, to the right of a received one. It is absolute,
-            so appearing never moves the bubble or its neighbours.
-          */}
           {canInteract && (
             <button
               ref={setPickerTrigger}
@@ -365,13 +321,6 @@ export function MessageBubble({
                 </span>
               </form>
             ) : message.isDeleted ? (
-              /*
-                A tombstone is still the sender's message: it keeps the bubble, its side
-                of the conversation and its time, and only the content is replaced. The
-                old plain "Message deleted" line was rendered by the list, outside the
-                bubble, so on a receiver's screen it read as a system notice instead of
-                as the place where the message used to be.
-              */
               <p className="flow-root italic opacity-80">
                 Message deleted
                 <span className={metaClasses}>{formatClock(message.createdAt)}</span>
@@ -392,12 +341,6 @@ export function MessageBubble({
                 <span className={metaClasses}>
                   {message.isEdited && <span>edited</span>}
                   <span>{formatClock(message.createdAt)}</span>
-                  {/*
-                    One 16 px slot at the end of the time line, in every state, so the
-                    chevron can replace the status mark on hover without the bubble
-                    changing size.
-                  */}
-                  {/* The status mark and the options chevron share this slot; on phones the chevron is always visible, so they sit side by side instead of overlapping. */}
                   <span className="flex h-4 min-w-4 shrink-0 items-center justify-end gap-1">
                     {isOwn && !message.failed && (
                       <span
@@ -465,17 +408,10 @@ export function MessageBubble({
           </p>
         )}
 
-        {/* Reactions: one pill per distinct emoji, overlapping the bubble's bottom
-            edge by a third of its height, inset 8 px from the bubble's outer corner. */}
         {reactions.length > 0 && (
           <div
             key={popKey}
             data-reaction-pill
-            /*
-             * The pill overlaps the bubble's bottom edge by a third of its own 22 px
-             * height, so it sits 15 px below that edge and keeps 8 px of inset from
-             * the bubble's outer-bottom corner.
-             */
             className={cn(
               "absolute -bottom-[15px] z-10 flex items-center gap-1",
               popKey > 0 && "animate-reaction-pop",
@@ -507,7 +443,6 @@ export function MessageBubble({
         )}
       </div>
 
-      {/* The reaction bar, anchored to the smiley, above the bubble. */}
       <Popover
         open={pickerOpen}
         onClose={() => {
@@ -673,19 +608,9 @@ export function MessageBubble({
   );
 }
 
-/**
- * Arrow-key navigation for a popover that holds `role="menuitem"` children: Arrow
- * keys move, Home and End jump to the ends, Escape is handled by the Popover itself.
- * Focus is held on the menu items, so the ring is always on the item that would run.
- */
 function MenuKeyboardNav({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement | null>(null);
 
-  /*
-   * The first item takes focus when the menu opens. Without this the popover holds
-   * focus on its own container and the arrow keys below never reach the menu, which
-   * is exactly how a menu that "works with the mouse" fails a keyboard user.
-   */
   useEffect(() => {
     const first = ref.current?.querySelector<HTMLElement>('[role="menuitem"]');
     first?.focus({ preventScroll: true });

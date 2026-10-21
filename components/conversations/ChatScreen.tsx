@@ -56,14 +56,6 @@ interface ActiveTyping {
   label: string;
 }
 
-/**
- * Zone three for the conversations destination: the open room.
- *
- * The room comes from the route, and the realtime subscription for it is set up
- * here rather than in the shell, because it is scoped to exactly this view: leaving
- * for another destination unmounts the subscription, which is the same lifetime the
- * socket already had when the open room was component state.
- */
 export function ChatScreen({ roomId }: { roomId: string }) {
   const auth = useAuth();
   const toast = useToast();
@@ -85,8 +77,6 @@ export function ChatScreen({ roomId }: { roomId: string }) {
   const uploadFilesRef = useRef(new Map<string, File>());
   const statusChecksRef = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const [detailsOpen, setDetailsOpen] = useState(false);
-  // Held as state rather than a ref because focus returns here when the details pane
-  // closes, and reading a ref during render is not allowed.
   const [detailsTrigger, setDetailsTrigger] = useState<HTMLButtonElement | null>(null);
   const lastTypingRef = useRef(0);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -404,12 +394,6 @@ export function ChatScreen({ roomId }: { roomId: string }) {
   const peerLastSeen = otherUserQuery.data?.lastSeen ?? null;
   const peerPresence = peerLastSeen ? derivePresence(peerLastSeen) : null;
 
-  /*
-   * One status line, in priority order: who is typing, then for a direct chat the
-   * other person's presence, then the member count for a group. The presence text
-   * only claims what `lastSeen` supports — when the profile has not loaded yet the
-   * line stays empty rather than asserting "Offline".
-   */
   const statusLine = typing
     ? room?.type === "GROUP"
       ? `${typing.label} is typing…`
@@ -429,8 +413,6 @@ export function ChatScreen({ roomId }: { roomId: string }) {
 
   function closeDetails() {
     setDetailsOpen(false);
-    // Focus goes back to the control that opened the pane, which is what makes the
-    // details reachable from the keyboard without tabbing through the conversation.
     detailsTrigger?.focus({ preventScroll: true });
   }
 
@@ -457,8 +439,6 @@ export function ChatScreen({ roomId }: { roomId: string }) {
           <ArrowLeft size={20} strokeWidth={1.75} aria-hidden="true" />
         </Link>
         {room?.type === "DIRECT" && otherParticipant ? (
-          // A direct chat's header is the other person, so it opens their profile —
-          // the same destination a connection row links to.
           <Link
             href={connectionHref(otherParticipant.userId)}
             className="focus-ring-light flex min-w-0 items-center gap-3 rounded-[var(--radius-control)]"
@@ -472,8 +452,6 @@ export function ChatScreen({ roomId }: { roomId: string }) {
               presenceRing="var(--app-pane)"
             />
             <span className="min-w-0">
-              {/* The pane keeps a heading of its own even when its title is also the
-                  link to the other person's profile. */}
               <h2 className="truncate font-ui text-[20px] font-semibold text-[var(--app-pane-text)]">
                 {title}
               </h2>
@@ -640,16 +618,6 @@ export function ChatScreen({ roomId }: { roomId: string }) {
   );
 }
 
-/**
- * The chat's overflow actions.
- *
- * Only what the API supports is offered: blocking is a direct-chat action, leaving
- * is a group action, and leaving asks before it acts because it cannot be undone
- * from the UI. There is deliberately no "mute notifications" entry — muting is the
- * participant `isMuted` flag, which the backend uses to stop *you sending*, and
- * only an owner or admin may change it, so offering it here would misrepresent what
- * it does.
- */
 function RoomMenu({
   isDirect,
   isGroup,
@@ -662,7 +630,6 @@ function RoomMenu({
   isDirect: boolean;
   isGroup: boolean;
   isBlocked: boolean;
-  /** The other person's profile, when this is a direct chat. */
   peerHref: string | null;
   onOpenDetails: () => void;
   onToggleBlock: () => Promise<void>;
@@ -726,8 +693,6 @@ function RoomMenu({
           <PopoverItem
             danger
             onClick={() => {
-              // The menu must get out of the way before the dialog takes focus, or the
-              // popover's own focus-restore would pull focus back out of the dialog.
               setOpen(false);
               setConfirming(true);
             }}
@@ -737,12 +702,6 @@ function RoomMenu({
         )}
       </Popover>
 
-      {/*
-        Leaving is the one action here that cannot be undone from the interface, so it
-        asks through the shared confirmation dialog rather than a second click inside
-        the menu: the menu closes, focus moves to the dialog's cancel button, and the
-        answer is an explicit button rather than whatever is under the pointer.
-      */}
       <ConfirmDialog
         open={confirming}
         title="Leave this group?"

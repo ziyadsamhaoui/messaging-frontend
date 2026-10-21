@@ -26,12 +26,6 @@ import { NAV_DESTINATIONS } from "./navDestinations";
 
 const ICON_SIZE = 22;
 
-/**
- * The row's alignment anchor and the only thing that shows hover, active or focus:
- * a 48 px box with a fixed 44 x 44 square centred inside it. The box never moves and
- * the square never grows with the rail, so the icon's centre stays 36 px from the
- * rail's edge in both the collapsed and the expanded state.
- */
 function RailSquare({ children }: { children: React.ReactNode }) {
   return (
     <span className="flex h-11 w-12 shrink-0 items-center justify-center">
@@ -46,18 +40,6 @@ interface RailProps {
   route: AppRoute;
 }
 
-/**
- * Zone one: the primary navigation.
- *
- * Real links in a `nav` landmark, not buttons, so every destination has a URL and
- * middle-click, a new tab and the back button all behave. The collapsed state is
- * mirrored onto the document element (see `.app-rail` in `globals.css`) so the width
- * is correct in the server's HTML and never flashes.
- *
- * Counts come from the three queries the destinations themselves use, which means
- * the badge and the list can never disagree. A count that the API cannot provide —
- * per-room unread on conversation rows — is left out rather than faked.
- */
 export function Rail({ route }: RailProps) {
   const auth = useAuth();
   const router = useRouter();
@@ -90,15 +72,10 @@ export function Rail({ route }: RailProps) {
     router.replace("/login");
   }
 
-  /*
-   * The shortcut is registered on the document rather than on a focused element,
-   * because it must work wherever the keyboard focus happens to be.
-   */
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (!(event.ctrlKey || event.metaKey) || event.key.toLowerCase() !== "b") return;
       const target = event.target as HTMLElement | null;
-      // Never steal the key from a text field.
       if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) {
         return;
       }
@@ -153,12 +130,6 @@ export function Rail({ route }: RailProps) {
         </button>
       </div>
 
-      {/*
-        No `px-3` on the list or on the profile block: the row's own 12 px inset
-        (`.app-rail-row`) is the only horizontal padding the icon column may have. Two
-        insets stacked put the icon box 24 px in, which moved the icon's centre to 48 px
-        and left it off the rail's 36 px axis.
-      */}
       <ul className="flex flex-col gap-1">
         {NAV_DESTINATIONS.map(({ value, label, Icon, countKey }) => {
           const count = countKey ? counts[countKey] : 0;
@@ -190,11 +161,6 @@ export function Rail({ route }: RailProps) {
           />
         </li>
         <li>
-          {/*
-            Signing out lives in the rail itself, not only inside the account
-            popover: it is the one action a person may need before they trust the
-            screen they are on, and burying it behind a menu reads as a trap.
-          */}
           <button
             type="button"
             onClick={() => void signOut()}
@@ -238,8 +204,6 @@ function RailLink({
   active: boolean;
   icon: React.ReactNode;
 }) {
-  // The count belongs to the accessible name: "Notifications, 3 unread", not a badge
-  // that a screen reader either misses or announces twice.
   const accessibleName =
     count > 0 ? `${label}, ${count}${countSuffix ? ` ${countSuffix}` : ""}` : label;
 
@@ -252,9 +216,6 @@ function RailLink({
       className={cn(
         "app-rail-row group/rail relative flex h-11 items-center gap-1 font-ui text-[15px] font-medium transition-colors duration-150 motion-reduce:transition-none",
         tooltipTriggerClass,
-        // The row itself is never filled. Selection is carried by the left marker,
-        // the 44 px square behind the icon and the label's weight — and, for assistive
-        // tech, by `aria-current="page"`. Colour is never the only signal.
         active
           ? "text-[var(--app-rail-text-strong)]"
           : "text-[var(--app-rail-text)] hover:text-[var(--app-rail-text-strong)]",
@@ -290,9 +251,6 @@ function ProfileBlock({
   connected: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  // The trigger is held in state rather than a ref: the popover needs the element
-  // to position against and to restore focus to, and reading a ref during render is
-  // not allowed (the value would not be there on the first pass anyway).
   const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
 
   return (
@@ -308,9 +266,6 @@ function ProfileBlock({
           tooltipTriggerClass
         )}
       >
-        {/* The same 48 px box and 44 px square as the destination rows, so the avatar's
-            centre is also 36 px when the rail is collapsed and its hover highlight is
-            the same size as every other icon's. */}
         <RailSquare>
           <Avatar
             name={username}

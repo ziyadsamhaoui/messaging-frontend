@@ -80,10 +80,7 @@ describe("SettingsView", () => {
     expect(screen.getByRole("link", { name: /notification preferences/i })).toHaveTextContent(
       "1 type muted"
     );
-    // With nothing selected the pane explains the layout instead of rendering a form.
     expect(screen.getByText("Choose a setting to change")).toBeInTheDocument();
-    // Signing out is in the rail on a desk; the list repeats it only where the rail is
-    // replaced by the tab bar, so it is never offered twice at one width.
     const signOut = screen.getByRole("button", { name: /sign out/i });
     expect(signOut.parentElement?.className).toContain("md:hidden");
   });
@@ -94,7 +91,6 @@ describe("SettingsView", () => {
     expect(screen.getByLabelText("Username")).toHaveValue("me");
     expect(screen.getByLabelText("About")).toBeInTheDocument();
     expect(screen.getByLabelText("Picture URL")).toBeInTheDocument();
-    // Nothing has changed yet, so there is nothing to save.
     expect(screen.queryByRole("button", { name: "Save profile" })).toBeNull();
   });
 

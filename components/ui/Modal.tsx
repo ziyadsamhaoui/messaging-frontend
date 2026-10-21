@@ -132,10 +132,6 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
         aria-labelledby={title ? titleId : undefined}
         tabIndex={-1}
         className={cn(
-          // A solid raised-forest surface with one border: the gradient fill and the
-          // gradient-clipped title this dialog used to carry are not part of the
-          // design system, and the flat panel also keeps its heading at a measured
-          // 7.9:1 instead of varying with the gradient behind it.
           "w-full max-w-lg rounded-3xl border border-[rgba(164,190,123,0.25)] bg-[var(--color-surface-raised)] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.45)] focus:outline-none",
           className
         )}

@@ -36,11 +36,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      {/*
-        Above the mobile tab bar: 56 px of bar plus its safe-area inset, so a toast
-        never covers the navigation it sits over. On a desk the bar is gone and the
-        toast returns to the 16 px margin.
-      */}
       <div
         role="region"
         aria-label="Notifications"

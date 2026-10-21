@@ -37,20 +37,6 @@ function isExpired(invitation: PendingInvitationDto): boolean {
   return isPast(invitation.expiresAt);
 }
 
-/**
- * Zone two for the Invites destination.
- *
- * The inbox is server-truth: `GET /invitations/pending` returns the caller's
- * PENDING invitations in *both* directions, with the room name and the inviter, so
- * the sender's and the recipient's views are the same rows seen from two sides and
- * answering one flips its stored status for both. There is no endpoint that lists
- * accepted, declined or expired invitations, so there is no "Past" segment here —
- * that gap is reported rather than filled with client-side guesswork.
- *
- * A row is a link to `/app/invites/<id>`, which is the destination notification
- * rows already pointed at, and its two answers are icon buttons beside the link
- * rather than a second, whole-row click target.
- */
 export function InvitesPanel({
   hideOnNarrow,
   activeInvitationId,
@@ -63,13 +49,6 @@ export function InvitesPanel({
   const invitationsQuery = usePendingInvitations(true);
   const acceptMutation = useAcceptInvitation();
   const rejectMutation = useRejectInvitation();
-  /*
-   * The visible section is derived, not synchronised by an effect: opening an
-   * invitation from a notification or a link has to reveal the section that row lives
-   * in, or the highlight would sit in a tab that is not on screen. A manual tab choice
-   * is remembered as an override keyed by the open invitation, so it survives a
-   * refetch and is dropped when a different invitation is opened.
-   */
   const [segmentOverride, setSegmentOverride] = useState<{ id: string | null; value: Segment } | null>(
     null
   );
@@ -100,8 +79,6 @@ export function InvitesPanel({
       }
     } catch (error) {
       if (isApiError(error) && error.kind === "invitation-expired") {
-        // Still stored as PENDING but past its TTL: keep the row and mark it
-        // non-actionable instead of leaving buttons that cannot work.
         setExpiredIds((previous) => ({ ...previous, [invitation.id]: true }));
         toast.push(errorMessage(error), "info");
       } else if (

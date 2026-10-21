@@ -36,17 +36,6 @@ type Segment = "connected" | "requests";
 
 const SEGMENTS_ID = "connections-segments";
 
-/**
- * Zone two for the Connections destination.
- *
- * There are two lists — people you are connected to, and the requests in both
- * directions — and a third, temporary view for finding someone new. Blocked people
- * are not a connection state: they are an account-level list, so they live in
- * Settings, beside the rest of the controls that act on your own account.
- *
- * The add view replaces the list inside the panel rather than opening a dialog, so
- * the destination, the back button and the browser history keep working.
- */
 export function ConnectionsPanel({
   hideOnNarrow,
   activeUserId,
@@ -316,10 +305,6 @@ function ConnectedRow({
   );
 }
 
-/**
- * The find-and-request view. Selecting someone whose relationship already exists
- * says so instead of sending a request the server would reject with a 409.
- */
 function AddConnectionView({ onViewRequests }: { onViewRequests: () => void }) {
   const toast = useToast();
   const [value, setValue] = useState("");

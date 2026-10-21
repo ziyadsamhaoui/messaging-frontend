@@ -6,14 +6,6 @@ import { useUser } from "@/hooks/useUser";
 import { groupInfoHeadingId, groupInfoSectionId } from "@/lib/groupInfo";
 import { PendingInvitationDto } from "@/lib/types";
 
-/**
- * Pending invitations this caller sent for the group.
- *
- * The chat service returns outgoing invitations in the shared inbox
- * (`GET /invitations/pending`) and offers no cancel endpoint, so a row says that
- * the person was invited and nothing else. A cancel control here would be a button
- * that cannot work.
- */
 export function InvitationsSection({ invitations }: { invitations: PendingInvitationDto[] }) {
   return (
     <section

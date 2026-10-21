@@ -78,7 +78,6 @@ describe("NotificationsPanel", () => {
     const { container } = renderPanel();
 
     expect(container.querySelector("svg.lucide-message-square-text")).not.toBeNull();
-    // The bell belongs to the section itself; only the empty state may keep it.
     expect(container.querySelector("svg.lucide-bell")).toBeNull();
   });
 
@@ -89,7 +88,6 @@ describe("NotificationsPanel", () => {
     expect(marker, "the unread marker must exist").not.toBeNull();
     expect(marker!.className).toContain("left-0");
     expect(marker!.className).toContain("w-[3px]");
-    // Nothing in the row carries a background colour of its own.
     expect(screen.getByText("alice sent you a message").closest("button, a, div")).not.toHaveClass(
       "bg-[rgba(164,190,123,0.08)]"
     );

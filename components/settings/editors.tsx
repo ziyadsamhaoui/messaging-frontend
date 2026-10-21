@@ -35,7 +35,6 @@ import { MessageDensity, TextSize, TimeFormat } from "@/lib/prefs";
 import { SavedNote, SettingsCard, SettingsEditorShell, SettingsRow } from "./parts";
 import { version } from "@/package.json";
 
-/** Shown for a moment after a change that saves itself. */
 function useSavedFlash() {
   const [saved, setSaved] = useState(false);
   useEffect(() => {
@@ -223,11 +222,6 @@ export function AppearanceEditor({ onBack }: { onBack: () => void }) {
   );
 }
 
-/**
- * The live preview: two sample bubbles, a clock and a reaction pill, in the real
- * bubble styles. The text is fixed demo content and is labelled as a preview, so it
- * can never be mistaken for a message.
- */
 function AppearancePreview() {
   const prefs = usePrefsStore();
   const clock = prefs.timeFormat === "12h" ? "1:29 PM" : "13:29";
@@ -586,7 +580,6 @@ function BlockedRow({
   );
 }
 
-/** Kept for the settings index: the router is needed to leave the editor on mobile. */
 export function useBackToSettings() {
   const router = useRouter();
   return () => router.push("/app/settings");

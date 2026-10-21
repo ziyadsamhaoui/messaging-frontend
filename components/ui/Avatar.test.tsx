@@ -2,12 +2,6 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Avatar, initialsFor } from "./Avatar";
 
-/*
- * The defect this pins: three different accounts (admin, admin2, admin3) all rendered
- * "AD", because the rule took the first two letters of a single-word name. The second
- * letter of `admin2` is `d`, so the digit that actually tells the accounts apart was
- * never reached.
- */
 describe("initialsFor", () => {
   it("uses the first letter plus the trailing digit when a name ends in one", () => {
     expect(initialsFor("admin2")).toBe("A2");

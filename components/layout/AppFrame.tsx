@@ -11,17 +11,6 @@ import { Rail } from "./Rail";
 import { MobileNav } from "./MobileNav";
 import { SECTION_PANEL_HEADING_ID } from "./SectionPanel";
 
-/**
- * The authenticated shell.
- *
- * It lives in the route group's layout rather than in a page, which is what makes
- * the four zones a shell: the rail, the socket and the user-scoped realtime
- * subscriptions stay mounted while the destinations and the open conversation
- * change underneath them.
- *
- * Layout: `h-dvh` on the root and `min-h-0` on every zone, so each zone scrolls on
- * its own and the document itself never scrolls.
- */
 export function AppFrame({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
   const router = useRouter();
@@ -45,22 +34,10 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     void registerServiceWorker();
   }, [authenticated]);
 
-  /*
-   * The device preferences (clock format, density, text size, motion) are mirrored
-   * onto the document element once the shell mounts, so the first authenticated paint
-   * already reflects them. The store seeds the time formatter at import time, which is
-   * why rows and bubbles can read it synchronously.
-   */
   useEffect(() => {
     applyStoredPrefs();
   }, []);
 
-  /*
-   * Moving focus to the panel heading when the *destination* changes, and only
-   * then: switching conversations inside one destination must not pull focus out
-   * of the list the user is navigating with the keyboard. The first run is skipped
-   * so loading the app does not steal focus.
-   */
   const destinationRef = useRef<string | null>(null);
   const destinationKey = route.isSettings ? "settings" : route.destination;
   useEffect(() => {
@@ -88,20 +65,6 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    /*
-     * `font-ui` on the shell root, not on `body`.
-     *
-     * The base stylesheet sets `body { font-family: var(--font-body) }` — a serif — and
-     * `input, textarea, button { font-family: inherit }`, which is why placeholders,
-     * typed text and every button in the app screen rendered in serif while the labels
-     * beside them rendered in the interface sans. The fix belongs on the app's own root
-     * rather than on `body`, because the landing, login and register pages are painted
-     * on the same `body` and must keep their serif voice. Font-family inherits, so one
-     * declaration here covers the rail, every panel, both panes and every control that
-     * did not already set its own face.
-     *
-     * The single exception is the sidebar wordmark, which carries `font-display` itself.
-     */
     <div className="app-shell-root flex h-dvh w-full flex-col overflow-hidden bg-[var(--app-panel)] font-ui md:flex-row">
       <a
         href="#main-pane"
@@ -111,7 +74,6 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
       </a>
       <Rail route={route} />
       <div className="flex min-h-0 min-w-0 flex-1">{children}</div>
-      {/* Below 768 px the rail is hidden by CSS and this bar carries navigation. */}
       <MobileNav route={route} />
     </div>
   );

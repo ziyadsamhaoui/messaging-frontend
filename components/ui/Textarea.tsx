@@ -6,12 +6,7 @@ import { cn } from "@/lib/utils";
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string | null;
-  /** A static explanation under the field, wired to `aria-describedby`. */
   hint?: string;
-  /**
-   * The surface the field sits on, matching {@link import("./Input").Input}: `dark`
-   * for the authentication and marketing pages, `light` for the parchment panes.
-   */
   tone?: "dark" | "light";
 }
 

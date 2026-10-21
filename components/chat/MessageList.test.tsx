@@ -61,10 +61,8 @@ describe("MessageList tombstones", () => {
     ]);
 
     const label = screen.getByText("Message deleted");
-    // The text lives inside the bubble, not in a bare paragraph in the list.
     const bubble = label.closest("div");
     expect(bubble?.className).toContain("bg-[var(--app-bubble-in)]");
-    // And the row keeps the receiver's alignment.
     const row = label.closest(".group\\/message");
     expect(row?.className).toContain("flex-row");
     expect(row?.className).not.toContain("flex-row-reverse");

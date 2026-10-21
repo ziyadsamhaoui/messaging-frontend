@@ -23,7 +23,6 @@ const MESSAGE: ChatMessage = {
 };
 
 beforeEach(() => {
-  // jsdom has no clipboard; the menu's copy entry needs one to call.
   Object.defineProperty(navigator, "clipboard", {
     value: { writeText: vi.fn().mockResolvedValue(undefined) },
     configurable: true,
@@ -56,7 +55,6 @@ describe("MessageBubble controls", () => {
 
     expect(screen.getByRole("button", { name: "React to this message" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Message options" })).toBeInTheDocument();
-    // The old four-button toolbar must not come back.
     expect(screen.queryByRole("button", { name: "Copy message" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Edit message" })).toBeNull();
   });
@@ -66,9 +64,7 @@ describe("MessageBubble controls", () => {
 
     const bubble = screen.getByText("hello there").closest("p");
     expect(bubble?.textContent).toContain("edited");
-    // No leading zero in the 12-hour clock.
     expect(bubble?.textContent).toMatch(/\d{1,2}:\d{2} (AM|PM)/);
-    // A leading zero ("01:29 AM") is the bug this formatter exists to prevent.
     expect(bubble?.textContent).not.toMatch(/\b0\d:\d{2} (AM|PM)/);
   });
 
@@ -195,7 +191,6 @@ describe("MessageBubble controls", () => {
     expect(screen.queryByRole("button", { name: "Message options" })).toBeNull();
 
     const text = screen.getByText("Message deleted");
-    // The tombstone is the received bubble, not a bare paragraph, and it keeps a time.
     const bubble = text.closest("div");
     expect(bubble?.className).toContain("bg-[var(--app-bubble-in)]");
     expect(text.textContent).toMatch(/Message deleted\s*\d/);

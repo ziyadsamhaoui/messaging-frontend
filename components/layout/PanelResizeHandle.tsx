@@ -11,32 +11,9 @@ interface DragState {
   pointerId: number;
   startX: number;
   startWidth: number;
-  /** The most recent width the pointer asked for; written on the next frame, and on drop. */
   pending: number;
 }
 
-/**
- * The section panel's resize handle.
- *
- * Behaviour worth stating because each part is a decision:
- *
- * - The hit area is 8 px wide even though the line it draws is 1 px, because a 1 px
- *   target is unhittable. The line thickens to 3 px on hover and while dragging, which
- *   is the only feedback needed to make the affordance discoverable.
- * - Dragging uses pointer events with pointer capture, so the gesture survives the
- *   pointer leaving the 8 px strip — which it does immediately during a fast drag — and
- *   works identically for mouse, pen and touch. `touch-action: none` stops a touch drag
- *   from scrolling the panel instead of resizing it.
- * - Width updates are coalesced into one `requestAnimationFrame` per frame: a pointer can
- *   fire far more often than the display refreshes, and re-rendering the panel and the
- *   chat beside it on every event is wasted work. localStorage is written once, on
- *   pointer up, not on every frame.
- * - Text selection is disabled on the body for the duration of the drag; without it a
- *   drag across the panel selects labels instead of moving the edge.
- * - The handle is a real `separator` with a value, so it is operable from the keyboard:
- *   arrows move 16 px (48 with Shift), Home and End jump to the limits, and Enter resets
- *   to the default — the same reset a double-click performs.
- */
 export function PanelResizeHandle() {
   const { width, min, max, enabled, setWidth, reset } = usePanelWidth();
   const [dragging, setDragging] = useState(false);
@@ -79,8 +56,6 @@ export function PanelResizeHandle() {
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
     } catch {
-      // Pointer capture is unavailable in jsdom and in some older engines; the drag still
-      // works while the pointer stays over the handle.
     }
     dragRef.current = {
       pointerId: event.pointerId,
@@ -105,14 +80,11 @@ export function PanelResizeHandle() {
       cancelAnimationFrame(frameRef.current);
       frameRef.current = null;
     }
-    // Persisted once here rather than on every frame, and against the final value so a
-    // drag that ends between frames still stores where the pointer stopped.
     write(state.pending, true);
     setDragging(false);
     try {
       event.currentTarget.releasePointerCapture(event.pointerId);
     } catch {
-      // Nothing to release outside a captured pointer.
     }
   }
 

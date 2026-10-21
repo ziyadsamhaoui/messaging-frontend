@@ -18,17 +18,6 @@ import { errorMessage } from "@/lib/errors";
 import { formatRelative, formatUntil, isPast } from "@/lib/time";
 import { roomHref } from "@/lib/appRoute";
 
-/**
- * The open invitation, addressed by `/app/invites/<invitationId>`.
- *
- * This is the destination notification rows already linked to: an INVITATION
- * notification carries the invitation id, so `invitationHref()` was pointing at a
- * route that did not exist and those rows 404'd. The panel beside it is the inbox, so
- * answering here updates the list without a round trip through a dialog.
- *
- * There is no endpoint that returns one invitation, so the row is read from the same
- * pending-invitation query the inbox uses — one source, no second shape.
- */
 export function InvitationDetail({ invitationId }: { invitationId: string }) {
   const router = useRouter();
   const toast = useToast();
@@ -55,7 +44,6 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
       if (action === "accept") {
         const accepted = await acceptMutation.mutateAsync(invitation.id);
         toast.push("Invitation accepted.", "success");
-        // Accepting adds you to the room, so the useful place to be is the room.
         router.push(roomHref(accepted?.roomId ?? invitation.roomId));
       } else {
         await rejectMutation.mutateAsync(invitation.id);
@@ -121,7 +109,6 @@ export function InvitationDetail({ invitationId }: { invitationId: string }) {
   return (
     <MainPane>
       <header className="flex h-[72px] shrink-0 items-center gap-3 border-b border-[var(--app-pane-divider)] px-6">
-        {/* The pane is the whole screen below `md`, so it carries its own way back. */}
         <Link
           href="/app/invites"
           aria-label="Back to invites"

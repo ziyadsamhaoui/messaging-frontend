@@ -31,10 +31,6 @@ const TYPE_DESCRIPTIONS: Record<NotificationType, string> = {
   SYSTEM: "Service notices and announcements.",
 };
 
-/**
- * Notification preferences as a destination of the notifications section, where the
- * list stays visible beside it.
- */
 export function NotificationPreferencesView() {
   return (
     <MainPane>
@@ -43,14 +39,6 @@ export function NotificationPreferencesView() {
   );
 }
 
-/**
- * The editor itself: which types arrive, and whether push is allowed for the account.
- *
- * Shared by the notifications destination and by Settings → Notification preferences,
- * so the two can never disagree about what the switches mean. The per-device push
- * controls are deliberately not here — they need the browser's own answer, which is
- * what Settings → Push on this device is for.
- */
 export function NotificationPreferencesEditor({ onBack }: { onBack?: () => void }) {
   const preferencesQuery = useNotificationPreferences(true);
 
@@ -75,8 +63,6 @@ export function NotificationPreferencesEditor({ onBack }: { onBack?: () => void 
           ))}
         </div>
       ) : (
-        // Keyed on the server version so a refetch re-initialises the form from the
-        // stored values rather than leaving half-applied local state on screen.
         <PreferencesForm
           key={preferencesQuery.dataUpdatedAt}
           preferences={preferencesQuery.data}

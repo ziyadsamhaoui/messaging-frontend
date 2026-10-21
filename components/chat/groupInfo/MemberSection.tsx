@@ -45,7 +45,6 @@ interface MemberSectionProps {
   roomId: string;
   callerRole: ParticipantRole;
   currentUserId: string | null;
-  /** Already ordered: owner, admins, then everyone else by name. */
   participants: ParticipantResponse[];
   nameOf: (participant: ParticipantResponse) => string;
   profileOf: (userId: string) => PublicUserDto | undefined;
@@ -60,13 +59,6 @@ interface MemberSectionProps {
   onAddMembers: () => void;
 }
 
-/**
- * The members section, in place on the one scrolling page.
- *
- * The list does not scroll on its own: showing eight rows and expanding the rest in
- * place keeps the section's height part of the page, so the scroll spy re-measures
- * it and the sticky tab bar keeps following the reader.
- */
 export function MemberSection({
   roomId,
   callerRole,
@@ -347,8 +339,6 @@ function MemberMenu({
       setOpen(false);
       if (after) await after();
     } catch (error) {
-      // Nothing was changed optimistically, so the list already shows server truth;
-      // the toast states why the action did not happen.
       toast.push(errorMessage(error), "error");
     } finally {
       setBusy(null);

@@ -34,19 +34,10 @@ interface RowSpec {
   title: string;
   subtitle: string;
   icon: React.ReactNode;
-  /** Extra words the search field matches on, beyond the title and subtitle. */
   keywords: string;
-  /** A dot that asks for attention (a permission that needs fixing). */
   attention?: boolean;
 }
 
-/**
- * The settings list.
- *
- * Every row states its own current value in the subtitle, so the panel answers "what
- * is it set to" without opening anything, and each one opens an editor in the pane
- * beside it. The list is the index, not a second copy of the editors.
- */
 export function SettingsPanel({
   selected,
   hideOnNarrow,
@@ -181,8 +172,6 @@ export function SettingsPanel({
       }
     >
       <div className="flex flex-col gap-4 px-2 pb-2">
-        {/* Profile hero card: avatar, name, handle, about and presence, opening the
-            Profile editor. One tinted surface, no gradient. */}
         <Link
           href={settingsHref("profile")}
           className="focus-ring flex items-center gap-3 rounded-[18px] border border-[rgba(164,190,123,0.24)] bg-[rgba(164,190,123,0.1)] p-3 transition-colors duration-150 motion-reduce:transition-none hover:bg-[rgba(164,190,123,0.16)]"
@@ -239,12 +228,6 @@ export function SettingsPanel({
           ))
         )}
 
-        {/*
-          On a desk, signing out lives in the rail where it is always visible without
-          opening anything. The rail is replaced by the tab bar below 768 px, so the
-          settings list carries the same row there — never both, so the action has one
-          place at each width.
-        */}
         <div className="mt-1 border-t border-[var(--app-panel-divider)] pt-2 md:hidden">
           <SettingsIndexRow
             icon={<LogOut size={20} strokeWidth={1.75} />}

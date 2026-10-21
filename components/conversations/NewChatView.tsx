@@ -20,18 +20,6 @@ type Step = "people" | "group";
 
 const TYPE_ID = "new-chat-type";
 
-/**
- * Starting a conversation inside the section panel, not in a dialog.
- *
- * A dialog would cover the very list the new room is about to join, and it would
- * leave the destination's URL pointing at nothing. The panel view keeps the shell,
- * the back button and the rail in place.
- *
- * Direct is one step: pick the person, start. A group is two steps on purpose —
- * choose the people, then name the room and review who is in it — because a group
- * has two different kinds of decision and mixing them on one screen is what makes
- * a form feel like a form.
- */
 export function NewChatView({
   onCancel,
   onCreate,
@@ -65,8 +53,6 @@ export function NewChatView({
     setType(next);
     setStep("people");
     setError(null);
-    // A group can hold many people; a direct room is exactly two. Carrying a
-    // multi-person selection into Direct would silently drop everyone but one.
     setSelected((prev) => (next === "DIRECT" ? prev.slice(0, 1) : prev));
   }
 
@@ -130,8 +116,6 @@ export function NewChatView({
       }
     >
       <div
-        // The tab semantics only exist while the type control is on screen; the
-        // group step is a view of its own, not a tab panel.
         {...(step === "people"
           ? {
               role: "tabpanel" as const,

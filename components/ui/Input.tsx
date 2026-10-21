@@ -7,8 +7,6 @@ export type FieldSize = "sm" | "md" | "lg";
 
 const HEIGHTS: Record<FieldSize, string> = {
   sm: "h-[var(--control-height-sm)] px-3 text-[13px]",
-  // 15 px at the 40 px height: the app's fields are 15–16 px, and this is the size the
-  // panel search rows use.
   md: "h-[var(--control-height-md)] px-3.5 text-[15px]",
   lg: "h-[var(--control-height-lg)] px-3.5 text-[15px]",
 };
@@ -18,15 +16,8 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
   error?: string | null;
   hint?: string;
   size?: FieldSize;
-  /**
-   * The surface the field sits on, so foreground and border stay legible on both.
-   * `dark` is the default and is what the authentication cards and the public pages
-   * already use; `light` is for the parchment panes of the app screen.
-   */
   tone?: "dark" | "light";
-  /** Rendered inside the field on the left edge (e.g. a search icon). */
   leading?: React.ReactNode;
-  /** Rendered inside the field on the right edge (e.g. a visibility toggle). */
   trailing?: React.ReactNode;
 }
 
@@ -36,11 +27,8 @@ const TONES = {
       "border-[var(--color-field-border)] bg-[var(--color-field)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-placeholder)] hover:bg-[var(--color-field-hover)]",
     label: "text-[var(--color-text-secondary)]",
     ring: "focus-ring",
-    // The placeholder token, so the icon reads as a hint rather than as content.
     adornment: "text-[var(--color-text-placeholder)]",
   },
-  // On parchment: forest text at 6.22:1, a 3.30:1 control border and a 4.64:1
-  // placeholder, all measured against the pane.
   light: {
     field:
       "border-[var(--app-pane-control-border)] bg-[var(--app-pane-raised)] text-[var(--app-pane-text)] placeholder:text-[var(--app-pane-placeholder)]",
@@ -50,15 +38,6 @@ const TONES = {
   },
 } as const;
 
-/**
- * The one text field style per surface.
- *
- * Panels and panes each get exactly one height, radius, border and placeholder
- * contrast, and a search field is this component with a `leading` magnifier rather
- * than a hand-rolled `<input type="search">` with its own classes — which is how the
- * chat and connections panels ended up with a field that did not match the fields
- * inside the dialogs.
- */
 export function Input({
   className,
   label,
@@ -104,13 +83,6 @@ export function Input({
           id={inputId}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          /*
-           * The size tokens come FIRST, then the adornment padding, then the caller's
-           * own classes. Tailwind-merge keeps the last class of a conflicting group, so
-           * with `HEIGHTS` last its `px-*` used to win over `pl-10`/`pr-12` — the icon
-           * and the text ended up on top of each other, which is exactly the reported
-           * "magnifier over the placeholder" in the Chats panel.
-           */
           className={cn(
             "w-full rounded-[var(--radius-control)] border font-ui transition-colors disabled:cursor-not-allowed disabled:opacity-60",
             HEIGHTS[size],

@@ -76,7 +76,6 @@ describe("InvitesPanel", () => {
       "aria-current",
       "page"
     );
-    // An outgoing invitation has nothing to answer.
     expect(screen.queryByRole("button", { name: /accept invitation/i })).toBeNull();
   });
 
