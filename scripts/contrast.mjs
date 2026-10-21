@@ -1,21 +1,4 @@
 #!/usr/bin/env node
-/**
- * WCAG contrast measurement for the values actually used by the interface.
- *
- * The design constraints require contrast to be *measured*, never estimated, and
- * most of this app's colours are rgba() tints layered over a surface, so a plain
- * foreground/background pair is not the real composite a reader sees. This script
- * therefore supports `over`, which alpha-composites one or more translucent layers
- * onto an opaque surface before measuring.
- *
- * Usage:
- *   node scripts/contrast.mjs "#A4BE7B" "#1A3A20"
- *   node scripts/contrast.mjs "rgba(164,190,123,0.7) over #285430"
- *   node scripts/contrast.mjs line1 line2 line3 ...          # one pair per line
- *
- * Exit code is 0 when every pair reaches the threshold given with --min (default
- * 4.5) and 1 otherwise, so a pass cannot be claimed without seeing it.
- */
 
 function parseColor(value) {
   const input = value.trim().replace(/^over\s+/i, "");
@@ -51,7 +34,6 @@ function parseColor(value) {
 }
 
 function composite(layers) {
-  // Right-most layer is the opaque surface; the rest are painted over it.
   const [surface, ...rest] = [...layers].reverse();
   let result = { ...surface };
   for (const layer of rest) {
