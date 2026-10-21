@@ -16,21 +16,12 @@ import { forgotPasswordRequest } from "@/lib/services/auth";
 
 const EMAIL_FIELD_ID = "recovery-email";
 
-/**
- * Requests a password-reset email, using `POST /auth/forgot-password`.
- *
- * The Auth service answers 200 whether or not the address exists, so the
- * confirmation is worded as "if an account exists" — it must never confirm that an
- * account was found.
- */
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [fieldErrors, setFieldErrors] = useState<RecoveryFieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  /* Same duplicate-submit guard as the sign-in form: a burst of clicks in one tick
-     all read `loading` as false, so a ref is what actually blocks the second call. */
   const submitLockRef = useRef(false);
 
   useEffect(() => {
@@ -83,8 +74,6 @@ export default function ForgotPasswordPage() {
             <p className="font-ui text-sm text-[var(--color-parchment)]">
               The link can only be used once, so open it as soon as it arrives.
             </p>
-            {/* The same action styling as the submit button, so the confirmation's
-                single next step reads as the primary action it is. */}
             <Link
               href="/login"
               className={buttonClasses({ variant: "primary", tone: "dark", size: "lg", className: "w-full font-ui!" })}

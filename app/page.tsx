@@ -30,7 +30,6 @@ const MESSAGES: { side: BubbleSide; tone: BubbleTone; text: string; wide?: boole
   { side: "right", tone: "theirs", text: "B: Always, what's on your mind?" },
 ];
 
-/** Gap between one bubble's entrance and the next. */
 const STAGGER = 0.45;
 
 function Bubble({
@@ -91,22 +90,6 @@ function Bubble({
   );
 }
 
-/**
- * The thread itself: one flex column, each bubble to its own side, staggered in one
- * after another.
- *
- * On phones it runs full width. `-mx-6` cancels the page gutter the hero sits in and
- * the width is grown by the same 3rem, because a negative margin on its own would
- * only shift the stack: `w-full` is measured against the padded parent, so the two
- * together are what make the stack span the viewport. `px-3` is then the whole 12px
- * gutter the bubbles see.
- *
- * From `sm` up it stops bleeding, centres itself and caps at 520px, which keeps the
- * thread reading as a conversation rather than letting the two sides drift apart on a
- * tablet. From `xl` up the column stays in flow so the artwork keeps its position,
- * while the bubbles are placed around it: incoming on the artwork's left, outgoing on
- * its right, staggered as in the reference.
- */
 const BUBBLE_PLACEMENT = [
   "xl:absolute xl:left-[-426px] xl:top-0",
   "xl:absolute xl:right-0 xl:top-[72px]",
@@ -133,12 +116,6 @@ function BubbleThread() {
   );
 }
 
-/**
- * Progressive enhancement for the "Why BadrLink?" link. Without JavaScript the plain
- * `href="#why"` still jumps to the section. With it, the page scrolls smoothly (or
- * jumps under reduced motion), moves focus to the section heading without a second
- * scroll, and records `#why` in the URL.
- */
 function scrollToWhy(event: React.MouseEvent<HTMLAnchorElement>) {
   const section = document.getElementById("why");
   const heading = document.getElementById("why-heading");
@@ -153,20 +130,17 @@ function scrollToWhy(event: React.MouseEvent<HTMLAnchorElement>) {
 export default function Home() {
   return (
     <div id="top" className="relative flex min-h-dvh flex-col overflow-hidden bg-[var(--color-parchment)] text-[var(--color-forest)]">
-      {/* A light wash instead of the old dark ramp: two soft pools of sage and deep parchment keep the parchment from reading as a flat fill. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_95%_at_80%_6%,rgba(164,190,123,0.38),transparent_58%),radial-gradient(90%_80%_at_4%_98%,rgba(212,200,158,0.85),transparent_60%)]"
       />
       <CursorGrid tone="light" />
 
-      {/* The hero is one full screen: the header and the hero content share it. */}
       <div className="relative z-10 flex min-h-dvh flex-col">
       <SiteHeader />
 
       <main className="relative z-10 flex flex-1 items-center px-6 py-12 lg:py-16">
         <div className="mx-auto grid w-full max-w-7xl grid-cols-1 items-center gap-12 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:gap-10">
-          {/* Marked so the grid softens while the pointer is over the hero copy. */}
           <div data-cursor-grid-soften className="flex flex-col gap-6">
             <motion.h1
               initial={{ opacity: 0, y: 16 }}
@@ -221,13 +195,6 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/*
-            The illustration and its thread: side by side from `xl` (the thread
-            overlapping the artwork's edge), stacked underneath below that. The gutter
-            now lives on the artwork rather than on this wrapper, so the thread can
-            bleed past it on phones. Marked so the grid softens over both, since the
-            artwork has transparent areas.
-          */}
           <div
             data-cursor-grid-soften
             className="relative mx-auto flex w-full max-w-[820px] flex-col items-center gap-4 lg:translate-x-20 xl:flex-row xl:items-center xl:justify-center xl:gap-0"
@@ -256,7 +223,6 @@ export default function Home() {
       </div>
 
       <section id="why" aria-labelledby="why-heading" className="relative z-10 flex min-h-dvh flex-col justify-center px-6 py-14 lg:py-20">
-        {/* max-w-7xl matches the hero container above, so the Why text starts at the same x as the hero. */}
         <div className="mx-auto w-full max-w-7xl">
           <WhySection headingLevel="h2" headingId="why-heading" />
 

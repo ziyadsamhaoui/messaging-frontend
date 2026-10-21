@@ -23,15 +23,6 @@ import { resetPasswordRequest } from "@/lib/services/auth";
 
 const NEW_PASSWORD_FIELD_ID = "new-password";
 
-/**
- * The screen the emailed reset link opens.
- *
- * The token travels in the query string. `useSearchParams` reads it, which is why
- * the page is split in two: the hook needs a Suspense boundary around it, and that
- * boundary doubles as the card's "checking" state — so a link is never described as
- * valid or broken before it has actually been read. The card shell is the same in
- * both, so its top edge does not move when the real content arrives.
- */
 export default function ResetPasswordPage() {
   return (
     <Suspense fallback={<ResetPasswordShell status="Checking your reset link…" />}>
@@ -81,14 +72,12 @@ function ResetPasswordScreen() {
   const [fieldErrors, setFieldErrors] = useState<RecoveryFieldErrors>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  /** Set by a terminal server answer; `null` means "still showing the form". */
   const [outcome, setOutcome] = useState<"done" | "invalid-token" | null>(null);
   const submitLockRef = useRef(false);
 
   const invalidToken = outcome === "invalid-token" || !token;
   const showForm = outcome === null && Boolean(token);
 
-  /* Focus the first field once, when the form is what is actually on screen. */
   useEffect(() => {
     if (showForm) document.getElementById(NEW_PASSWORD_FIELD_ID)?.focus();
   }, [showForm]);
@@ -98,7 +87,6 @@ function ResetPasswordScreen() {
     setError(null);
     setFieldErrors((prev) => {
       const next = { ...prev, password: undefined };
-      // Editing the password can invalidate a confirmation that already passed.
       if (confirmPassword) {
         next.confirmPassword = value === confirmPassword ? undefined : "Passwords do not match.";
       }
@@ -197,13 +185,10 @@ function ResetPasswordScreen() {
           }}
           error={fieldErrors.password}
           disabled={loading}
-          /* A new password: password managers should suggest one rather than offer
-             the credential they already have. */
           autoComplete="new-password"
           className={AUTH_FIELD_CLASS}
         />
 
-        {/* Directly below the password, and hidden while it is empty. */}
         <PasswordStrengthMeter password={password} />
 
         <PasswordField

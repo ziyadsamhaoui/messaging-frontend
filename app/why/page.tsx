@@ -18,7 +18,6 @@ export default function WhyBadrLink() {
       <SiteHeader />
 
       <main className="relative z-10 flex flex-1 items-center px-6 py-14 lg:py-20">
-        {/* max-w-7xl matches the home hero's container, so the text starts at the same x. The 2cm lift moves the content up without changing the layout. */}
         <div className="mx-auto w-full max-w-7xl -translate-y-[2cm]">
           <WhySection headingLevel="h1" />
 
