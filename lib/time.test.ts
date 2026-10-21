@@ -13,11 +13,6 @@ import {
   setClockFormat,
 } from "./time";
 
-/*
- * One shared time vocabulary is the point of this module, so these tests pin the
- * day boundaries (calendar-based, not 24-hour-based) rather than the exact locale
- * output, which the runtime is allowed to choose.
- */
 const NOW = new Date("2026-10-14T12:00:00.000Z");
 
 function freeze() {
@@ -29,11 +24,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-/*
- * The clock stamp. `toLocaleTimeString` cannot express "no leading zero" without
- * becoming locale-dependent, which is exactly how "01:29 AM" appeared beside
- * "12:15 PM" in the same list. These cases pin the hand-built formatter.
- */
 describe("formatClock", () => {
   const at = (iso: string | null) => formatClock(iso);
 
@@ -41,7 +31,6 @@ describe("formatClock", () => {
 
   it("drops the leading zero in 12-hour form", () => {
     setClockFormat("12h");
-    // Local-time inputs, so the expectation does not depend on the test machine's zone.
     expect(at(new Date(2026, 9, 14, 1, 29).toISOString())).toBe("1:29 AM");
     expect(at(new Date(2026, 9, 14, 13, 5).toISOString())).toBe("1:05 PM");
   });
@@ -67,7 +56,6 @@ describe("formatClock", () => {
 describe("formatCalendarDate", () => {
   it("names the day rather than how long ago it was", () => {
     freeze();
-    // "Today" is the wrong answer for a creation date, which is why this exists.
     expect(formatCalendarDate(NOW.toISOString())).not.toBe("Today");
     expect(formatCalendarDate(NOW.toISOString())).toMatch(/2026/);
   });
@@ -120,7 +108,6 @@ describe("formatDayLabel", () => {
 
   it("falls back to a weekday name inside the last week", () => {
     freeze();
-    // 2026-10-11 is a Sunday.
     expect(formatDayLabel("2026-10-11T08:00:00")).toMatch(/Sunday/);
   });
 });
@@ -157,7 +144,6 @@ describe("formatUntil and isPast", () => {
 
   it("falls back to the past tense once the instant has passed", () => {
     freeze();
-    // An invitation that lapsed an hour ago must not read as "in 1 h".
     expect(formatUntil("2026-10-14T11:00:00.000Z")).toBe("1 h ago");
     expect(formatUntil("2026-10-14T11:59:30.000Z")).toBe("just now");
   });

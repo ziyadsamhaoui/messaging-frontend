@@ -60,8 +60,6 @@ class SocketManager {
     try {
       const refreshed = await refreshSession();
       if (!refreshed || this.rejectedTokens.has(refreshed.accessToken)) {
-        // A realtime failure must never sign the user out on its own: leave the stored session
-        // intact and let the REST layer end it on a genuine 401.
         return;
       }
       this.connect(refreshed.accessToken);
@@ -117,10 +115,6 @@ class SocketManager {
     };
     client.onWebSocketClose = () => {
       this.active.clear();
-      // A close only signals an authentication problem when the access token is no longer usable.
-      // A refused or absent connection (gateway/realtime service unavailable) is a transport
-      // failure: the STOMP client's own reconnectDelay retries it, and we must not refresh tokens
-      // (or clear the session) on every failed attempt.
       if (!isAccessTokenUsable(token, 5_000)) {
         void this.recoverAuthentication(token);
         return;

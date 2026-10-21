@@ -38,8 +38,6 @@ describe("resolveActiveSectionId", () => {
   });
 
   it("absorbs sub-pixel jitter at the boundary", () => {
-    // A section whose top rounds to the line is already current. The tolerance
-    // keeps the tab from flickering while the line sits within half a pixel of it.
     expect(resolveActiveSectionId(sections, 479.6, false)).toBe("invitations");
     expect(resolveActiveSectionId(sections, 480.4, false)).toBe("invitations");
     expect(resolveActiveSectionId(sections, 479.4, false)).toBe("members");

@@ -22,10 +22,6 @@ export function logoutRequest(refreshToken: string) {
   return apiClient.post<void>("/auth/logout", { refreshToken });
 }
 
-/**
- * Asks the Auth service to email a reset link. It answers 200 whether or not the
- * address exists (enumeration-safe), so callers must never imply that it did.
- */
 export function forgotPasswordRequest(body: ForgotPasswordRequest) {
   return apiClient.post<void>("/auth/forgot-password", body, { auth: false });
 }

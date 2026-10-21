@@ -8,11 +8,6 @@ import {
   panelWidthCeiling,
 } from "./uiStore";
 
-/*
- * The limits are the contract the handle and the bootstrap script both depend on:
- * 340 px by default, never below 280 px, never above 480 px or 40% of the viewport,
- * and no dragging at all below 1024 px.
- */
 describe("panelWidthCeiling", () => {
   it("allows the full 480 px on a wide viewport", () => {
     expect(panelWidthCeiling(1920)).toBe(PANEL_WIDTH_MAX);

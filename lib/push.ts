@@ -3,17 +3,8 @@ import { VAPID_PUBLIC_KEY } from "./env";
 
 export type PushSubscribeResult = { ok: true } | { ok: false; reason: string };
 
-/** The four states the device can be in. There is no fifth: never "subscribed" and "off". */
 export type PushState = "unsupported" | "blocked" | "not-enabled" | "enabled";
 
-/**
- * Where the last successful registration is remembered.
- *
- * The server exposes no "list my subscriptions" endpoint, so this is the only way to
- * know that *this* browser's subscription reached the server — and the only way to
- * delete it again on sign-out, because `DELETE /notifications/subscriptions/{id}`
- * needs the id the POST returned.
- */
 const PUSH_RECORD_KEY = "badrlink.push.record";
 
 interface PushRecord {
@@ -56,12 +47,6 @@ export function isSecureContextForPush(): boolean {
   return window.isSecureContext;
 }
 
-/**
- * Push is only allowed on a secure origin, and `localhost` counts as one — so the
- * development server can subscribe, and anything served over plain http on a real
- * host cannot. That distinction is worth reporting rather than hiding behind
- * "not supported".
- */
 export function pushBlockingReason(): string | null {
   if (!isSecureContextForPush()) {
     return "This page is not served over HTTPS, and browsers only allow push on a secure origin.";
@@ -72,15 +57,6 @@ export function pushBlockingReason(): string | null {
   return null;
 }
 
-/**
- * Validates the application server key.
- *
- * A VAPID public key is the base64url-encoded uncompressed P-256 point: 65 bytes,
- * the first of them 0x04. Passing anything else to `pushManager.subscribe` throws
- * `InvalidAccessError` *after* the permission prompt, which is how a swapped or
- * truncated key turns into "notifications just never arrive" with no visible error.
- * Checking the shape here turns that into a sentence someone can act on.
- */
 export function validateVapidKey(key: string): { ok: true; bytes: Uint8Array<ArrayBuffer> } | { ok: false; reason: string } {
   const trimmed = key.trim();
   if (!trimmed) {
@@ -124,11 +100,6 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
   }
 }
 
-/**
- * The real state of this device, read from the browser rather than remembered in a
- * React state: an earlier version could show "Subscribed" beside a disabled
- * "Enable push", which is only possible when the label and the API disagree.
- */
 export async function readPushState(): Promise<{
   state: PushState;
   permission: NotificationPermission | "unsupported";
@@ -163,7 +134,6 @@ export async function readPushState(): Promise<{
   };
 }
 
-/** Enables push for this device: permission, subscription, registration with the server. */
 export async function enablePush(): Promise<PushSubscribeResult> {
   const blocking = pushBlockingReason();
   if (blocking) return { ok: false, reason: blocking };
@@ -208,10 +178,6 @@ function pushErrorMessage(error: unknown): string {
   return "The push subscription could not be created.";
 }
 
-/**
- * Posts the subscription to the notification service through the gateway and
- * remembers the id it returns, so sign-out can delete exactly that row.
- */
 async function sendSubscriptionToServer(subscription: PushSubscription): Promise<PushSubscribeResult> {
   const serialized = subscription.toJSON() as {
     endpoint?: string;
@@ -236,7 +202,6 @@ async function sendSubscriptionToServer(subscription: PushSubscription): Promise
   }
 }
 
-/** Turns push off on this device and removes the server-side row. */
 export async function disablePush(): Promise<PushSubscribeResult> {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
     return { ok: false, reason: "Push is not available in this browser." };
@@ -250,27 +215,18 @@ export async function disablePush(): Promise<PushSubscribeResult> {
   try {
     if (subscription) await subscription.unsubscribe();
   } catch {
-    // An unsubscribe failure must not stop the local record from being cleared.
   }
 
   if (record?.subscriptionId) {
     try {
       await apiClient.delete<void>(`/notifications/subscriptions/${record.subscriptionId}`);
     } catch {
-      // The row may already be gone; the local teardown continues regardless.
     }
   }
   writePushRecord(null);
   return { ok: true };
 }
 
-/**
- * Re-registers an existing subscription on sign-in.
- *
- * A subscription outlives the session, but the server row is tied to the user, so a
- * browser that signed in as someone else must send its endpoint again. Best effort:
- * it never prompts for permission and never throws.
- */
 export async function syncPushSubscription(): Promise<boolean> {
   if (pushBlockingReason() || Notification.permission !== "granted") return false;
   try {
@@ -284,7 +240,6 @@ export async function syncPushSubscription(): Promise<boolean> {
   }
 }
 
-/** Shows a notification through the service worker, proving the device end to end. */
 export async function showTestNotification(): Promise<PushSubscribeResult> {
   const blocking = pushBlockingReason();
   if (blocking) return { ok: false, reason: blocking };
@@ -317,7 +272,6 @@ export interface PushDiagnostic {
   detail: string;
 }
 
-/** The live checks shown in the Diagnostics section of the push editor. */
 export async function collectPushDiagnostics(): Promise<PushDiagnostic[]> {
   const blocking = pushBlockingReason();
   const key = validateVapidKey(VAPID_PUBLIC_KEY);

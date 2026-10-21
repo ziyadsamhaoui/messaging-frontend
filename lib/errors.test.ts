@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ApiError, classifyError, errorMessage, normalizeError } from "./errors";
 
-/*
- * The error vocabulary is what every panel and the composer branch on, so a change
- * that quietly reclassifies a code changes behaviour in the chat rather than here.
- * These cases pin the codes the app actually receives.
- */
 describe("classifyError", () => {
   it("classifies a blocked relationship by code, not by status", () => {
     expect(classifyError(400, "BLOCKED_RELATIONSHIP")).toBe("blocked");
@@ -17,8 +12,6 @@ describe("classifyError", () => {
   });
 
   it("does not mistake a muted participant for a block", () => {
-    // PARTIAL: PARTICIPANT_MUTED shares 403 with FORBIDDEN, so it resolves to
-    // "forbidden" — the composer's blocked banner must key off `isBlocked`, not 403.
     expect(classifyError(403, "PARTICIPANT_MUTED")).toBe("forbidden");
   });
 

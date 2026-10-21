@@ -101,12 +101,6 @@ export interface InvitationResponse {
   expiresAt: string;
 }
 
-/**
- * A row of the caller's pending-invitation inbox. `direction` is viewer-relative:
- * `INCOMING` rows are addressed to the caller and may be accepted or rejected,
- * `OUTGOING` rows were sent by the caller. `roomName` is resolved by Chat because
- * the recipient is not a participant of the room yet.
- */
 export interface PendingInvitationDto {
   id: string;
   roomId: string;
@@ -154,7 +148,6 @@ export interface SubscriptionResponse {
 export interface ConnectionDto {
   id: number;
   status: ConnectionStatus;
-  /** INCOMING requests are addressed to the current user and are the only ones they may accept or decline. */
   direction: ConnectionDirection;
   otherUserId: string;
   createdAt: string;

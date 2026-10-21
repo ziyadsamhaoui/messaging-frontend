@@ -38,9 +38,6 @@ export function useSocket({ token, onServerError }: UseSocketOptions) {
         ? await refreshSession()
         : session;
       if (!next) {
-        // Could not obtain a usable token: stay offline instead of signing the user out. Clearing
-        // the session here would turn any transient refresh failure into a logout; the REST layer
-        // owns that decision and only acts on a genuine 401.
         socketManager.disconnect();
         return;
       }

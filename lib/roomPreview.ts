@@ -3,7 +3,6 @@ import type { ChatMessage, CursorPage } from "./types";
 import { messagesQueryKey } from "@/hooks/useMessages";
 
 export interface RoomPreview {
-  /** One line, ready to render: "You: …" for own messages, "name: …" in groups. */
   text: string;
   at: string;
 }
@@ -14,15 +13,6 @@ function isMessagePage(value: unknown): value is { pages: CursorPage<ChatMessage
   return Array.isArray(pages);
 }
 
-/**
- * The last message of a room, read from whatever the client already has.
- *
- * `GET /rooms` returns `lastMessageId` and nothing else — no text and no timestamp
- * — so the conversation list has no server-side preview to show. Rather than
- * inventing one, the row renders the preview only for a room whose messages the
- * client has actually loaded, reading the newest entry out of the query cache. The
- * backend gap is reported rather than papered over.
- */
 export function readCachedPreview(
   queryClient: QueryClient,
   roomId: string,

@@ -93,7 +93,6 @@ describe("useGroupInfoScroll", () => {
     Object.defineProperty(container, "clientHeight", { value: 600, configurable: true });
 
     const geometry = { settingsTop: 500 };
-    // Rects are viewport-relative, so they move with the container's scroll offset.
     vi.spyOn(container, "getBoundingClientRect").mockImplementation(() => rect(0, 600));
     vi.spyOn(members, "getBoundingClientRect").mockImplementation(() => {
       const top = 0 - container.scrollTop;
@@ -170,8 +169,6 @@ describe("useGroupInfoScroll", () => {
     fireEvent.scroll(container);
     await waitFor(() => expect(active()).toBe("invitations"));
 
-    // Accepting the last invitation removes the section and everything below moves
-    // up. The reader is now at Settings, not back at the top of the page.
     geometry.settingsTop = 400;
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "accept last invitation" }));
@@ -188,7 +185,6 @@ describe("useGroupInfoScroll", () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole("button", { name: "go settings" }));
 
-    // The indicator moves immediately, before the smooth scroll has finished.
     expect(active()).toBe("settings");
     expect(scrollTo).toHaveBeenCalledWith({
       top: 500 - GROUP_INFO_SCROLL_OFFSET_PX,

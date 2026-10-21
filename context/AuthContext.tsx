@@ -135,17 +135,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     const current = getSession();
     try {
-      // Revokes the refresh token and denylists the access-token jti server-side. A failure
-      // here (e.g. an expired access token) must not block the local teardown below.
       if (current?.refreshToken) {
         await logoutRequest(current.refreshToken);
       }
     } catch {
       void 0;
     }
-    // Tear down the authenticated realtime connection and drop every cached query so the
-    // next user on this browser cannot observe the previous user's rooms, messages or
-    // notifications, and no subscription survives the sign-out.
     socketManager.disconnect();
     queryClient.clear();
     clearSession();

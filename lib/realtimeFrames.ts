@@ -23,14 +23,6 @@ const PARTICIPANT_EVENTS = new Set([
   "PARTICIPANT_UNMUTED",
 ]);
 
-/*
- * Frames delivered to `/topic/users/{id}`: the ones the sender or the recipient
- * needs regardless of which room is open. Only the three events the realtime
- * gateway actually forwards are recognised — it does not fan out
- * `INVITATION_REJECTED` or `MESSAGE_DELETED` to a user queue, so a decline reaches
- * the sender as "no longer pending" on the next refetch and nothing here invents a
- * finer-grained signal.
- */
 export type UserFrame =
   | { kind: "invitation-sent"; frame: InvitationSentFrame }
   | { kind: "invitation-accepted"; frame: InvitationAcceptedFrame }

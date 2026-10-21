@@ -11,14 +11,8 @@ import {
   type SectionPosition,
 } from "@/lib/groupInfo";
 
-/** A smooth scroll that has not reported `scrollend` by now is treated as done. */
 const RESUME_FALLBACK_MS = 900;
 
-/**
- * True when the reader asked for less motion, either through the operating system
- * or through the app's own preference. `data-motion` is written by the prefs store;
- * `never` means never animate.
- */
 export function prefersReducedMotion(): boolean {
   if (typeof document !== "undefined" && document.documentElement.dataset.motion === "never") {
     return true;
@@ -28,27 +22,11 @@ export function prefersReducedMotion(): boolean {
 }
 
 export interface GroupInfoScroll {
-  /** The one scroll container for the page. */
   scrollRef: RefObject<HTMLDivElement | null>;
-  /** The section whose tab is current. */
   activeId: GroupInfoTabId | null;
-  /** Scroll a section under the sticky bar and move the indicator at once. */
   scrollToTab: (id: GroupInfoTabId) => void;
 }
 
-/**
- * Drives the sticky tabs from a single scroll container.
- *
- * The active section is the last one whose top has crossed the line just below the
- * sticky tab bar. Positions are measured from the container's own scroll
- * offset, so they survive a resize, a member list that grows, a section that appears
- * or disappears, and the panel being resized — a ResizeObserver re-measures the
- * container and each section whenever their height changes.
- *
- * While a tab-triggered smooth scroll runs the spy is paused, so the indicator does
- * not bounce through the sections in between. It resumes on `scrollend`, on a short
- * timeout, or immediately when the reader scrolls by hand.
- */
 export function useGroupInfoScroll(
   tabs: ReadonlyArray<GroupInfoTab>,
   enabled = true
@@ -64,7 +42,6 @@ export function useGroupInfoScroll(
     activeRef.current = activeId;
   }, [activeId]);
 
-  /** Only write state when a different section actually takes over. */
   const setActiveId = useCallback((id: GroupInfoTabId | null) => {
     if (id === activeRef.current) return;
     activeRef.current = id;
@@ -126,7 +103,6 @@ export function useGroupInfoScroll(
     scheduleUpdate();
   }, [clearResumeTimer, scheduleUpdate]);
 
-  // Re-measure on scroll and whenever the page's height changes.
   useEffect(() => {
     if (!enabled) return;
     const container = scrollRef.current;
@@ -159,9 +135,6 @@ export function useGroupInfoScroll(
     };
   }, [enabled, scheduleUpdate, tabs]);
 
-  // A section that disappears (the last invitation is accepted) must not leave its
-  // tab current. Re-measure instead of defaulting to the first tab: the reader may
-  // be further down the page, and the resolver picks whatever is now under the line.
   useEffect(() => {
     if (tabs.length === 0) {
       setActiveId(null);
@@ -173,7 +146,6 @@ export function useGroupInfoScroll(
     }
   }, [scheduleUpdate, setActiveId, tabs, update]);
 
-  // Scrolling by hand during a programmatic scroll resumes the spy at once.
   useEffect(() => {
     if (!enabled) return;
     const container = scrollRef.current;
@@ -211,8 +183,6 @@ export function useGroupInfoScroll(
 
   const scrollToTab = useCallback(
     (id: GroupInfoTabId) => {
-      // The indicator moves immediately; the spy stays out of the way until the
-      // section has landed.
       setActiveId(id);
       const container = scrollRef.current;
       const section = typeof document !== "undefined" ? document.getElementById(groupInfoSectionId(id)) : null;
