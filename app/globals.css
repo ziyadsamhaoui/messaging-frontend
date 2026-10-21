@@ -1,7 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  /* ---------- Brand ramps ---------- */
   --color-parchment: #E5D9B6;
   --color-parchment-dim: #D4C89E;
   --color-parchment-elevated: #F1E9D2;
@@ -13,16 +12,14 @@
   --color-forest: #285430;
   --color-forest-deep: #1A3A20;
 
-  /* ---------- Semantic surfaces ---------- */
   --color-bg: #1A3A20;
   --color-surface: #285430;
   --color-surface-2: #2E5E37;
-  --color-surface-raised: #234829; /* cards and raised panels */
-  --color-field: #1D3E24; /* solid control surface */
+  --color-surface-raised: #234829;
+  --color-field: #1D3E24;
   --color-field-hover: #21462A;
   --color-field-border: rgba(229, 217, 182, 0.55);
 
-  /* ---------- Text ---------- */
   --color-text-primary: #E5D9B6;
   --color-text-secondary: #A4BE7B;
   --color-text-secondary-soft: rgba(164, 190, 123, 0.7);
@@ -31,106 +28,69 @@
   --color-text-on-light: #285430;
   --color-text-on-light-soft: #3F5E39;
 
-  /* ---------- Borders and dividers ---------- */
   --color-border: rgba(164, 190, 123, 0.2);
   --color-border-subtle: rgba(164, 190, 123, 0.15);
   --color-border-strong: rgba(229, 217, 182, 0.25);
 
-  /* ---------- Actions ---------- */
   --color-primary: #3B6330;
   --color-primary-hover: #345A2A;
   --color-primary-active: #2C4C24;
   --color-accent: #A4BE7B;
-  /* legacy aliases kept so existing consumers keep working */
   --color-cta: #3B6330;
   --color-cta-hover: #345A2A;
 
-  /* ---------- Status ---------- */
   --color-success: #7FB069;
   --color-warning: #E0A53B;
   --color-error: #C0392B;
-  --color-danger: #F7B3A8; /* foreground on dark surfaces */
+  --color-danger: #F7B3A8;
   --color-error-surface: rgba(192, 57, 43, 0.16);
 
-  /* ---------- Focus ---------- */
   --color-focus: #A4BE7B;
   --color-focus-offset: #142E19;
 
-  /* ---------- Shape ---------- */
   --radius-control: 12px;
   --radius-surface: 22px;
   --radius-pill: 9999px;
 
-  /* ---------- Control heights ---------- */
   --control-height-sm: 32px;
   --control-height-md: 40px;
   --control-height-lg: 48px;
 
-  /* ---------- Elevation ---------- */
   --shadow-card: 0 30px 60px -34px rgba(4, 16, 8, 0.85);
   --shadow-control: 0 1px 2px rgba(4, 16, 8, 0.25);
 
-  /* ---------- Layout ---------- */
   --content-max: 72rem;
 
-  /*
-   * ---------------------------------------------------------------------------
-   * App screen (authenticated) semantic aliases
-   * ---------------------------------------------------------------------------
-   * Every value below REFERENCES an existing palette entry — no new brand colour is
-   * introduced. They exist because the app screen is built from four distinct
-   * surfaces (rail, panel, parchment pane, raised pane) and the same nominal
-   * "secondary" text has four different measured contrasts on them; naming the
-   * surface lets a component pick the value that was actually measured.
-   *
-   * The ratio after each comment is the measured pair, produced by
-   * `node scripts/contrast.mjs` (never estimated). Values that failed were not
-   * used: #A4BE7B on the panel is 4.26:1 and #8AAE76 on the panel 3.50:1, so
-   * neither is used as panel text; #C0392B on parchment is 3.87:1, so danger text
-   * on parchment uses the deeper #8F2A1B (already used by the danger button) at
-   * 5.94:1.
-   */
-  --app-rail: var(--color-bg); /* #1A3A20, darkest forest */
-  --app-rail-text: var(--color-text-secondary); /* 6.13:1 on rail */
-  --app-rail-text-strong: var(--color-text-primary); /* 8.94:1 on rail */
+  --app-rail: var(--color-bg);
+  --app-rail-text: var(--color-text-secondary);
+  --app-rail-text-strong: var(--color-text-primary);
   --app-rail-hover: rgba(229, 217, 182, 0.07);
-  /*
-   * There is deliberately no `--app-rail-active` fill: the active destination is
-   * marked by the sage line on the rail's left edge and a change of text colour,
-   * not by a tinted row. The line (--color-sage on the rail) is 6.13:1, above the
-   * 3:1 non-text floor, and the active label keeps the 8.94:1 cream it had.
-   */
 
-  --app-panel: var(--color-surface); /* #285430, a shade lighter than the rail */
+  --app-panel: var(--color-surface);
   --app-panel-raised: var(--color-surface-2);
-  --app-panel-text: var(--color-text-primary); /* 6.22:1 on panel */
-  --app-panel-text-soft: var(--color-sage-light); /* #C2D6A0 5.59:1 on panel */
+  --app-panel-text: var(--color-text-primary);
+  --app-panel-text-soft: var(--color-sage-light);
   --app-panel-hover: rgba(229, 217, 182, 0.06);
   --app-panel-active: rgba(164, 190, 123, 0.14);
   --app-panel-divider: rgba(164, 190, 123, 0.16);
-  --app-panel-field: var(--color-field); /* #1D3E24 */
-  --app-panel-field-border: rgba(229, 217, 182, 0.7); /* 3.68:1 vs the panel */
+  --app-panel-field: var(--color-field);
+  --app-panel-field-border: rgba(229, 217, 182, 0.7);
 
-  --app-pane: var(--color-parchment); /* #E5D9B6 */
-  --app-pane-raised: var(--color-parchment-elevated); /* #F1E9D2 */
-  --app-pane-text: var(--color-text-on-light); /* 6.22:1 on parchment */
-  --app-pane-text-soft: var(--color-text-on-light-soft); /* #3F5E39 5.20:1 */
-  --app-pane-placeholder: rgba(40, 84, 48, 0.7); /* 4.64:1 on parchment */
+  --app-pane: var(--color-parchment);
+  --app-pane-raised: var(--color-parchment-elevated);
+  --app-pane-text: var(--color-text-on-light);
+  --app-pane-text-soft: var(--color-text-on-light-soft);
+  --app-pane-placeholder: rgba(40, 84, 48, 0.7);
   --app-pane-divider: rgba(40, 84, 48, 0.28);
-  --app-pane-control-border: rgba(40, 84, 48, 0.7); /* 3.30:1 on parchment */
+  --app-pane-control-border: rgba(40, 84, 48, 0.7);
   --app-pane-hover: rgba(40, 84, 48, 0.07);
 
   --app-bubble-in: var(--color-parchment-elevated);
   --app-bubble-in-border: rgba(40, 84, 48, 0.5);
-  --app-bubble-in-text: var(--color-text-on-light); /* 7.22:1 */
+  --app-bubble-in-text: var(--color-text-on-light);
   --app-bubble-out: var(--color-forest);
-  --app-bubble-out-text: var(--color-parchment); /* 6.22:1 */
+  --app-bubble-out-text: var(--color-parchment);
 
-  /*
-   * Bubble geometry, so "Message density" is one set of numbers rather than a
-   * second copy of every class. Comfortable: a one-line bubble is 20 + 7 + 7 = 34 px.
-   * The gaps are the reference's: 2 px inside a sender group, 10 px between groups.
-   */
   --app-bubble-py: 7px;
   --app-bubble-px: 10px;
   --app-bubble-radius: 10px;
@@ -139,21 +99,16 @@
   --app-bubble-tail-w: 6px;
   --app-bubble-tail-h: 8px;
 
-  --app-badge-fill: var(--color-sage); /* forest text on it 6.13:1 */
+  --app-badge-fill: var(--color-sage);
   --app-badge-text: var(--color-forest-deep);
-  --app-danger-on-dark: var(--color-danger); /* #F7B3A8 4.98:1 on panel */
-  --app-danger-on-light: #8F2A1B; /* 5.94:1 on parchment; also the danger button shade */
+  --app-danger-on-dark: var(--color-danger);
+  --app-danger-on-light: #8F2A1B;
   --app-warning-dot: var(--color-warning);
 
-  --app-tooltip-surface: #234829; /* raised forest */
-  --app-tooltip-text: var(--color-text-primary); /* 7.2:1 */
+  --app-tooltip-surface: #234829;
+  --app-tooltip-text: var(--color-text-primary);
 }
 
-/*
- * Compact density: tighter padding and gaps, same type and colours. It changes
- * nothing but these five numbers, which is why the setting cannot drift away from
- * what it claims to change.
- */
 html[data-density="compact"] {
   --app-bubble-py: 4px;
   --app-bubble-px: 9px;
@@ -161,10 +116,6 @@ html[data-density="compact"] {
   --app-bubble-gap-between-groups: 6px;
 }
 
-/*
- * Text size scales the shell rather than the root font size: the app's type scale is
- * written in pixel utilities, where a root `font-size` would have no effect at all.
- */
 html[data-text-size="small"] .app-shell-root {
   zoom: 0.9;
 }
@@ -184,15 +135,6 @@ html[data-text-size="large"] .app-shell-root {
   box-sizing: border-box;
 }
 
-/*
- * `height: 100%` on BOTH elements used to squeeze tall pages. The body is a flex
- * column, so a page root with `min-h-dvh` became a flex item with `flex-shrink: 1`
- * and an overridden automatic minimum size: it was squashed to the viewport height,
- * and because those roots carry `overflow-hidden`, everything below the fold was
- * clipped and unreachable — `/why` reported scrollHeight === clientHeight and could
- * not be scrolled at all. A minimum height keeps short pages filling the viewport
- * while letting tall ones grow and scroll.
- */
 html {
   height: 100%;
 }
@@ -216,25 +158,12 @@ body::before {
   z-index: -1;
 }
 
-/*
- * Base element styles must live in `@layer base`. Anything left unlayered in
- * this file outranks every Tailwind utility, because the cascade puts unlayered
- * declarations above `@layer utilities`. Left unlayered, this `a` rule silently
- * beat `text-*` on every anchor — which is what made the landing CTA render
- * cream-on-cream (its fill won, its text colour lost).
- */
 @layer base {
   a {
     color: inherit;
     text-decoration: none;
   }
 
-  /*
-   * Tailwind v4's preflight leaves buttons on the default cursor, so every button,
-   * tab and label in the app showed an arrow while anchors showed a hand. This is in
-   * `@layer base` on purpose: a `cursor-not-allowed` or `cursor-default` utility must
-   * still be able to win over it, which it cannot do against an unlayered rule.
-   */
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   [role="tab"]:not(:disabled),
@@ -252,26 +181,6 @@ button {
   font-family: inherit;
 }
 
-/*
- * Shared keyboard focus treatment, in two halves because the two surfaces need
- * different rings.
- *
- * `.focus-ring` is the dark half (rail, panels, raised dialogs): a 2 px sage outline
- * with a 2 px offset, so the gap shows the surface behind the control and the ring
- * never sits flush against the fill it outlines. `outline` rather than `box-shadow`
- * on purpose — an outline never shifts layout and is not clipped by a scrolling
- * ancestor. Measured as a non-text indicator against every dark surface it is used
- * on: 6.13:1 on the rail (#1A3A20), 4.26:1 on the panel (#285430) and 5.04:1 on the
- * raised surface (#234829), all above the 3:1 floor.
- *
- * This class was referenced by 24 components but had no rule at all, which is why
- * rail rows, segmented controls and the new controls had no visible focus ring in
- * the review captures.
- *
- * `.focus-ring-light` is the parchment half, for the pane and its raised popovers,
- * where a sage ring measures 1.6:1 against the surface: a parchment inner ring and a
- * forest outer ring, 6.22:1 on parchment and 7.22:1 on the raised pane.
- */
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
@@ -284,20 +193,9 @@ button {
     0 0 0 4px var(--color-forest);
 }
 
-/*
- * Themed thin scrollbars. The browser default is a light, wide bar that lands as
- * a bright stripe down a dark panel (and vice versa), so every scrollable zone in
- * the app opts into one of these two. Firefox uses the standard properties;
- * Chromium/WebKit need the vendor pseudo-elements, which is why both are set.
- */
 .app-scroll-dark {
   scrollbar-width: thin;
   scrollbar-color: rgba(164, 190, 123, 0.45) transparent;
-  /*
-   * A panel is a vertical list. A horizontal bar in one can only be the symptom of
-   * a row that failed to truncate, so the sideways axis is closed here and the rows
-   * themselves are what truncate.
-   */
   overflow-x: hidden;
 }
 
@@ -347,12 +245,6 @@ button {
   background-color: rgba(40, 84, 48, 0.6);
 }
 
-/*
- * Stepper arrows. Chromium can render a button at each end of a scrollbar; once the
- * bar is only 10 px wide they read as two small boxes clipped onto the stripe, which
- * is what showed up at the bottom and right of the notifications panel. Hidden here,
- * not merely left unstyled.
- */
 .app-scroll-dark::-webkit-scrollbar-button,
 .app-scroll-light::-webkit-scrollbar-button {
   display: none;
@@ -360,27 +252,8 @@ button {
   height: 0;
 }
 
-/*
- * ---------------------------------------------------------------------------
- * Sidebar rail
- * ---------------------------------------------------------------------------
- * The collapsed state lives on the document element (set before the first paint by
- * the bootstrap script in `app/layout.tsx`), and the geometry is expressed from
- * it in CSS. That is what keeps the rail from being painted at one width and then
- * snapping to another once React hydrates: the width is right in the server's own
- * HTML and stays right.
- *
- * 200 ms on the width and 120 ms on the labels, with `nowrap` + `overflow: hidden`
- * so a label can never wrap or push the row while the rail animates.
- */
 :root {
   --app-rail-width: 248px;
-  /*
-   * The two fills of the row highlight. It is a 44 x 44 square centred on the icon,
-   * never the row: a full-width tint reads as a selected *row*, which is what the
-   * panel list uses, and it made the rail look like a stack of blocks. Both values are
-   * cream over the darkest forest, so the cream icon on them stays at 8.94:1.
-   */
   --app-rail-icon-hover: rgba(229, 217, 182, 0.08);
   --app-rail-icon-active: rgba(229, 217, 182, 0.16);
 }
@@ -401,44 +274,14 @@ html[data-sidebar="collapsed"] {
   transition: opacity 120ms ease-out;
 }
 
-/*
- * `display: none`, not `opacity`/`visibility`.
- *
- * A label that is only invisible still occupies layout, and in a centred row that is
- * the difference between an icon at 36 px and an icon pushed off-axis. Removing it from
- * layout is what makes the collapsed geometry exact — and it is also why the rail can
- * animate its width without the icons drifting sideways at any frame: the icon box is
- * pinned to the rail's left edge, so the animated edge is always the far one.
- */
 html[data-sidebar="collapsed"] .app-rail-label {
   display: none;
 }
 
-/*
- * The icon column is the alignment anchor, and it is the same 48 px box at the same
- * 12 px inset in BOTH states — so an icon's centre is 36 px from the rail's edge
- * whether the rail is expanded or collapsed, and 36 px is exactly half of the
- * collapsed 72 px rail.
- *
- * The row must therefore keep its 12 px inset when collapsed. Centring the row's
- * contents instead (the previous rule) is what pushed the icons off-centre: the label
- * was still laid out — hidden with `opacity`/`visibility` rather than removed — so the
- * row centred the icon *and* the space the invisible label occupied, which put the
- * icon's centre well left of 36 px.
- */
 .app-rail-row {
   padding-inline: 12px;
 }
 
-/*
- * The row is the hit area — icon, label and the free space after it — but the only
- * thing that ever changes colour is the 44 x 44 square around the icon. Hovering the
- * label therefore lights the icon square, exactly as hovering the icon does.
- *
- * The square sits inside the 48 px icon box, centred, so its centre is still 36 px
- * from the rail's edge (12 + 24) and it stays there when the rail widens: the box is
- * the fixed anchor, the label is what grows.
- */
 .app-rail-square {
   transition:
     background-color 150ms ease-out,
@@ -453,11 +296,6 @@ html[data-sidebar="collapsed"] .app-rail-label {
   background-color: var(--app-rail-icon-active);
 }
 
-/*
- * Keyboard focus is shown on the square, not around the whole row, so the indicator
- * is the same size and in the same place as the pointer highlight. The row's own
- * outline is suppressed: two nested outlines on one focus state read as noise.
- */
 .app-rail-row:focus-visible {
   outline: none;
 }
@@ -471,11 +309,6 @@ html[data-sidebar="collapsed"] .app-rail-row {
   padding-inline: 12px;
 }
 
-/*
- * Collapsed header: the mark above the toggle, both centred on the same 36 px axis.
- * The header keeps its 12 px inset, so its 48 px content box centres anything up to
- * 48 px wide on 12 + 24 = 36 px without a single per-child offset.
- */
 html[data-sidebar="collapsed"] .app-rail-header {
   height: auto;
   flex-direction: column;
@@ -492,19 +325,10 @@ html[data-sidebar="collapsed"] .app-rail-header .app-rail-brand {
   padding-inline: 0;
 }
 
-/* Tooltips belong to the collapsed rail: expanded rows already carry their title. */
 html[data-sidebar="expanded"] .app-rail .app-tooltip {
   display: none;
 }
 
-/*
- * Below 768 px the rail is replaced, not narrowed.
- *
- * A 72 px icon rail on a phone spends a sixth of the width on five unlabelled icons;
- * navigation moves to the bottom tab bar (`MobileNav`), where each destination keeps
- * an icon *and* a name and the whole target is in thumb reach. The bar is a real flex
- * child of the shell, so nothing is ever painted underneath it.
- */
 @media (max-width: 767px) {
   .app-rail {
     display: none;
@@ -519,29 +343,10 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   }
 }
 
-/*
- * ---------------------------------------------------------------------------
- * Resizable section panel
- * ---------------------------------------------------------------------------
- * The width lives in `--app-panel-width` on the document element: written by the
- * bootstrap script in `app/layout.tsx` before the first paint, and updated by the
- * resize handle while dragging.
- *
- * On the document element rather than on the panel itself, deliberately. An
- * element-level custom property cannot be overridden by a stylesheet rule — the
- * element's own declaration wins over anything an ancestor or a media query says — so
- * a width set on the panel could not be clamped for narrow viewports in CSS. Set on the
- * root, the media query below can simply outrank it.
- */
 .app-panel {
   width: var(--app-panel-width, 340px);
 }
 
-/*
- * Below 1024 px the panel is a fixed 300 px and resizing is off. `display: none` also
- * removes the handle from the tab order, so a keyboard user never lands on a control
- * that would do nothing.
- */
 @media (max-width: 1023px) {
   .app-panel {
     width: 300px !important;
@@ -552,11 +357,6 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   }
 }
 
-/*
- * On a phone there is one zone at a time, so the zone that is left takes the whole
- * width. Declared after the 300 px clamp so it wins: that clamp is a desk rule, and
- * with the detail pane hidden it would leave a strip of empty panel beside the list.
- */
 @media (max-width: 767px) {
   .app-panel {
     width: 100% !important;
@@ -584,12 +384,6 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   }
 }
 
-/*
- * Tooltip reveal. A delay on the way in and none on the way out is what keeps
- * tooltips from flickering while the pointer crosses a rail; it needs no timer in
- * JS, and the delay survives a keyboard focus because `:focus-visible` starts the
- * same transition.
- */
 .app-tooltip {
   opacity: 0;
   transform: translateX(-2px);
@@ -614,17 +408,7 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   }
 }
 
-/*
- * ---------------------------------------------------------------------------
- * Cursor-driven effects (shared by the marketing and authentication pages)
- * ---------------------------------------------------------------------------
- * Both read their pointer position from the same custom properties, written on the
- * element from a rAF-throttled handler so a pointermove never triggers a render.
- * Geometry (position, inset, radius, pointer-events) stays in utilities on the
- * element itself; these classes only paint.
- */
 
-/* The grid revealed in a soft circle around the cursor. */
 .cursor-grid {
   --cursor-grid-line: rgba(229, 217, 182, 0.3);
   --cursor-grid-cell: 44px;
@@ -633,8 +417,6 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
     linear-gradient(to right, var(--cursor-grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--cursor-grid-line) 1px, transparent 1px);
   background-size: var(--cursor-grid-cell) var(--cursor-grid-cell);
-  /* The feathered stops are what "blur" the reveal at its edges. The mask is one
-     pass of the element's own box (no tiling); only the grid background repeats. */
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-image: radial-gradient(
@@ -651,13 +433,10 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   );
 }
 
-/* On the parchment pages the lines have to go the other way to stay visible. */
 .cursor-grid--light {
   --cursor-grid-line: rgba(40, 84, 48, 0.22);
 }
 
-/* A one-pixel border that lights up around the pointer: the gradient is masked to
-   the padding box, so only the 1px ring survives. */
 .spotlight-ring {
   padding: 1px;
   background-image: radial-gradient(
@@ -733,8 +512,6 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   animation: shimmer 1.5s linear infinite;
 }
 
-/* Constant, gentle float for the phone new-chat button. Uses the `translate` property so
-   it does not fight the `scale` used by the press squeeze. */
 @keyframes fab-float {
   0%,
   100% {
@@ -749,7 +526,6 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
   animation: fab-float 3s ease-in-out infinite;
 }
 
-/* One-shot pop when a reaction is added. */
 @keyframes reaction-pop {
   0% {
     transform: scale(0.6);
