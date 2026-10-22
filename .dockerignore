@@ -1,0 +1,17 @@
+# Keep the build context small and free of local configuration.
+node_modules/
+.next/
+out/
+coverage/
+.git/
+.gitignore
+.env
+.env.local
+.env*.local
+docs/
+*.tsbuildinfo
+npm-debug.log*
+.idea/
+.junie/
+Dockerfile
+.dockerignore
