@@ -41,18 +41,25 @@ export function SettingsEditorShell({
   onBack,
   backLabel = "Back to settings",
   badge,
+  wide = false,
 }: {
   icon: React.ReactNode;
   title: string;
-  description: string;
+  description?: string;
   children: React.ReactNode;
   onBack?: () => void;
   backLabel?: string;
   badge?: React.ReactNode;
+  wide?: boolean;
 }) {
   return (
     <div className="app-scroll-light min-h-0 flex-1 overflow-y-auto">
-      <div className="flex w-full max-w-[700px] flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6">
+      <div
+        className={cn(
+          "flex w-full flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6",
+          wide ? "max-w-[1100px]" : "max-w-[700px]"
+        )}
+      >
         <div className="flex items-center gap-2">
           {onBack && (
             <IconButton
@@ -75,9 +82,11 @@ export function SettingsEditorShell({
         </div>
         <div className="flex flex-col gap-1">
           <h2 className="font-ui text-[22px] font-semibold text-[var(--app-pane-text)]">{title}</h2>
-          <p className="font-ui text-[13px] leading-relaxed text-[var(--app-pane-text-soft)]">
-            {description}
-          </p>
+          {description && (
+            <p className="font-ui text-[13px] leading-relaxed text-[var(--app-pane-text-soft)]">
+              {description}
+            </p>
+          )}
           {badge}
         </div>
         {children}
@@ -220,7 +229,7 @@ export function SettingsIndexRow({
   href?: string;
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   selected?: boolean;
   danger?: boolean;
   onClick?: () => void;
@@ -256,9 +265,11 @@ export function SettingsIndexRow({
           <span className="truncate font-ui text-[15px] font-medium">{title}</span>
           {action}
         </span>
-        <span className="block truncate font-ui text-[13px] text-[var(--app-panel-text-soft)]">
-          {subtitle}
-        </span>
+        {subtitle && (
+          <span className="block truncate font-ui text-[13px] text-[var(--app-panel-text-soft)]">
+            {subtitle}
+          </span>
+        )}
       </span>
       <ChevronRight
         size={18}

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { Avatar, initialsFor } from "./Avatar";
 
 describe("initialsFor", () => {
@@ -29,12 +29,32 @@ describe("Avatar", () => {
     expect(screen.getByText("A2")).toBeInTheDocument();
   });
 
-  it("prefers the profile picture and hides the initials", () => {
+  it("keeps the initials until the picture has loaded, so a broken URL never leaves a blank circle", () => {
     const { container } = render(
       <Avatar name="admin2" seed="u-2" src="https://example.com/a.png" />
     );
-    expect(screen.queryByText("A2")).not.toBeInTheDocument();
-    expect(container.querySelector("[style*='background-image']")).not.toBeNull();
+    expect(screen.getByText("A2")).toBeInTheDocument();
+    expect(container.querySelector("[style*='background-image']")).toBeNull();
+  });
+
+  it("shows the picture over the initials once it has loaded", async () => {
+    class LoadingImage {
+      onload: (() => void) | null = null;
+      set src(_value: string) {
+        queueMicrotask(() => this.onload?.());
+      }
+    }
+    vi.stubGlobal("Image", LoadingImage);
+    try {
+      const { container } = render(
+        <Avatar name="admin2" seed="u-2" src="https://example.com/a.png" />
+      );
+      await waitFor(() =>
+        expect(container.querySelector("[style*='background-image']")).not.toBeNull()
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it("ignores a non-http source rather than injecting it into a CSS url()", () => {

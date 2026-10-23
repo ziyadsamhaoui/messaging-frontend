@@ -34,7 +34,7 @@ export function readCachedPreview(
   if (!newest) return null;
 
   if (newest.isDeleted) return { text: "Message deleted", at: newest.createdAt };
-  const content = newest.content.trim();
+  const content = (newest.content ?? "").trim();
   if (!content) return null;
 
   const own = newest.senderId === currentUserId;

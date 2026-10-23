@@ -6,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppRealtime } from "@/hooks/useAppRealtime";
 import { parseAppRoute } from "@/lib/appRoute";
 import { registerServiceWorker } from "@/lib/push";
-import { applyStoredPrefs } from "@/store/prefsStore";
 import { Rail } from "./Rail";
 import { MobileNav } from "./MobileNav";
 import { SECTION_PANEL_HEADING_ID } from "./SectionPanel";
@@ -33,10 +32,6 @@ export function AppFrame({ children }: { children: React.ReactNode }) {
     if (!authenticated) return;
     void registerServiceWorker();
   }, [authenticated]);
-
-  useEffect(() => {
-    applyStoredPrefs();
-  }, []);
 
   const destinationRef = useRef<string | null>(null);
   const destinationKey = route.isSettings ? "settings" : route.destination;

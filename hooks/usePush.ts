@@ -1,12 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  collectPushDiagnostics,
-  PushDiagnostic,
-  PushState,
-  readPushState,
-} from "@/lib/push";
+import { PushState, readPushState } from "@/lib/push";
 
 export interface PushStatus {
   state: PushState;
@@ -52,25 +47,4 @@ export function usePushStatus(pollMs = 0): PushStatus {
   }, [pollMs]);
 
   return { ...value, refresh };
-}
-
-export function usePushDiagnostics(active: boolean) {
-  const [checks, setChecks] = useState<PushDiagnostic[] | null>(null);
-
-  const run = useCallback(async () => {
-    setChecks(await collectPushDiagnostics());
-  }, []);
-
-  useEffect(() => {
-    if (!active) return;
-    let live = true;
-    void collectPushDiagnostics().then((next) => {
-      if (live) setChecks(next);
-    });
-    return () => {
-      live = false;
-    };
-  }, [active]);
-
-  return { checks, run };
 }

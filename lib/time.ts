@@ -1,18 +1,6 @@
 
-import type { TimeFormat } from "./prefs";
-
 const MINUTE = 60_000;
 const DAY = 86_400_000;
-
-let clockFormat: TimeFormat = "12h";
-
-export function setClockFormat(format: TimeFormat) {
-  clockFormat = format;
-}
-
-export function getClockFormat(): TimeFormat {
-  return clockFormat;
-}
 
 export function parseTimestamp(value: string | null | undefined): Date | null {
   if (!value) return null;
@@ -51,7 +39,7 @@ export function formatClock(iso: string | null | undefined): string {
   if (!value) return "";
   const hours24 = value.getHours();
   const minutes = String(value.getMinutes()).padStart(2, "0");
-  if (clockFormat === "24h") return `${String(hours24).padStart(2, "0")}:${minutes}`;
+
   const suffix = hours24 < 12 ? "AM" : "PM";
   const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
   return `${hours12}:${minutes} ${suffix}`;

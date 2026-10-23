@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
-import { AlertCircle, Download, FileText, Loader2, RotateCw } from "lucide-react";
+import React, { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { AlertCircle, Download, FileText, ImageOff, Loader2, RotateCw } from "lucide-react";
 import { AttachmentResponse, PendingAttachmentUpload } from "@/lib/types";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -60,7 +62,64 @@ function PendingAttachmentCard({
   );
 }
 
-function AttachmentItem({ attachment }: { attachment: AttachmentResponse }) {
+function ImageAttachment({
+  attachment,
+  url,
+  overlay,
+}: {
+  attachment: AttachmentResponse;
+  url: string;
+  overlay?: React.ReactNode;
+}) {
+  const queryClient = useQueryClient();
+  const [loaded, setLoaded] = useState(false);
+  const [refreshed, setRefreshed] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  function handleError() {
+    if (!refreshed) {
+      setRefreshed(true);
+      void queryClient.invalidateQueries({ queryKey: ["attachments"] });
+      return;
+    }
+    setFailed(true);
+  }
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="focus-ring-light relative block aspect-[4/3] w-[330px] max-w-full max-h-[330px] overflow-hidden rounded-[6px]"
+    >
+      {failed ? (
+        <span className="flex h-full w-full flex-col items-center justify-center gap-2 bg-[rgba(40,84,48,0.12)] font-ui text-[12px] text-[var(--app-pane-text-soft)]">
+          <ImageOff size={24} strokeWidth={1.5} aria-hidden="true" />
+          Image unavailable
+        </span>
+      ) : (
+        <>
+          {!loaded && <Skeleton className="absolute inset-0 rounded-[6px]" />}
+          <img
+            src={url}
+            alt={attachment.fileName}
+            loading="lazy"
+            onLoad={() => setLoaded(true)}
+            onError={handleError}
+            className={"absolute inset-0 h-full w-full object-cover transition-opacity duration-150 motion-reduce:transition-none " + (loaded ? "opacity-100" : "opacity-0")}
+          />
+        </>
+      )}
+      {overlay && (
+        <span className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-end bg-[linear-gradient(transparent,rgba(0,0,0,0.35))] px-2 pb-1 pt-6">
+          {overlay}
+        </span>
+      )}
+    </a>
+  );
+}
+
+function AttachmentItem({ attachment, overlay }: { attachment: AttachmentResponse; overlay?: React.ReactNode }) {
   const url = attachment.url ?? undefined;
 
   if (attachment.status !== "READY" || !url) {
@@ -80,21 +139,7 @@ function AttachmentItem({ attachment }: { attachment: AttachmentResponse }) {
   }
 
   if (attachment.kind === "IMAGE") {
-    return (
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="focus-ring-light block max-w-full overflow-hidden rounded-xl"
-      >
-        <img
-          src={url}
-          alt={attachment.fileName}
-          loading="lazy"
-          className="max-h-72 w-full max-w-[420px] object-cover"
-        />
-      </a>
-    );
+    return <ImageAttachment attachment={attachment} url={url} overlay={overlay} />;
   }
 
   if (attachment.kind === "VIDEO") {
@@ -146,10 +191,12 @@ export function AttachmentPreview({
   attachments,
   pendingUpload,
   onRetry,
+  imageOverlay,
 }: {
   attachments: AttachmentResponse[];
   pendingUpload?: PendingAttachmentUpload;
   onRetry?: () => void;
+  imageOverlay?: React.ReactNode;
 }) {
   if (pendingUpload) {
     return <PendingAttachmentCard pending={pendingUpload} onRetry={onRetry} />;
@@ -158,7 +205,11 @@ export function AttachmentPreview({
   return (
     <div className="flex flex-col gap-2">
       {attachments.map((attachment) => (
-        <AttachmentItem key={attachment.id} attachment={attachment} />
+        <AttachmentItem
+          key={attachment.id}
+          attachment={attachment}
+          overlay={attachments.length === 1 ? imageOverlay : undefined}
+        />
       ))}
     </div>
   );

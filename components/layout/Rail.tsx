@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, LogOut, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { LogOut, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   AppDestination,
   AppRoute,
   destinationHref,
-  NOTIFICATION_PREFERENCES_HREF,
   SETTINGS_HREF,
+  settingsHref,
 } from "@/lib/appRoute";
 import { useAuth } from "@/hooks/useAuth";
 import { useUiStore } from "@/store/uiStore";
@@ -20,7 +20,6 @@ import { usePendingInvitations } from "@/hooks/useInvitations";
 import { usePendingConnections } from "@/hooks/useConnections";
 import { Avatar } from "@/components/ui/Avatar";
 import { CountBadge, RailBadge } from "@/components/ui/Badge";
-import { Popover, popoverItemClasses } from "@/components/ui/Popover";
 import { Tooltip, tooltipTriggerClass } from "@/components/ui/Tooltip";
 import { NAV_DESTINATIONS } from "./navDestinations";
 
@@ -230,10 +229,10 @@ function RailLink({
       )}
       <RailSquare>
         {icon}
-        <RailBadge count={count} max={9} />
+        <RailBadge count={count} max={9} className="app-rail-badge-icon" />
       </RailSquare>
       <span className="app-rail-label min-w-0 flex-1 truncate">{label}</span>
-      {count > 0 && <CountBadge count={count} max={9} />}
+      {count > 0 && <CountBadge count={count} max={9} className="app-rail-badge-pill" />}
       <Tooltip label={accessibleName} side="right" />
     </Link>
   );
@@ -250,17 +249,11 @@ function ProfileBlock({
   seed?: string;
   connected: boolean;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [trigger, setTrigger] = useState<HTMLButtonElement | null>(null);
-
   return (
     <div className="border-t border-[var(--app-rail-hover)] py-3">
-      <button
-        ref={setTrigger}
-        type="button"
-        onClick={() => setMenuOpen((open) => !open)}
-        aria-haspopup="dialog"
-        aria-expanded={menuOpen}
+      <Link
+        href={settingsHref("profile")}
+        aria-label={`Your profile, ${username}`}
         className={cn(
           "app-rail-row group/rail flex w-full items-center gap-1 py-1.5 text-left text-[var(--app-rail-text)] transition-colors duration-150 motion-reduce:transition-none hover:text-[var(--app-rail-text-strong)]",
           tooltipTriggerClass
@@ -284,32 +277,7 @@ function ProfileBlock({
           </span>
         </span>
         <Tooltip label={`${username}, ${connected ? "online" : "reconnecting"}`} side="right" />
-      </button>
-
-      <Popover
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        anchor={trigger}
-        label="Account"
-        side="top"
-      >
-        <Link
-          href={SETTINGS_HREF}
-          className={popoverItemClasses()}
-          onClick={() => setMenuOpen(false)}
-        >
-          <Settings size={16} strokeWidth={1.75} aria-hidden="true" />
-          Settings
-        </Link>
-        <Link
-          href={NOTIFICATION_PREFERENCES_HREF}
-          className={popoverItemClasses()}
-          onClick={() => setMenuOpen(false)}
-        >
-          <Bell size={16} strokeWidth={1.75} aria-hidden="true" />
-          Notification preferences
-        </Link>
-      </Popover>
+      </Link>
     </div>
   );
 }

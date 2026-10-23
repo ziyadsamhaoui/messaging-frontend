@@ -66,7 +66,7 @@
   --app-rail-text-strong: var(--color-text-primary);
   --app-rail-hover: rgba(229, 217, 182, 0.07);
 
-  --app-panel: var(--color-surface);
+  --app-panel: #234A2B;
   --app-panel-raised: var(--color-surface-2);
   --app-panel-text: var(--color-text-primary);
   --app-panel-text-soft: var(--color-sage-light);
@@ -93,9 +93,11 @@
 
   --app-bubble-py: 7px;
   --app-bubble-px: 10px;
-  --app-bubble-radius: 10px;
+  --app-bubble-pad: 6px 7px 8px 9px;
+  --app-bubble-radius: 7.5px;
+  --app-bubble-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
   --app-bubble-gap-in-group: 2px;
-  --app-bubble-gap-between-groups: 10px;
+  --app-bubble-gap-between-groups: 12px;
   --app-bubble-tail-w: 6px;
   --app-bubble-tail-h: 8px;
 
@@ -107,21 +109,6 @@
 
   --app-tooltip-surface: #234829;
   --app-tooltip-text: var(--color-text-primary);
-}
-
-html[data-density="compact"] {
-  --app-bubble-py: 4px;
-  --app-bubble-px: 9px;
-  --app-bubble-gap-in-group: 1px;
-  --app-bubble-gap-between-groups: 6px;
-}
-
-html[data-text-size="small"] .app-shell-root {
-  zoom: 0.9;
-}
-
-html[data-text-size="large"] .app-shell-root {
-  zoom: 1.12;
 }
 
 @theme inline {
@@ -275,6 +262,14 @@ html[data-sidebar="collapsed"] {
 }
 
 html[data-sidebar="collapsed"] .app-rail-label {
+  display: none;
+}
+
+html[data-sidebar="collapsed"] .app-rail-badge-pill {
+  display: none;
+}
+
+html:not([data-sidebar="collapsed"]) .app-rail-badge-icon {
   display: none;
 }
 
@@ -560,3 +555,132 @@ html[data-sidebar="expanded"] .app-rail .app-tooltip {
 }
 
 
+
+@keyframes avatar-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes avatar-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.avatar-modal-dialog {
+  animation: avatar-modal-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.avatar-modal-overlay {
+  animation: avatar-overlay-in 180ms ease-out both;
+}
+
+.avatar-zoom-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.avatar-zoom-slider:focus {
+  outline: none;
+}
+
+.avatar-zoom-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+}
+
+.avatar-zoom-slider::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+.avatar-zoom-slider::-moz-range-progress {
+  background: transparent;
+}
+
+.avatar-zoom-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -7px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-parchment-elevated);
+  box-shadow: 0 2px 6px rgba(4, 16, 8, 0.45);
+  transition: transform 150ms ease-out;
+}
+
+.avatar-zoom-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--color-parchment-elevated);
+  box-shadow: 0 2px 6px rgba(4, 16, 8, 0.45);
+  transition: transform 150ms ease-out;
+}
+
+.avatar-zoom-slider:hover::-webkit-slider-thumb,
+.avatar-zoom-slider:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+.avatar-zoom-slider:hover::-moz-range-thumb,
+.avatar-zoom-slider:active::-moz-range-thumb {
+  transform: scale(1.15);
+}
+
+.avatar-zoom-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+.avatar-zoom-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--color-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-modal-dialog,
+  .avatar-modal-overlay,
+  .avatar-zoom-slider::-webkit-slider-thumb,
+  .avatar-zoom-slider::-moz-range-thumb {
+    animation: none;
+    transition: none;
+  }
+}
+
+@keyframes invite-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.invite-card-in {
+  animation: invite-card-in 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-card-in {
+    animation: none;
+  }
+}

@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@/hooks/useAttachments", () => ({
   useRoomMedia: () => state.media,
+  invalidateRoomMedia: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock("@/lib/services/rooms", () => ({

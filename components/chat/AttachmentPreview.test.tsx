@@ -2,8 +2,14 @@ import React from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AttachmentPreview } from "./AttachmentPreview";
 import { AttachmentResponse, PendingAttachmentUpload } from "@/lib/types";
+
+function renderWithClient(ui: React.ReactElement) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={client}>{ui}</QueryClientProvider>);
+}
 
 function attachment(overrides: Partial<AttachmentResponse> = {}): AttachmentResponse {
   return {
@@ -37,7 +43,7 @@ const FAILED_UPLOAD: PendingAttachmentUpload = {
 describe("AttachmentPreview", () => {
   it("shows a failed upload with its file name, error and a working retry", async () => {
     const onRetry = vi.fn();
-    render(<AttachmentPreview attachments={[]} pendingUpload={FAILED_UPLOAD} onRetry={onRetry} />);
+    renderWithClient(<AttachmentPreview attachments={[]} pendingUpload={FAILED_UPLOAD} onRetry={onRetry} />);
 
     expect(screen.getByText("holiday.jpg")).toBeInTheDocument();
     expect(screen.getByRole("status")).toHaveTextContent(/storage service rejected/i);
@@ -48,7 +54,7 @@ describe("AttachmentPreview", () => {
   });
 
   it("renders a ready image with the file name as its alternative text", () => {
-    render(<AttachmentPreview attachments={[attachment()]} />);
+    renderWithClient(<AttachmentPreview attachments={[attachment()]} />);
 
     const image = screen.getByRole("img", { name: "photo.png" });
     expect(image).toHaveAttribute("src", "https://files.test/photo.png");
@@ -56,7 +62,7 @@ describe("AttachmentPreview", () => {
   });
 
   it("renders a document as a download link with its size", () => {
-    render(
+    renderWithClient(
       <AttachmentPreview
         attachments={[
           attachment({
@@ -77,7 +83,7 @@ describe("AttachmentPreview", () => {
   });
 
   it("shows processing for a not-yet-ready attachment and no image", () => {
-    render(
+    renderWithClient(
       <AttachmentPreview
         attachments={[attachment({ status: "PENDING_SCAN", url: undefined })]}
       />
@@ -88,7 +94,7 @@ describe("AttachmentPreview", () => {
   });
 
   it("shows unavailable for a rejected attachment and exposes no URL", () => {
-    render(
+    renderWithClient(
       <AttachmentPreview
         attachments={[attachment({ status: "REJECTED", url: undefined })]}
       />

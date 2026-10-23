@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { OnlineStatus } from "@/lib/types";
 import { presenceDotClass, presenceLabel } from "@/lib/presence";
 
-export type AvatarSize = 28 | 40 | 48 | 96 | 120;
+export type AvatarSize = 28 | 40 | 48 | 72 | 88 | 96 | 120 | 176;
 
 const VARIANTS: Array<{ fill: string; text: string }> = [
   { fill: "#C2D6A0", text: "#1A3A20" },
@@ -38,27 +38,49 @@ const SIZES: Record<AvatarSize, string> = {
   28: "h-7 w-7 text-[11px]",
   40: "h-10 w-10 text-xs",
   48: "h-12 w-12 text-sm",
+  72: "h-[72px] w-[72px] text-2xl",
+  88: "h-[88px] w-[88px] text-3xl",
   96: "h-24 w-24 text-2xl",
   120: "h-[120px] w-[120px] text-4xl",
+  176: "h-[176px] w-[176px] text-6xl",
 };
 
 const DOT_SIZES: Record<AvatarSize, string> = {
   28: "h-2.5 w-2.5 border-2",
   40: "h-3 w-3 border-2",
   48: "h-3.5 w-3.5 border-2",
+  72: "h-4 w-4 border-[3px]",
+  88: "h-5 w-5 border-[3px]",
   96: "h-5 w-5 border-[3px]",
   120: "h-6 w-6 border-[3px]",
+  176: "h-8 w-8 border-4",
 };
 
 function asImageUrl(src: string | null | undefined): string | null {
   if (!src) return null;
   try {
     const parsed = new URL(src);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:" && parsed.protocol !== "blob:") {
+      return null;
+    }
     return parsed.toString();
   } catch {
     return null;
   }
+}
+
+function useImageReady(url: string | null): boolean {
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!url) return;
+    const probe = new Image();
+    probe.onload = () => setLoadedUrl(url);
+    probe.src = url;
+    return () => {
+      probe.onload = null;
+    };
+  }, [url]);
+  return url !== null && loadedUrl === url;
 }
 
 interface AvatarProps {
@@ -82,6 +104,7 @@ export function Avatar({
 }: AvatarProps) {
   const variant = variantFor(seed ?? name);
   const imageUrl = asImageUrl(src);
+  const imageReady = useImageReady(imageUrl);
   const initials = initialsFor(name);
 
   return (
@@ -89,27 +112,34 @@ export function Avatar({
       <span
         aria-hidden="true"
         className={cn(
-          "flex items-center justify-center overflow-hidden rounded-full font-ui font-semibold uppercase",
+          "relative flex items-center justify-center overflow-hidden rounded-full font-ui font-semibold uppercase",
           SIZES[size]
         )}
-        style={
-          imageUrl
-            ? { backgroundImage: `url(${JSON.stringify(imageUrl)})`, backgroundSize: "cover", backgroundPosition: "center" }
-            : { backgroundColor: variant.fill, color: variant.text }
-        }
+        style={{ backgroundColor: variant.fill, color: variant.text }}
       >
-        {!imageUrl && initials}
+        {initials}
+        {imageReady && imageUrl && (
+          <span
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${JSON.stringify(imageUrl)})` }}
+          />
+        )}
       </span>
       {status && (
         <>
           <span
             aria-hidden="true"
             className={cn(
-              "absolute -bottom-0.5 -right-0.5 rounded-full",
+              "absolute rounded-full",
               DOT_SIZES[size],
               presenceDotClass[status]
             )}
-            style={{ borderColor: presenceRing }}
+            style={{
+              left: "85.36%",
+              top: "85.36%",
+              transform: "translate(-50%, -50%)",
+              borderColor: presenceRing,
+            }}
           />
           <span className="sr-only">{presenceLabel(status)}</span>
         </>

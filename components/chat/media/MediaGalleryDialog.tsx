@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, Trash2 } from "lucide-react";
-import { useRoomMedia } from "@/hooks/useAttachments";
+import { invalidateRoomMedia, useRoomMedia } from "@/hooks/useAttachments";
 import { messagesQueryKey } from "@/hooks/useMessages";
 import { deleteMessage } from "@/lib/services/rooms";
 import { flattenPages } from "@/lib/pagination";
@@ -79,7 +79,7 @@ export function MediaGalleryDialog({
     }
 
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["room-media", roomId] }),
+      invalidateRoomMedia(queryClient, roomId),
       queryClient.invalidateQueries({ queryKey: messagesQueryKey(roomId) }),
       queryClient.invalidateQueries({ queryKey: ["attachments", roomId] }),
     ]);

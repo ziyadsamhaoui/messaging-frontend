@@ -14,20 +14,17 @@ interface AttachmentMenuProps {
 const GROUPS = [
   {
     label: "Photos and videos",
-    description: "Images are resized before upload. Videos are sent as they are.",
     accept: "image/*,video/*",
     icon: ImagePlay,
   },
   {
     label: "Documents and files",
-    description: "PDF, text, spreadsheets, presentations and archives.",
     accept:
       ".pdf,.txt,.csv,.docx,.xlsx,.pptx,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/zip",
     icon: FileText,
   },
   {
     label: "Audio files",
-    description: "Send an existing recording from this device.",
     accept: "audio/*",
     icon: Music,
   },
@@ -70,18 +67,13 @@ export function AttachmentMenu({ open, onClose, anchor, onPick }: AttachmentMenu
               type="button"
               role="menuitem"
               onClick={() => onPick(group.accept)}
-              className="focus-ring-light flex w-full items-start gap-3 rounded-[var(--radius-control)] px-2.5 py-2 text-left hover:bg-[var(--app-pane-hover)]"
+              className="focus-ring-light flex w-full items-center gap-3 rounded-[var(--radius-control)] px-2.5 py-2 text-left hover:bg-[var(--app-pane-hover)]"
             >
-              <span className="mt-0.5 text-[var(--app-pane-text-soft)]">
+              <span className="text-[var(--app-pane-text-soft)]">
                 <Icon size={18} strokeWidth={1.75} aria-hidden="true" />
               </span>
-              <span className="min-w-0">
-                <span className="block font-ui text-[14px] font-medium text-[var(--app-pane-text)]">
-                  {group.label}
-                </span>
-                <span className="block font-ui text-[12px] leading-snug text-[var(--app-pane-text-soft)]">
-                  {group.description}
-                </span>
+              <span className="block min-w-0 font-ui text-[14px] font-medium text-[var(--app-pane-text)]">
+                {group.label}
               </span>
             </button>
           );

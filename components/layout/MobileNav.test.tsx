@@ -46,7 +46,7 @@ describe("MobileNav", () => {
   });
 
   it("marks the active destination, and Settings while a settings editor is open", () => {
-    renderNav("/app/settings/appearance");
+    renderNav("/app/settings/shortcuts");
     expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute(
       "aria-current",
       "page"

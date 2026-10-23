@@ -10,6 +10,8 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  overlayClassName?: string;
+  titleClassName?: string;
 }
 
 interface ModalEntry {
@@ -46,7 +48,15 @@ function unlockBodyScroll() {
   }
 }
 
-export function Modal({ open, onClose, title, children, className }: ModalProps) {
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  className,
+  overlayClassName,
+  titleClassName,
+}: ModalProps) {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLElement | null>(null);
   const entryRef = useRef<ModalEntry | null>(null);
@@ -124,7 +134,12 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(12,28,16,0.82)] px-4">
+    <div
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center bg-[rgba(12,28,16,0.82)] px-4",
+        overlayClassName
+      )}
+    >
       <div
         ref={dialogRef}
         role="dialog"
@@ -138,7 +153,10 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
       >
         <div className="flex items-center justify-between">
           {title && (
-            <h3 id={titleId} className="font-ui text-[17px] font-semibold text-[var(--app-panel-text)]">
+            <h3
+              id={titleId}
+              className={cn("font-ui text-[17px] font-semibold text-[var(--app-panel-text)]", titleClassName)}
+            >
               {title}
             </h3>
           )}

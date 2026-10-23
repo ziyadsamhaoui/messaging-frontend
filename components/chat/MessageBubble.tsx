@@ -81,6 +81,7 @@ export interface MessageBubbleProps {
   isOwn: boolean;
   showSenderName: boolean;
   isFirstOfGroup: boolean;
+  isLastOfGroup?: boolean;
   senderName?: string;
   senderTone?: number;
   canDeleteAsOwner?: boolean;
@@ -121,8 +122,9 @@ export function MessageBubble({
   onRetryUpload,
 }: MessageBubbleProps) {
   const toast = useToast();
+  const content = message.content ?? "";
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(message.content);
+  const [draft, setDraft] = useState(content);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerFromMenu, setPickerFromMenu] = useState(false);
@@ -173,40 +175,93 @@ export function MessageBubble({
     }, 450);
   }
 
-  const tail = isFirstOfGroup && canInteract ? (
-    <span
+  const hasTail = isFirstOfGroup && canInteract;
+
+  const tailPath = "M0 0H8C4.5 1.6 1.5 5.5 0 11.2V0Z";
+  const tail = hasTail ? (
+    <svg
       aria-hidden="true"
-      className={cn(
-        "absolute top-0",
-        isOwn ? "-right-[5px]" : "-left-[5px]"
-      )}
+      focusable="false"
+      width={8}
+      height={13}
+      viewBox="0 0 8 13"
+      className="pointer-events-none absolute top-0 overflow-visible"
       style={{
-        width: "var(--app-bubble-tail-w)",
-        height: "var(--app-bubble-tail-h)",
-        backgroundColor: isOwn ? "var(--app-bubble-out)" : "var(--app-bubble-in)",
-        borderColor: isOwn ? "transparent" : "var(--app-bubble-in-border)",
-        clipPath: isOwn
-          ? "polygon(0 0, 100% 0, 0 100%)"
-          : "polygon(0 0, 100% 0, 100% 100%)",
+        left: isOwn ? undefined : -7,
+        right: isOwn ? -7 : undefined,
+        color: isOwn ? "var(--app-bubble-out)" : "var(--app-bubble-in)",
+        transform: isOwn ? undefined : "scaleX(-1)",
       }}
-    />
+    >
+      <path d={tailPath} fill="rgba(11,20,26,0.13)" transform="translate(0 1)" />
+      <path d={tailPath} fill="currentColor" />
+    </svg>
   ) : null;
 
+  const imageMedia =
+    !message.isDeleted && !editing && !pendingUpload && attachments.length === 1 && attachments[0].kind === "IMAGE";
+  const hasCaption = content.trim().length > 0;
+  const imageOnly = imageMedia && !hasCaption;
+
   const bubbleClasses = cn(
-    "relative w-fit max-w-full font-ui text-[15px] leading-5",
-    "py-[var(--app-bubble-py)] px-[var(--app-bubble-px)]",
+    "relative w-fit max-w-full min-w-0 font-ui text-[14.2px] leading-[19px]",
+    imageMedia ? "p-[3px]" : "p-[var(--app-bubble-pad)]",
     isOwn
       ? "bg-[var(--app-bubble-out)] text-[var(--app-bubble-out-text)]"
-      : "border border-[var(--app-bubble-in-border)] bg-[var(--app-bubble-in)] text-[var(--app-bubble-in-text)]",
+      : "bg-[var(--app-bubble-in)] text-[var(--app-bubble-in-text)]",
     "rounded-[var(--app-bubble-radius)]",
-    isFirstOfGroup && isOwn && "rounded-tr-none",
-    isFirstOfGroup && !isOwn && "rounded-tl-none"
+    hasTail && isOwn && "rounded-tr-none",
+    hasTail && !isOwn && "rounded-tl-none",
+    "shadow-[var(--app-bubble-shadow)]"
   );
 
   const metaClasses = cn(
-    "float-right ml-3 mt-[3px] inline-flex translate-y-[2px] items-center gap-1",
-    "font-ui text-[11px] leading-none whitespace-nowrap",
-    isOwn ? "text-[rgba(229,217,182,0.7)]" : "text-[var(--app-pane-text-soft)]"
+    "float-right ml-2 mt-[3px] flex h-[15px] items-center gap-[3px] whitespace-nowrap",
+    "font-ui text-[11px] leading-none opacity-[0.65]",
+    isOwn ? "text-[var(--app-bubble-out-text)]" : "text-[var(--app-bubble-in-text)]"
+  );
+
+  const overlayMetaClasses = cn(
+    "flex items-center gap-[3px] whitespace-nowrap font-ui text-[11px] leading-none text-white"
+  );
+
+  const renderMeta = (className: string) => (
+    <span className={className}>
+      {message.isEdited && <span>edited</span>}
+      <span>{formatClock(message.createdAt)}</span>
+      <span className="flex h-4 min-w-4 shrink-0 items-center justify-end gap-1">
+        {isOwn && !message.failed && (
+          <span className="flex items-center group-hover/message:hidden group-focus-within/message:hidden text-[rgba(229,217,182,0.6)]">
+            {message.pending ? (
+              <Clock size={16} strokeWidth={2} aria-hidden="true" />
+            ) : (
+              <Check size={16} strokeWidth={2} aria-hidden="true" />
+            )}
+            <span className="sr-only">{message.pending ? "Sending" : "Sent"}</span>
+          </span>
+        )}
+        {canInteract && (
+          <button
+            ref={setMenuTrigger}
+            type="button"
+            aria-label="Message options"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={(event) => {
+              event.stopPropagation();
+              setMenuOpen(true);
+            }}
+            className={cn(
+              "focus-ring-light hidden h-4 w-4 items-center justify-center rounded",
+              "group-hover/message:flex group-focus-within/message:flex max-md:flex",
+              isOwn ? "text-[rgba(229,217,182,0.85)]" : "text-[var(--app-pane-text-soft)]"
+            )}
+          >
+            <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
+          </button>
+        )}
+      </span>
+    </span>
   );
 
   return (
@@ -225,7 +280,7 @@ export function MessageBubble({
         className={cn(
           "relative flex min-w-0 flex-col",
           isOwn ? "items-end" : "items-start",
-          "max-w-[min(75%,760px)]",
+          "max-w-[65%]",
           reactions.length > 0 && "mb-3"
         )}
       >
@@ -289,7 +344,7 @@ export function MessageBubble({
                   onKeyDown={(event) => {
                     if (event.key === "Escape") {
                       event.preventDefault();
-                      setDraft(message.content);
+                      setDraft(content);
                       setEditing(false);
                     }
                     if (event.key === "Enter" && !event.shiftKey) {
@@ -305,7 +360,7 @@ export function MessageBubble({
                   <button
                     type="button"
                     onClick={() => {
-                      setDraft(message.content);
+                      setDraft(content);
                       setEditing(false);
                     }}
                     className="focus-ring-light rounded-lg px-2 py-1 font-ui text-[12px] font-medium text-[var(--app-pane-text-soft)]"
@@ -328,62 +383,26 @@ export function MessageBubble({
             ) : (
               <div className="flow-root">
                 {(attachments.length > 0 || pendingUpload) && (
-                  <div className="mb-1.5 max-w-full">
+                  <div className={cn("max-w-full", !imageMedia && "mb-1.5")}>
                     <AttachmentPreview
                       attachments={attachments}
                       pendingUpload={pendingUpload}
                       onRetry={() => onRetryUpload?.(message.id)}
+                      imageOverlay={imageOnly ? renderMeta(overlayMetaClasses) : undefined}
                     />
                   </div>
                 )}
-                <p className="flow-root whitespace-pre-wrap [overflow-wrap:anywhere]">
-                {message.content.trim().length > 0 && <MessageText content={message.content} />}
-                <span className={metaClasses}>
-                  {message.isEdited && <span>edited</span>}
-                  <span>{formatClock(message.createdAt)}</span>
-                  <span className="flex h-4 min-w-4 shrink-0 items-center justify-end gap-1">
-                    {isOwn && !message.failed && (
-                      <span
-                        className={cn(
-                          "flex items-center group-hover/message:hidden group-focus-within/message:hidden",
-                          message.pending
-                            ? "text-[rgba(229,217,182,0.6)]"
-                            : "text-[rgba(229,217,182,0.6)]"
-                        )}
-                      >
-                        {message.pending ? (
-                          <Clock size={12} strokeWidth={2} aria-hidden="true" />
-                        ) : (
-                          <Check size={12} strokeWidth={2} aria-hidden="true" />
-                        )}
-                        <span className="sr-only">{message.pending ? "Sending" : "Sent"}</span>
-                      </span>
+                {!imageOnly && (
+                  <p
+                    className={cn(
+                      "flow-root whitespace-pre-wrap [overflow-wrap:anywhere]",
+                      imageMedia && "px-[6px] pb-[5px] pt-[5px]"
                     )}
-                    {canInteract && (
-                      <button
-                        ref={setMenuTrigger}
-                        type="button"
-                        aria-label="Message options"
-                        aria-haspopup="menu"
-                        aria-expanded={menuOpen}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setMenuOpen(true);
-                        }}
-                        className={cn(
-                          "focus-ring-light hidden h-4 w-4 items-center justify-center rounded",
-                          "group-hover/message:flex group-focus-within/message:flex max-md:flex",
-                          isOwn
-                            ? "text-[rgba(229,217,182,0.85)]"
-                            : "text-[var(--app-pane-text-soft)]"
-                        )}
-                      >
-                        <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
-                      </button>
-                    )}
-                  </span>
-                </span>
-                </p>
+                  >
+                    {hasCaption && <MessageText content={content} />}
+                    {renderMeta(metaClasses)}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -563,7 +582,7 @@ export function MessageBubble({
                 className={popoverItemClasses()}
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(message.content);
+                    await navigator.clipboard.writeText(content);
                     toast.push("Message copied.", "success");
                   } catch {
                     toast.push("Could not copy the message.", "error");
@@ -580,7 +599,7 @@ export function MessageBubble({
                   role="menuitem"
                   className={popoverItemClasses()}
                   onClick={() => {
-                    setDraft(message.content);
+                    setDraft(content);
                     setEditing(true);
                     setMenuOpen(false);
                   }}

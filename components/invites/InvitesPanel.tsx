@@ -80,12 +80,12 @@ export function InvitesPanel({
     } catch (error) {
       if (isApiError(error) && error.kind === "invitation-expired") {
         setExpiredIds((previous) => ({ ...previous, [invitation.id]: true }));
-        toast.push(errorMessage(error), "info");
+        toast.push(errorMessage(error), "warning");
       } else if (
         isApiError(error) &&
         (error.kind === "not-found" || error.code === "INVITATION_ALREADY_HANDLED")
       ) {
-        toast.push(errorMessage(error), "info");
+        toast.push(errorMessage(error), "warning");
         void queryClient.invalidateQueries({ queryKey: pendingInvitationsQueryKey });
       } else {
         toast.push(errorMessage(error), "error");

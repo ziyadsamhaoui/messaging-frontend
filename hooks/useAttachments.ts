@@ -1,6 +1,6 @@
 "use client";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, type QueryClient } from "@tanstack/react-query";
 import { listRoomMedia, lookupAttachments } from "@/lib/services/attachments";
 
 export function attachmentLookupKey(roomId: string | null, ids: string[]) {
@@ -20,6 +20,10 @@ export function useAttachmentLookup(roomId: string | null, ids: string[]) {
 
 export function roomMediaKey(roomId: string | null, limit: number) {
   return ["room-media", roomId, limit] as const;
+}
+
+export function invalidateRoomMedia(queryClient: QueryClient, roomId: string) {
+  return queryClient.invalidateQueries({ queryKey: ["room-media", roomId] });
 }
 
 export function useRoomMedia(roomId: string | null, limit = 30) {

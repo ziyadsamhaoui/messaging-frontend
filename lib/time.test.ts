@@ -10,7 +10,6 @@ import {
   isPast,
   isSameDay,
   parseTimestamp,
-  setClockFormat,
 } from "./time";
 
 const NOW = new Date("2026-10-14T12:00:00.000Z");
@@ -27,24 +26,14 @@ afterEach(() => {
 describe("formatClock", () => {
   const at = (iso: string | null) => formatClock(iso);
 
-  afterEach(() => setClockFormat("12h"));
-
   it("drops the leading zero in 12-hour form", () => {
-    setClockFormat("12h");
     expect(at(new Date(2026, 9, 14, 1, 29).toISOString())).toBe("1:29 AM");
     expect(at(new Date(2026, 9, 14, 13, 5).toISOString())).toBe("1:05 PM");
   });
 
   it("reads midnight and noon as 12, not 0", () => {
-    setClockFormat("12h");
     expect(at(new Date(2026, 9, 14, 0, 15).toISOString())).toBe("12:15 AM");
     expect(at(new Date(2026, 9, 14, 12, 15).toISOString())).toBe("12:15 PM");
-  });
-
-  it("pads the hour in 24-hour form", () => {
-    setClockFormat("24h");
-    expect(at(new Date(2026, 9, 14, 9, 7).toISOString())).toBe("09:07");
-    expect(at(new Date(2026, 9, 14, 21, 40).toISOString())).toBe("21:40");
   });
 
   it("returns an empty string rather than an invalid date", () => {

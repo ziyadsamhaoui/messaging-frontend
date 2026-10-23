@@ -196,6 +196,14 @@ describe("MessageBubble controls", () => {
     expect(text.textContent).toMatch(/Message deleted\s*\d/);
   });
 
+  it("renders a message whose content is null (attachment-only) without crashing", () => {
+    renderBubble({
+      message: { ...MESSAGE, content: null as unknown as string, type: "IMAGE" },
+    });
+
+    expect(screen.getByRole("button", { name: "Message options" })).toBeInTheDocument();
+  });
+
   it("offers Retry on a failed message instead of controls", async () => {
     const onRetry = vi.fn();
     renderBubble({ message: { ...MESSAGE, failed: true }, onRetry });

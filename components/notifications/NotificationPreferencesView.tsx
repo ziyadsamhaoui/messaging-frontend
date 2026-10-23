@@ -11,8 +11,12 @@ import {
   useNotificationPreferences,
   useUpdateNotificationPreferences,
 } from "@/hooks/useNotifications";
+import { Send } from "lucide-react";
+import { buttonClasses } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
+import { usePushStatus } from "@/hooks/usePush";
 import { errorMessage } from "@/lib/errors";
+import { disablePush, enablePush, pushBlockingReason, showTestNotification } from "@/lib/push";
 import { NotificationType, PreferencesResponse } from "@/lib/types";
 
 const NOTIFICATION_TYPES: NotificationType[] = ["MESSAGE", "REACTION", "INVITATION", "SYSTEM"];
@@ -46,7 +50,6 @@ export function NotificationPreferencesEditor({ onBack }: { onBack?: () => void 
     <SettingsEditorShell
       icon={<Bell size={26} strokeWidth={1.75} />}
       title="Notification preferences"
-      description="Which notifications you receive, and whether they may reach you by push at all."
       onBack={onBack}
     >
       {preferencesQuery.isError ? (
@@ -69,6 +72,102 @@ export function NotificationPreferencesEditor({ onBack }: { onBack?: () => void 
         />
       )}
     </SettingsEditorShell>
+  );
+}
+
+function DevicePushControls() {
+  const toast = useToast();
+  const status = usePushStatus(4000);
+  const [busy, setBusy] = useState(false);
+  const blocking = pushBlockingReason();
+
+  const copy =
+    blocking && status.state === "unsupported"
+      ? { title: "Not supported", body: blocking }
+      : status.state === "blocked"
+        ? {
+            title: "Blocked in the browser",
+            body: "Notifications are denied for this site. Allow them in the browser's site settings, then reload.",
+          }
+        : status.state === "enabled"
+          ? {
+              title: "Enabled on this device",
+              body: "Notifications arrive while the app is closed, as long as the server can send them.",
+            }
+          : {
+              title: "Not enabled",
+              body: "Turn push on for this browser to be notified when the app is not in front of you.",
+            };
+
+  async function toggle() {
+    setBusy(true);
+    try {
+      const result = status.state === "enabled" ? await disablePush() : await enablePush();
+      if (result.ok) {
+        toast.push(status.state === "enabled" ? "Push disabled on this device." : "Push enabled on this device.", "success");
+      } else {
+        toast.push(result.reason, "error");
+      }
+      await status.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function test() {
+    setBusy(true);
+    try {
+      const result = await showTestNotification();
+      if (!result.ok) toast.push(result.reason, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-3 p-4">
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden="true"
+          className={`h-2.5 w-2.5 rounded-full ${
+            status.state === "enabled"
+              ? "bg-[var(--color-sage)]"
+              : status.state === "blocked"
+                ? "bg-[var(--color-warning)]"
+                : "bg-[var(--app-pane-control-border)]"
+          }`}
+        />
+        <p className="font-ui text-[15px] font-medium text-[var(--app-pane-text)]">
+          {status.ready ? copy.title : "Checking…"}
+        </p>
+      </div>
+      <p className="font-ui text-[13px] leading-relaxed text-[var(--app-pane-text-soft)]">{copy.body}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        {status.state !== "blocked" && status.state !== "unsupported" && (
+          <button
+            type="button"
+            onClick={() => void toggle()}
+            disabled={busy}
+            className={buttonClasses({
+              variant: status.state === "enabled" ? "secondary" : "primary",
+              size: "md",
+              tone: "pane",
+            })}
+          >
+            {status.state === "enabled" ? "Disable on this device" : "Enable on this device"}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => void test()}
+          disabled={busy || status.permission !== "granted"}
+          className={buttonClasses({ variant: "secondary", size: "md", tone: "pane" })}
+        >
+          <Send size={16} strokeWidth={1.75} aria-hidden="true" />
+          Send test notification
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -150,10 +249,10 @@ function PreferencesForm({ preferences }: { preferences: PreferencesResponse }) 
             />
           }
         />
-        <SettingsRow
-          title="This browser"
-          description="Permission and the subscription are per device. Settings → Push on this device shows what this browser is actually doing."
-        />
+      </SettingsCard>
+
+      <SettingsCard title="This device">
+        <DevicePushControls />
       </SettingsCard>
 
       {error && (

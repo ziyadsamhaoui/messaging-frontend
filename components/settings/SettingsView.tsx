@@ -8,14 +8,7 @@ import { SETTINGS_HREF, SettingsSection } from "@/lib/appRoute";
 import { SettingsPanel } from "./SettingsPanel";
 import { ProfileEditor } from "./ProfileEditor";
 import { NotificationPreferencesEditor } from "@/components/notifications/NotificationPreferencesView";
-import {
-  AboutEditor,
-  AccountEditor,
-  AppearanceEditor,
-  BlockedUsersEditor,
-  PushEditor,
-  ShortcutsEditor,
-} from "./editors";
+import { BlockedUsersEditor, ShortcutsEditor } from "./editors";
 
 export function SettingsView({ section }: { section: SettingsSection | null }) {
   const router = useRouter();
@@ -54,19 +47,11 @@ function SettingsEditor({ section, onBack }: { section: SettingsSection; onBack:
   switch (section) {
     case "profile":
       return <ProfileEditor onBack={onBack} />;
-    case "account":
-      return <AccountEditor onBack={onBack} />;
     case "notifications":
       return <NotificationPreferencesEditor onBack={onBack} />;
-    case "push":
-      return <PushEditor onBack={onBack} />;
     case "blocked":
       return <BlockedUsersEditor onBack={onBack} />;
-    case "appearance":
-      return <AppearanceEditor onBack={onBack} />;
     case "shortcuts":
       return <ShortcutsEditor onBack={onBack} />;
-    case "about":
-      return <AboutEditor onBack={onBack} />;
   }
 }

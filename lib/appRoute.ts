@@ -1,25 +1,13 @@
 
 export type AppDestination = "chats" | "connections" | "invites" | "notifications";
 
-export type SettingsSection =
-  | "profile"
-  | "account"
-  | "notifications"
-  | "push"
-  | "blocked"
-  | "appearance"
-  | "shortcuts"
-  | "about";
+export type SettingsSection = "profile" | "notifications" | "blocked" | "shortcuts";
 
 export const SETTINGS_SECTIONS: readonly SettingsSection[] = [
   "profile",
-  "account",
   "notifications",
-  "push",
   "blocked",
-  "appearance",
   "shortcuts",
-  "about",
 ] as const;
 
 export const APP_DESTINATIONS: readonly AppDestination[] = [

@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { roomsQueryKey } from "@/hooks/useRooms";
 import { roomHref } from "@/lib/appRoute";
 import { createRoom } from "@/lib/services/rooms";
 import { useUiStore } from "@/store/uiStore";
 import { CreateRoomRequest, CursorPage, RoomResponse } from "@/lib/types";
-import { SelectionPrompt } from "@/components/layout/SelectionPrompt";
+import { MainPane } from "@/components/layout/MainPane";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ConversationsPanel } from "./ConversationsPanel";
 import { ChatScreen } from "./ChatScreen";
 import { NewChatView } from "./NewChatView";
@@ -52,21 +53,15 @@ export function ChatsDestination({ roomId }: { roomId: string | null }) {
       {roomId ? (
         <ChatScreen roomId={roomId} />
       ) : (
-        <SelectionPrompt
-          hideOnNarrow
-          title="Select a chat"
-          description="Choose a conversation from the list to keep talking, or start a new one."
-          action={
-            <button
-              type="button"
-              onClick={() => setComposing(true)}
-              className="focus-ring-light inline-flex items-center gap-2 rounded-[var(--radius-control)] bg-[var(--color-primary)] px-4 py-2.5 font-ui text-sm font-semibold text-[var(--color-parchment)]"
-            >
-              <Plus size={16} strokeWidth={1.75} aria-hidden="true" />
-              New chat
-            </button>
-          }
-        />
+        <MainPane hideOnNarrow>
+          <EmptyState
+            tone="pane"
+            className="m-auto"
+            icon={<MessageSquare size={22} strokeWidth={1.75} />}
+            title="Select a chat"
+            description="Choose a conversation from the list to keep talking, or start a new one."
+          />
+        </MainPane>
       )}
     </>
   );

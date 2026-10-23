@@ -64,6 +64,27 @@ function orderMessages(messages: ChatMessage[]): ChatMessage[] {
   });
 }
 
+type MessageRow = Extract<Row, { kind: "message" }>;
+
+type DayGroup = { key: string; label: string | null; rows: MessageRow[] };
+
+function groupRowsByDay(rows: Row[]): DayGroup[] {
+  const groups: DayGroup[] = [];
+  for (const row of rows) {
+    if (row.kind === "separator") {
+      groups.push({ key: row.id, label: row.label, rows: [] });
+      continue;
+    }
+    let current = groups[groups.length - 1];
+    if (!current) {
+      current = { key: `lead-${row.id}`, label: null, rows: [] };
+      groups.push(current);
+    }
+    current.rows.push(row);
+  }
+  return groups;
+}
+
 function buildRows(messages: ChatMessage[]): Row[] {
   const rows: Row[] = [];
 
@@ -236,10 +257,38 @@ export function MessageList({
     if (element) element.scrollTop = element.scrollHeight;
   }, [typingLabel]);
 
+  const [floatingLabel, setFloatingLabel] = useState<string | null>(null);
+  const updateFloatingLabel = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const containerTop = container.getBoundingClientRect().top;
+    let label: string | null = null;
+    for (const node of container.querySelectorAll<HTMLElement>("[data-day-separator]")) {
+      if (node.getBoundingClientRect().top >= containerTop) break;
+      label = node.dataset.daySeparator ?? null;
+    }
+    setFloatingLabel(label);
+  }, []);
+
+  useEffect(() => {
+    updateFloatingLabel();
+  }, [ordered, updateFloatingLabel]);
+
   return (
     <div className="relative min-h-0 flex-1">
+      {floatingLabel && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center"
+        >
+          <span className="rounded-full bg-[rgba(40,84,48,0.1)] px-3 py-1 font-ui text-[12px] font-medium text-[var(--app-pane-text-soft)] shadow-sm backdrop-blur-sm">
+            {floatingLabel}
+          </span>
+        </div>
+      )}
       <div
         ref={containerRef}
+        onScroll={updateFloatingLabel}
         role="log"
         aria-live="polite"
         aria-label="Messages"
@@ -261,17 +310,19 @@ export function MessageList({
             </p>
           ) : (
             <>
-              {rows.map((row) => {
-                if (row.kind === "separator") {
-                  return (
-                    <div key={row.id} className="sticky top-0 z-10 flex justify-center py-2">
+              {groupRowsByDay(rows).map((group) => (
+                <section key={group.key}>
+                  {group.label && (
+                    <div
+                      data-day-separator={group.label}
+                      className="my-3 flex justify-center"
+                    >
                       <span className="rounded-full bg-[rgba(40,84,48,0.1)] px-3 py-1 font-ui text-[12px] font-medium text-[var(--app-pane-text-soft)]">
-                        {row.label}
+                        {group.label}
                       </span>
                     </div>
-                  );
-                }
-
+                  )}
+                  {group.rows.map((row) => {
                 const message = row.message;
                 const isOwn = message.senderId === currentUserId;
 
@@ -296,6 +347,7 @@ export function MessageList({
                         isOwn={isOwn}
                         showSenderName={row.showSenderName && Boolean(isGroupRoom) && !isOwn}
                         isFirstOfGroup={row.isFirstOfGroup}
+                        isLastOfGroup={row.isLastOfGroup}
                         senderName={message.senderUsername}
                         senderTone={toneForSender(message.senderId)}
                         canDeleteAsOwner={Boolean(roomCreatedBy && roomCreatedBy === currentUserId)}
@@ -315,7 +367,9 @@ export function MessageList({
                     </div>
                   </div>
                 );
-              })}
+                  })}
+                </section>
+              ))}
 
               {typingLabel && (
                 <div className="mt-3 flex items-center gap-2" aria-live="polite">

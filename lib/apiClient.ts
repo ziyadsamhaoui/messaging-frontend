@@ -151,7 +151,8 @@ async function performFetch(
     Accept: "application/json",
     ...options.headers,
   };
-  if (options.body !== undefined) {
+  const isFormData = options.body instanceof FormData;
+  if (options.body !== undefined && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
   if (options.auth !== false && session?.accessToken) {
@@ -163,7 +164,11 @@ async function performFetch(
     return await fetch(`${API_GATEWAY_URL}${path}`, {
       method,
       headers,
-      body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      body: isFormData
+        ? (options.body as FormData)
+        : options.body !== undefined
+          ? JSON.stringify(options.body)
+          : undefined,
       signal,
     });
   } finally {

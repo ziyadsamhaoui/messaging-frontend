@@ -18,7 +18,7 @@ import {
   useRoomParticipants,
   useSendMessage,
 } from "@/hooks/useMessages";
-import { useAttachmentLookup } from "@/hooks/useAttachments";
+import { invalidateRoomMedia, useAttachmentLookup } from "@/hooks/useAttachments";
 import { useUser } from "@/hooks/useUser";
 import { useBlockedUserIds, useBlockUser, useUnblockUser } from "@/hooks/useBlocks";
 import { useSocket } from "@/hooks/useSocket";
@@ -45,6 +45,7 @@ import { useToast } from "@/components/ui/Toast";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { GroupInfoPanel, GROUP_INFO_PANEL_ID } from "@/components/chat/GroupInfoPanel";
+import { DirectInfoPanel, DIRECT_INFO_PANEL_ID } from "@/components/chat/DirectInfoPanel";
 import { MainPane } from "@/components/layout/MainPane";
 import { IconButton } from "@/components/ui/IconButton";
 import { Avatar } from "@/components/ui/Avatar";
@@ -178,6 +179,7 @@ export function ChatScreen({ roomId }: { roomId: string }) {
       } else if (classified.kind === "attachments") {
         applyAttachmentsUpdated(classified.frame);
         void queryClient.invalidateQueries({ queryKey: ["attachments"] });
+        void invalidateRoomMedia(queryClient, roomId);
         setPendingUploads((current) => {
           if (!current[classified.frame.messageId]) return current;
           const next = { ...current };
@@ -302,6 +304,7 @@ export function ChatScreen({ roomId }: { roomId: string }) {
                 attachmentIds: [confirmed.id],
               });
               void queryClient.invalidateQueries({ queryKey: ["attachments"] });
+              void invalidateRoomMedia(queryClient, roomId);
               setPendingUploads((current) => {
                 if (!current[messageId]) return current;
                 const next = { ...current };
@@ -478,15 +481,23 @@ export function ChatScreen({ roomId }: { roomId: string }) {
           </>
         )}
         <div className="ml-auto flex items-center gap-1">
-          {isGroup && (
+          {(isGroup || room?.type === "DIRECT") && (
             <IconButton
               ref={setDetailsTrigger}
               surface="pane"
               size="sm"
-              label={detailsOpen ? "Hide group info" : "Show group info"}
-              tooltip="Group info"
+              label={
+                room?.type === "DIRECT"
+                  ? detailsOpen
+                    ? "Hide contact info"
+                    : "Show contact info"
+                  : detailsOpen
+                    ? "Hide group info"
+                    : "Show group info"
+              }
+              tooltip={room?.type === "DIRECT" ? "Contact info" : "Group info"}
               aria-expanded={detailsOpen}
-              aria-controls={GROUP_INFO_PANEL_ID}
+              aria-controls={room?.type === "DIRECT" ? DIRECT_INFO_PANEL_ID : GROUP_INFO_PANEL_ID}
               onClick={() => (detailsOpen ? closeDetails() : setDetailsOpen(true))}
             >
               <UsersRound size={20} strokeWidth={1.75} aria-hidden="true" />
@@ -611,6 +622,34 @@ export function ChatScreen({ roomId }: { roomId: string }) {
             currentUserId={currentUserId}
             onClose={closeDetails}
             onLeft={() => setDetailsOpen(false)}
+          />
+        )}
+        {room?.type === "DIRECT" && detailsOpen && otherParticipant && (
+          <DirectInfoPanel
+            key={room.id}
+            room={room}
+            peerUserId={otherParticipant.userId}
+            peerName={title}
+            peerPictureUrl={otherUserQuery.data?.profilePictureUrl}
+            peerPresence={peerPresence}
+            peerLoading={otherUserQuery.isLoading && !otherUserQuery.data}
+            isBlocked={isBlocked}
+            onToggleBlock={async () => {
+              try {
+                if (isBlocked) {
+                  await unblockMutation.mutateAsync(otherParticipant.userId);
+                  markBlockedRoom(roomId, false);
+                  toast.push("User unblocked.", "success");
+                } else {
+                  await blockMutation.mutateAsync(otherParticipant.userId);
+                  markBlockedRoom(roomId, true);
+                  toast.push("User blocked.", "success");
+                }
+              } catch (error) {
+                toast.push(errorMessage(error), "error");
+              }
+            }}
+            onClose={closeDetails}
           />
         )}
       </div>

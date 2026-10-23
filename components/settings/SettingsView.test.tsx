@@ -75,11 +75,10 @@ describe("SettingsView", () => {
     renderSettings(null);
 
     expect(screen.getByRole("heading", { name: "Settings" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /username, photo, about/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /blocked users/i })).toHaveTextContent("1 blocked");
-    expect(screen.getByRole("link", { name: /notification preferences/i })).toHaveTextContent(
-      "1 type muted"
-    );
+    expect(screen.getByRole("link", { name: "Profile" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Blocked users" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Notification preferences" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /about|diagnostics/i })).toBeNull();
     expect(screen.getByText("Choose a setting to change")).toBeInTheDocument();
     const signOut = screen.getByRole("button", { name: /sign out/i });
     expect(signOut.parentElement?.className).toContain("md:hidden");
@@ -90,7 +89,7 @@ describe("SettingsView", () => {
 
     expect(screen.getByLabelText("Username")).toHaveValue("me");
     expect(screen.getByLabelText("About")).toBeInTheDocument();
-    expect(screen.getByLabelText("Picture URL")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Change profile picture" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save profile" })).toBeNull();
   });
 

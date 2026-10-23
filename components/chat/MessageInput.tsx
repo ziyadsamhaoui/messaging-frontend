@@ -163,12 +163,13 @@ export function MessageInput({
               : "border-[var(--app-pane-control-border)]"
           )}
         >
+          <div className="flex shrink-0 items-center">
           <IconButton
             ref={setMenuTrigger}
             surface="pane"
             size="md"
             label="Add attachment"
-            tooltip="Add attachment"
+            tooltip={null}
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
@@ -181,13 +182,14 @@ export function MessageInput({
             surface="pane"
             size="md"
             label="Insert emoji"
-            tooltip="Emoji"
+            tooltip={null}
             aria-haspopup="dialog"
             aria-expanded={emojiOpen}
             onClick={() => setEmojiOpen(true)}
           >
             <Smile size={20} strokeWidth={1.75} aria-hidden="true" />
           </IconButton>
+          </div>
 
           <label className="sr-only" htmlFor="composer">
             Message
@@ -235,6 +237,7 @@ export function MessageInput({
               surface="pane"
               size="md"
               label="Record a voice message"
+              tooltip={null}
               onClick={() => void recorder.start()}
               disabled={inputDisabled}
             >

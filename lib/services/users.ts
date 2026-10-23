@@ -1,5 +1,25 @@
+import { API_GATEWAY_URL } from "@/lib/env";
 import { apiClient, buildQuery } from "@/lib/apiClient";
 import { ConnectionDto, PublicUserDto, UpdateUserRequest } from "@/lib/types";
+
+export interface AccountDto {
+  id: string;
+  email: string;
+}
+
+export function getAccount() {
+  return apiClient.get<AccountDto>("/auth/me");
+}
+
+export function avatarUrl(id: string, version?: number | string): string {
+  return `${API_GATEWAY_URL}/users/${id}/avatar${version !== undefined ? `?v=${version}` : ""}`;
+}
+
+export function uploadAvatar(id: string, image: Blob) {
+  const form = new FormData();
+  form.append("file", image, "avatar.jpg");
+  return apiClient.post<void>(`/users/${id}/avatar`, form);
+}
 
 export function getUser(id: string) {
   return apiClient.get<PublicUserDto>(`/users/${id}`);

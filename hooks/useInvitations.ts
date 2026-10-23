@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   acceptInvitation,
+  inviteToRoom,
   listPendingInvitations,
   rejectInvitation,
 } from "@/lib/services/rooms";
@@ -39,4 +40,16 @@ export function useAcceptInvitation() {
 
 export function useRejectInvitation() {
   return useInvitationDecision(rejectInvitation);
+}
+
+export function useResendInvitation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ roomId, invitedUserId }: { roomId: string; invitedUserId: string }) =>
+      inviteToRoom(roomId, invitedUserId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: pendingInvitationsQueryKey });
+    },
+  });
 }
