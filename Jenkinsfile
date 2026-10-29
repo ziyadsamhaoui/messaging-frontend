@@ -43,8 +43,6 @@ pipeline {
 
                     def image = "messaging-frontend:sha-${shortSha}"
 
-                    // NEXT_PUBLIC_* are inlined by `next build`, so they are
-                    // build arguments and not runtime settings.
                     def buildArgs = [
                         "--build-arg NEXT_PUBLIC_API_GATEWAY_URL=${params.NEXT_PUBLIC_API_GATEWAY_URL}",
                         "--build-arg NEXT_PUBLIC_WS_URL=${params.NEXT_PUBLIC_WS_URL}"
